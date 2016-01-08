@@ -1,9 +1,11 @@
-CC = gcc
-CFLAGS = -Wall -W
+CFLAGS = -Wall -g
+
+OBJS = mysh.o
 
 all: mysh
 
-mysh: mysh.o
+mysh: $(OBJS)
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 clean: 
 	rm -f *.o *~ mysh
