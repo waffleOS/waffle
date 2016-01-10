@@ -1,6 +1,6 @@
 CFLAGS = -Wall -g
 
-OBJS = mysh.o
+OBJS = mysh.o execute_shell.o
 
 all: mysh
 
