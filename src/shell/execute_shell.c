@@ -1,4 +1,4 @@
-/*
+/**
  * execute_shell.c
  * Contains definitions of shell utility functions. 
  */
@@ -9,14 +9,21 @@
 #include "unistd.h"
 
 /* Size of char buffer to hold current directory string. */
-#define CWD_BUFFER_SIZE 1000 
+#define CWD_BUFFER_SIZE 1000
 
-/* 
- * Either unistd call might fail, so we encapsulate all 
+/** 
+ * Either unistd.h call might fail, so we encapsulate all 
  * possible outcomes in a status enum.
  */
 typedef enum {SUCCESS, LOGIN_FAIL, CWD_FAIL, BOTH_FAIL} error_status;
 
+
+/**
+ * void print_prompt()
+ * Prints the shell prompt in the form "usr:cwd> " using the unistd.h API.
+ * Exits if there is an error in getlogin() or getcwd(). This may be due
+ * to buffer overflow, or memory issues.
+ */
 void print_prompt() {
     char *login = getlogin();
     char buf[CWD_BUFFER_SIZE];
@@ -35,11 +42,14 @@ void print_prompt() {
         status = CWD_FAIL;
     }
 
-    if (status == SUCCESS) {
-        printf("%s:%s> ", login, cwd);
-    }
-    else {
-        printf("Error %d in reading login/cwd. Exiting...\n", status);
+    /* Print prompt even if there is an error for debugging purposes. */
+    printf("%s:%s> ", login, cwd);
+    
+    /* If there is an error, alert the user and terminate. */
+    if (status != SUCCESS) {
+        printf("\nError %d in reading login or cwd. Exiting...\n"
+               "Error 1: LOGIN_FAIL, Error 2: CWD_FAIL, Error 3: "
+               "BOTH_FAIL\n", status);
         exit(1); /* Exit with error. */ 
     }
 }
