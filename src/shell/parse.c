@@ -17,7 +17,8 @@ int main(int argc, char **argv)
 
 void initializeParser()
 {
-    tokens = malloc(1000 * sizeof(char));
+    tokens = malloc(1000 * sizeof(token));
+    cmds = malloc(1000 * sizeof(cmd));
     transitions[INITIAL][CHAR] = (transition) {&addChar, RECEIVED_CHAR};
     transitions[INITIAL][QUOTE] = (transition) {&doNOP, RECEIVED_QUOTE};
     transitions[INITIAL][REDIRECT] = (transition) {&createToken, INITIAL};
@@ -92,6 +93,11 @@ void createTokenRedirect(char c)
 }
 
 void doNOP(char c)
+{
+
+}
+
+cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
 {
 
 }

@@ -29,6 +29,7 @@ char buffer[1000];
 int count;
 int tokenCount;
 token * tokens;
+cmd * cmds;
 state currentState;
 
 transition transitions[3][4];
