@@ -57,6 +57,7 @@ int test_tokenize(char *test_str) {
     int expected_num_tkns;
     // printf("%d tokens for test string:\n", expected_num_tkns);
     printf("%s\n", test_str);
+    initializeParser();
     tkns = tokenize(test_str, &expected_num_tkns);
     printf("Tokenize called. Returned:\n");
     // print_tokens(tkns, expected_num_tkns);
@@ -94,7 +95,7 @@ int main(int argc, char **argv) {
     // }
     // printf("%s", str);
     // token ** tokens = tokenize(buf, &num_tokens);
-    
+
     // PUT WHAT YOU WANT TO TOKENIZE HERE
     test_tokenize("hi");
     return 0;

@@ -46,6 +46,7 @@ token ** tokenize(char * buf, int * num_tokens)
         char c = *buf;
         token_type t = getTokenType(c);
         executeTransition(c, t);
+        buf++;
     }
     *num_tokens = tokenCount;
     return &tokens;
