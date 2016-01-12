@@ -103,7 +103,7 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
 {
     int cmdCount = 0;
     int i;
-    cmd c;
+    cmd * c;
     int argc = 0;
     for (i = 0; i < num_tokens; i++)
     {
@@ -120,12 +120,11 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
                 strcpy(argv[k], x.text);
                 k++;
             }
-
+            c = (cmd *) malloc(sizeof(cmd));
             c.argc = argc;
             c.argv = argv;
             cmds[cmdCount++] = c;
             argc = 0;
-
         }
         else
         {
