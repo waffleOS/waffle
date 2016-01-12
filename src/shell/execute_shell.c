@@ -86,7 +86,6 @@ int execute_commands(cmd **commands, int n) {
             char *output = commands[i]->output;
             
             if (input != NULL) {
-                printf("Non null input %d %s\n", STDIN_FILENO, input);
                 in_fd = open(input, O_RDONLY);
                 dup2(in_fd, STDIN_FILENO);
                 close(in_fd);
