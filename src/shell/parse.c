@@ -1,25 +1,43 @@
-#include "execute_shell.h"
 
+#include "parse.h"
 #include "stdio.h"
 #include "unistd.h"
 
 #define INPUT_BUFFER_SIZE 5000
 
-int main(int argc, char **argv) {
-    char buf[INPUT_BUFFER_SIZE];
+f tokenValues[4] = { 1, 2, 3, 4 };
 
-    print_prompt();
-    while (1) {
-        if (fgets(buf, INPUT_BUFFER_SIZE, stdin) != NULL) {
-           print_prompt();
-        }
-    }
+int main(int argc, char **argv)
+{
+    printf("%d", getTokenType(' '));
+}
 
-    return 0;
+void initializeParser()
+{
+    count = 0;
+}
+
+token_type getTokenType(char c)
+{
+    if (c == '"') return QUOTE;
+    else if (c == '|' || c == '<' || c == '>') return REDIRECT;
+    else if (c == ' ') return SPACE;
+    else return CHAR;
+}
+
+f getTokenValue(token_type token_class)
+{
+
+}
+
+void addChar(char c)
+{
+
 }
 /*
-FSM      
+FSM
 token ** tokenize(char * buf, int & num_tokens)
 {
 
 }
+*/

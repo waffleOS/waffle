@@ -11,7 +11,7 @@ typedef struct {
 } token;
 
 typedef struct {
-    char *input;  /* NULL iff stdin. */ 
+    char *input;  /* NULL iff stdin. */
     char *output; /* NULL iff stdout. */
     char *error;  /* NULL iff stderr. */
     int pipe; /* Whether we need to pipe. */
