@@ -48,6 +48,7 @@ token ** tokenize(char * buf, int * num_tokens)
         executeTransition(c, t);
         buf++;
     }
+    createToken(" ");
     *num_tokens = tokenCount;
     return &tokens;
 }
