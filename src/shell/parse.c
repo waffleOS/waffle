@@ -74,12 +74,12 @@ void addChar(char c)
 void createToken(char c)
 {
     buffer[count++] = '\0';
-    token t=  (token *) malloc(sizeof(token));
+    token *t = (token *) malloc(sizeof(token));
     t->type = TEXT;
     t->text = malloc(count * sizeof(char));
     strcpy(t->text, buffer);
     t->length = count;
-    tokens[tokenCount++] = t;
+    tokens[tokenCount++] = *t;
 }
 
 void createTokenRedirect(char c)
@@ -91,7 +91,7 @@ void createTokenRedirect(char c)
     t->text[0] = c;
     t->text[1] = '\0';
     t->length = 2;
-    tokens[tokenCount++] = t;
+    tokens[tokenCount++] = *t;
 }
 
 void doNOP(char c)
@@ -105,6 +105,8 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
     int i;
     cmd * c;
     int argc = 0;
+    int setPreviousInput = 0;
+    int setPreviousOutput = 0;
     for (i = 0; i < num_tokens; i++)
     {
         token t = *tokens[i];
@@ -121,14 +123,34 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
                 k++;
             }
             c = (cmd *) malloc(sizeof(cmd));
-            c.argc = argc;
-            c.argv = argv;
-            cmds[cmdCount++] = c;
+            c->argc = argc;
+            c->argv = argv;
+            cmds[cmdCount++] = *c;
             argc = 0;
+            if (strncmp(t.text, "<", 1))
+            {
+                setPreviousInput = 1;
+            }
+            else if (strncmp(t.text, ">", 1))
+            {
+                setPreviousOutput = 1;
+            }
         }
         else
         {
             argc++;
+        }
+
+        if (setPreviousInput)
+        {
+            strcpy(cmds[cmdCount - 1].input, t.text);
+            setPreviousInput = 0;
+        }
+
+        if (setPreviousOutput)
+        {
+            strcpy(cmds[cmdCount - 1].output, t.text);
+            setPreviousOutput = 0;
         }
     }
 
