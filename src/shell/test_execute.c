@@ -36,6 +36,5 @@ int main() {
     test2[0]->argv = argv;
     printf("\nTest 2: cat < mysh.c\n");
     execute_commands(test2, 1);
-
     return 0;
 }

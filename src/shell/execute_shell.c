@@ -78,7 +78,8 @@ int execute_commands(cmd **commands, int n) {
         else if (pid > 0) {
             wait(&status);
         }
-        else {
+        else { // child process
+            // Set up the io redirection
             char **argv = commands[i]->argv;
             int in_fd, out_fd;
             
