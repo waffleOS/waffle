@@ -1,12 +1,12 @@
 /*******************************************************************************
- * parser_tests.c 
+ * parser_tests.c
  * CS124 Team Waffle Assignment 1 Shell
  * parser_tests.c
- * 
+ *
  * This file includes functions to test the tokenize and parsing functions.
  ******************************************************************************/
 
-/* Print out tokens in array. */ 
+/* Print out tokens in array. */
 void print_tokens(token **tokens, int n) {
     int i;
     for(i = 0; i < n; i++) {
@@ -14,7 +14,7 @@ void print_tokens(token **tokens, int n) {
     }
 }
 
-/* Print out commands in array. */ 
+/* Print out commands in array. */
 void print_commands(cmd **commands, int n) {
     int i, j;
     for(i = 0; i < n; i++) {
@@ -46,7 +46,7 @@ void print_commands(cmd **commands, int n) {
 
 
 /*
- * Test tokenize function and returns status of test. 
+ * Test tokenize function and returns status of test.
  * token **tokenize(char *buf, int *num_tokens);
  */
 int test_tokenize(char *test_str, int expected_num_tkns) {
@@ -56,12 +56,12 @@ int test_tokenize(char *test_str, int expected_num_tkns) {
     print_tokens(tkns, expected_num_tkns);
 }
 
-/* 
+/*
  * Unit test parse function
  * Tests the parse function given a specified
  * array of tokens and returns the status of the test.
  */
-int unit_test_parse(token **tokens); 
+int unit_test_parse(token **tokens);
 
 /* Integration test of tokenize and parse. */
 int int_test_parse(char *test_str) {

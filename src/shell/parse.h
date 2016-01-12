@@ -23,6 +23,7 @@ void createTokenRedirect(char c);
 void doNOP(char c);
 void executeTransition(char c, token_type token_class);
 token ** tokenize(char * buf, int * num_tokens);
+void initializeParser();
 
 char buffer[1000];
 int count;
