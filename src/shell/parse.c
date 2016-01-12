@@ -74,23 +74,23 @@ void addChar(char c)
 void createToken(char c)
 {
     buffer[count++] = '\0';
-    token t;
-    t.type = TEXT;
-    t.text = malloc(count * sizeof(char));
-    strcpy(t.text, buffer);
-    t.length = count;
+    token t=  (token *) malloc(sizeof(token));
+    t->type = TEXT;
+    t->text = malloc(count * sizeof(char));
+    strcpy(t->text, buffer);
+    t->length = count;
     tokens[tokenCount++] = t;
 }
 
 void createTokenRedirect(char c)
 {
     createToken(c);
-    token t;
-    t.type = REDIRECT_TOKEN;
-    t.text = malloc(2 * sizeof(char));
-    t.text[0] = c;
-    t.text[1] = '\0';
-    t.length = 2;
+    token * t = (token *) malloc(sizeof(token));
+    t->type = REDIRECT_TOKEN;
+    t->text = malloc(2 * sizeof(char));
+    t->text[0] = c;
+    t->text[1] = '\0';
+    t->length = 2;
     tokens[tokenCount++] = t;
 }
 
@@ -124,6 +124,8 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
             c.argc = argc;
             c.argv = argv;
             cmds[cmdCount++] = c;
+            argc = 0;
+
         }
         else
         {
