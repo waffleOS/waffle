@@ -37,5 +37,27 @@ int main() {
     printf("\nTest 2: cat < mysh.c\n");
     execute_commands(test2, 1);
 
+    /* Piping test. */
+    cmd *test3[2];
+    test3[0] = (cmd *) malloc(sizeof(cmd));
+    test3[0]->input = (char *) malloc(6);
+    strcpy(test2[0]->input, "mysh.c");
+    test3[0]->output = NULL;
+    argv = (char **) malloc(2 * sizeof(char *));
+    argv[0] = (char *) malloc(3);
+    strcpy(argv[0], "cat");
+    argv[1] = NULL;
+    test3[0]->argv = argv;
+    test3[1] = (cmd *) malloc(sizeof(cmd));
+    argv = (char **) malloc(3 * sizeof(char *));
+    argv[0] = (char *) malloc(4);
+    strcpy(argv[0], "grep");
+    argv[1] = (char *) malloc(3);
+    strcpy(argv[1], "int");
+    argv[2] = NULL;
+    test[0]->argv = argv;
+    printf("\nTest 3: cat < mysh.c | grep int \n");
+    execute_commands(test3, 2);
+
     return 0;
 }
