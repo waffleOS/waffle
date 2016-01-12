@@ -83,16 +83,15 @@ int execute_commands(cmd **commands, int n) {
         }
         else if (strcmp(argv[0], "exit") == 0) { 
             exit(EXIT_SUCCESS);
-        }
-
-        if ((pid = fork()) < 0) { 
+        } 
+        else if ((pid = fork()) < 0) { 
             perror("Fork error");
             exit(EXIT_FAILURE);
         }
         else if (pid > 0) {
             wait(&status);
         }
-        else {
+        else { /* child process */
             int in_fd, out_fd;
             
             char *input = commands[i]->input;

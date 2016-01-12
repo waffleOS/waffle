@@ -21,10 +21,15 @@ void addChar(char c);
 void createToken(char c);
 void createTokenRedirect(char c);
 void doNOP(char c);
+void executeTransition(char c, token_type token_class);
+token ** tokenize(char * buf, int * num_tokens);
+void initializeParser();
 
 char buffer[1000];
 int count;
-token tokens[1000];
+int tokenCount;
+token * tokens;
+cmd * cmds;
 state currentState;
 
 transition transitions[3][4];
