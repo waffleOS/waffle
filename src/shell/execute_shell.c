@@ -53,3 +53,18 @@ void print_prompt() {
         exit(1); /* Exit with error. */ 
     }
 }
+
+/**
+ * int execute_commands(cmd **commands, int n)
+ */
+int execute_commands(cmd **commands, int n) {
+    int i;
+    for (i = 0; i < n; i++) {
+        char *input = commands[i]->input;
+        if (input != NULL) {
+        }
+        char **argv = commands[i]->argv;
+        execvp(argv[0], argv);
+    }
+    return 0;
+}

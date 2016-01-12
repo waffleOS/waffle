@@ -6,6 +6,9 @@
 #ifndef EXECUTE_SHELL_H
 #define EXECUTE_SHELL_H 
 
+#include "shell_structs.h"
+
 void print_prompt();
+int execute_commands(cmd **commands, int n);
 
 #endif /* EXECUTE_SHELL_H */
