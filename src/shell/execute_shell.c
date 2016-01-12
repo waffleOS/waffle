@@ -4,9 +4,11 @@
  */
 #include "execute_shell.h"
 
-#include "stdio.h"
-#include "stdlib.h"
-#include "unistd.h"
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 /* Size of char buffer to hold current directory string. */
 #define CWD_BUFFER_SIZE 1000
@@ -56,15 +58,48 @@ void print_prompt() {
 
 /**
  * int execute_commands(cmd **commands, int n)
+ * Executes a sequence of commands, piping between 
  */
 int execute_commands(cmd **commands, int n) {
     int i;
+    int fd[2];
+    int status;
+    pid_t pid;
+    
+    /*if (pipe(fd) < 0) {
+        perror("Pipe error");
+    }*/
+
     for (i = 0; i < n; i++) {
-        char *input = commands[i]->input;
-        if (input != NULL) {
+        
+        if ((pid = fork()) < 0) { 
+            perror("Fork error");
         }
-        char **argv = commands[i]->argv;
-        execvp(argv[0], argv);
+        else if (pid > 0) {
+            wait(&status);
+        }
+        else {
+            char **argv = commands[i]->argv;
+            int in_fd, out_fd;
+            
+            char *input = commands[i]->input;
+            char *output = commands[i]->output;
+            
+            if (input != NULL) {
+                printf("Non null input %d %s\n", STDIN_FILENO, input);
+                in_fd = open(input, O_RDONLY);
+                dup2(in_fd, STDIN_FILENO);
+                close(in_fd);
+            }
+
+            if (output != NULL) {
+                out_fd = open(output, O_CREAT | O_TRUNC | O_WRONLY, 0);
+                dup2(out_fd, STDOUT_FILENO);
+                close(out_fd);
+            }
+
+            execvp(argv[0], argv);
+        }
     }
     return 0;
 }
