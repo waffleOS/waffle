@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
@@ -66,21 +67,31 @@ int execute_commands(cmd **commands, int n) {
     int status;
     pid_t pid;
     
-    /*if (pipe(fd) < 0) {
+    if (pipe(fd) < 0) {
         perror("Pipe error");
-    }*/
+        exit(EXIT_FAILURE);
+    }
 
     for (i = 0; i < n; i++) {
-        
-        if ((pid = fork()) < 0) { 
+        char **argv = commands[i]->argv;
+
+        /* 
+         * Functions that change program state must be implemented
+         * before forking.
+         */
+        if (strcmp(argv[0], "cd") == 0) {
+        }
+        else if (strcmp(argv[0], "exit") == 0) { 
+            exit(EXIT_SUCCESS);
+        } 
+        else if ((pid = fork()) < 0) { 
             perror("Fork error");
+            exit(EXIT_FAILURE);
         }
         else if (pid > 0) {
             wait(&status);
         }
-        else { // child process
-            // Set up the io redirection
-            char **argv = commands[i]->argv;
+        else { /* child process */
             int in_fd, out_fd;
             
             char *input = commands[i]->input;
@@ -88,14 +99,32 @@ int execute_commands(cmd **commands, int n) {
             
             if (input != NULL) {
                 in_fd = open(input, O_RDONLY);
-                dup2(in_fd, STDIN_FILENO);
+                if (dup2(in_fd, STDIN_FILENO) != STDIN_FILENO) {
+                    perror("dup2 error to stdin");
+                    exit(EXIT_FAILURE);
+                }
                 close(in_fd);
+            }
+            else if (i != 0) {
+                if (dup2(fd[0], STDIN_FILENO) != STDIN_FILENO) {
+                    perror("dup2 error to stdin"); 
+                    exit(EXIT_FAILURE);
+                }
             }
 
             if (output != NULL) {
                 out_fd = open(output, O_CREAT | O_TRUNC | O_WRONLY, 0);
-                dup2(out_fd, STDOUT_FILENO);
+                if (dup2(out_fd, STDOUT_FILENO) != STDOUT_FILENO) {
+                    perror("dup2 error to stdout");
+                    exit(EXIT_FAILURE);
+                }
                 close(out_fd);
+            }
+            else if (i != n - 1) {
+                if (dup2(fd[1], STDOUT_FILENO) != STDOUT_FILENO) {
+                    perror("dup2 error to stdout");
+                    exit(EXIT_FAILURE);
+                }
             }
 
             execvp(argv[0], argv);
