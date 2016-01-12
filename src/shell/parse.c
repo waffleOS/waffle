@@ -78,6 +78,7 @@ void createToken(char c)
     t.type = TEXT;
     t.text = malloc(count * sizeof(char));
     strcpy(t.text, buffer);
+    t.length = count;
     tokens[tokenCount++] = t;
 }
 
@@ -89,6 +90,7 @@ void createTokenRedirect(char c)
     t.text = malloc(2 * sizeof(char));
     t.text[0] = c;
     t.text[1] = '\0';
+    t.length = 2;
     tokens[tokenCount++] = t;
 }
 
@@ -99,5 +101,36 @@ void doNOP(char c)
 
 cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
 {
+    int cmdCount = 0;
+    int i;
+    cmd c;
+    int argc = 0;
+    for (i = 0; i < num_tokens; i++)
+    {
+        token t = *tokens[i];
+        if (t.type == REDIRECT_TOKEN)
+        {
+            char ** argv = (char **) malloc(argc * sizeof(char *));
+            int j;
+            int k = 0;
+            for (j = i - argc; j < i; j++)
+            {
+                token x = *tokens[i];
+                argv[k] = (char *) malloc(x.length);
+                strcpy(argv[k], x.text);
+                k++;
+            }
 
+            c.argc = argc;
+            c.argv = argv;
+            cmds[cmdCount++] = c;
+        }
+        else
+        {
+            argc++;
+        }
+    }
+
+    *num_commands = cmdCount;
+    return &cmds;
 }
