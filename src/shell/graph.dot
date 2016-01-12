@@ -18,6 +18,6 @@ ReceivedChar -> ReceivedQuote [label="quote\nNOP"]
 ReceivedChar -> Initial [label="redirect\ncreateTokenRedirect"]
 ReceivedChar -> Initial [label="space\ncreateToken"]
 
-ReceivedQuote -> ReceivedQuote [label="char\naddChar"]
+ReceivedQuote -> ReceivedQuote [label="char, redirect, space\naddChar"]
 ReceivedQuote -> ReceivedChar [label="quote\nNOP"]
 }
