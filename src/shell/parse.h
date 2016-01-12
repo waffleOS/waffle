@@ -21,10 +21,13 @@ void addChar(char c);
 void createToken(char c);
 void createTokenRedirect(char c);
 void doNOP(char c);
+void executeTransition(char c, token_type token_class);
+token ** tokenize(char * buf, int * num_tokens);
 
 char buffer[1000];
 int count;
-token tokens[1000];
+int tokenCount;
+token * tokens;
 state currentState;
 
 transition transitions[3][4];

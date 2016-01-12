@@ -5,6 +5,8 @@
 #ifndef SHELL_STRUCTS_H
 #define SHELL_STRUCTS_H
 
+typedef enum {TEXT, REDIRECT_TOKEN} cmd_token_type;
+
 typedef struct {
     int type;
     char *text;
