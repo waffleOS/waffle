@@ -17,16 +17,17 @@
 
 void initializeParser()
 {
+    buffer = malloc(1000 * sizeof(char));
     tokens = malloc(1000 * sizeof(token));
     cmds = malloc(1000 * sizeof(cmd));
     transitions[INITIAL][CHAR] = (transition) {&addChar, RECEIVED_CHAR};
     transitions[INITIAL][QUOTE] = (transition) {&doNOP, RECEIVED_QUOTE};
-    transitions[INITIAL][REDIRECT] = (transition) {&createToken, INITIAL};
+    transitions[INITIAL][REDIRECT] = (transition) {&createRedirectToken, INITIAL};
     transitions[INITIAL][SPACE] = (transition) {&doNOP, INITIAL};
 
     transitions[RECEIVED_CHAR][CHAR] = (transition) {&addChar, RECEIVED_CHAR};
     transitions[RECEIVED_CHAR][QUOTE] = (transition) {&doNOP, RECEIVED_QUOTE};
-    transitions[RECEIVED_CHAR][REDIRECT] = (transition) {&createTokenRedirect, INITIAL};
+    transitions[RECEIVED_CHAR][REDIRECT] = (transition) {&createTokenAndRedirect, INITIAL};
     transitions[RECEIVED_CHAR][SPACE] = (transition) {&createToken, INITIAL};
 
     transitions[RECEIVED_QUOTE][CHAR] = (transition) {&addChar, RECEIVED_QUOTE};
@@ -36,7 +37,7 @@ void initializeParser()
 
 }
 
-token ** tokenize(char * buf, int * num_tokens)
+token * tokenize(char * buf, int * num_tokens)
 {
     count = 0;
     tokenCount = 0;
@@ -50,7 +51,7 @@ token ** tokenize(char * buf, int * num_tokens)
     }
     createToken(' ');
     *num_tokens = tokenCount;
-    return &tokens;
+    return tokens;
 }
 
 token_type getTokenType(char c)
@@ -82,11 +83,17 @@ void createToken(char c)
     strcpy(t->text, buffer);
     t->length = count;
     tokens[tokenCount++] = *t;
+    count = 0;
 }
 
-void createTokenRedirect(char c)
+void createTokenAndRedirect(char c)
 {
     createToken(c);
+    createRedirectToken(c);
+}
+
+void createRedirectToken(char c)
+{
     token * t = (token *) malloc(sizeof(token));
     t->type = REDIRECT_TOKEN;
     t->text = malloc(2 * sizeof(char));
@@ -101,7 +108,7 @@ void doNOP(char c)
 
 }
 
-cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
+cmd * parse(token * tokens, int num_tokens, int * num_commands)
 {
     int cmdCount = 0;
     int i;
@@ -111,7 +118,7 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
     int setPreviousOutput = 0;
     for (i = 0; i < num_tokens; i++)
     {
-        token t = *tokens[i];
+        token t = tokens[i];
         if (t.type == REDIRECT_TOKEN)
         {
             char ** argv = (char **) malloc(argc * sizeof(char *));
@@ -119,7 +126,7 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
             int k = 0;
             for (j = i - argc; j < i; j++)
             {
-                token x = *tokens[i];
+                token x = tokens[i];
                 argv[k] = (char *) malloc(x.length);
                 strcpy(argv[k], x.text);
                 k++;
@@ -138,24 +145,24 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
                 setPreviousOutput = 1;
             }
         }
-        else
-        {
-            argc++;
-        }
 
-        if (setPreviousInput)
+        else if (setPreviousInput)
         {
             strcpy(cmds[cmdCount - 1].input, t.text);
             setPreviousInput = 0;
         }
 
-        if (setPreviousOutput)
+        else if (setPreviousOutput)
         {
             strcpy(cmds[cmdCount - 1].output, t.text);
             setPreviousOutput = 0;
         }
+        else
+        {
+            argc++;
+        }
     }
 
     *num_commands = cmdCount;
-    return &cmds;
+    return cmds;
 }

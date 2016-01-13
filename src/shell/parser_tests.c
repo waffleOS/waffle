@@ -12,10 +12,10 @@
 #include "parse.h"
 
 /* Print out tokens in array. */
-void print_tokens(token **tokens, int n) {
+void print_tokens(token *tokens, int n) {
     int i;
     for(i = 0; i < n; i++) {
-        printf("Token %d of type %d: %s\n", i, tokens[i]->type, tokens[i]->text);
+        printf("Token %d of type %d: %s\n", i, tokens[i].type, tokens[i].text);
     }
 }
 
@@ -55,7 +55,7 @@ void print_commands(cmd **commands, int n) {
  * token **tokenize(char *buf, int *num_tokens);
  */
 int test_tokenize(char *test_str) {
-    token **tkns;
+    token *tkns;
     int expected_num_tkns;
     // printf("%d tokens for test string:\n", expected_num_tkns);
     printf("%s\n", test_str);
@@ -63,8 +63,20 @@ int test_tokenize(char *test_str) {
     tkns = tokenize(test_str, &expected_num_tkns);
     printf("Tokenize called. Returned:\n");
     print_tokens(tkns, expected_num_tkns);
+    test_command(tkns, expected_num_tkns);
 
     /* return strcmp();*/
+    return 0;
+}
+
+int test_command(token * tokens, int num_tokens)
+{
+    int num_commands;
+    print_tokens(tokens, num_tokens);
+    cmd * cmds;
+    cmds = parse(tokens, num_tokens, &num_commands);
+    printf("Parse called. Returned:\n");
+
     return 0;
 }
 
@@ -99,6 +111,6 @@ int main(int argc, char **argv) {
     // token ** tokens = tokenize(buf, &num_tokens);
 
     // PUT WHAT YOU WANT TO TOKENIZE HERE
-    test_tokenize("hi");
+    test_tokenize("grep Allow < logfile.txt | grep -v google");
     return 0;
 }
