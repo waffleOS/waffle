@@ -170,7 +170,7 @@ int execute_commands(cmd **commands, int n) {
                 }
                 close(out_fd);
             }
-            else if (i != n - 1) {
+            else if (i < n - 1) {
                 /* We don't attach stdout to anything on the last command
                 Note: for the ith command, we connect it to the file
                 descriptor at index 2 * i + 1 */
