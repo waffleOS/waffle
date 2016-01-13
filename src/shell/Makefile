@@ -1,4 +1,4 @@
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g -std=c99
 
 OBJS = mysh.o execute_shell.o parse.o parser_tests.o
 
