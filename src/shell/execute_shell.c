@@ -158,13 +158,9 @@ int execute_commands(cmd **commands, int n) {
                     }
                 }
 
-<<<<<<< HEAD
                 if (dup2(fd[2 * (i - 1)], STDIN_FILENO) != STDIN_FILENO) {
                     perror("dup2 error to stdin"); 
-=======
-                if (dup2(fd[2 * i], STDIN_FILENO) != STDIN_FILENO) {
-                    perror("dup2 error to stdin");
->>>>>>> 317f86eff372ce2869b7f8c607d0a608c9d4bba1
+
                     exit(EXIT_FAILURE);
                 }
             }
