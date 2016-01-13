@@ -133,7 +133,7 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
 
             if (newCommand)
             {
-                char ** argv = (char **) malloc(argc * sizeof(char *));
+                char ** argv = (char **) malloc((argc + 1) * sizeof(char *));
                 int j;
                 int k = 0;
                 for (j = i - argc; j < i; j++)
@@ -143,6 +143,7 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
                     strcpy(argv[k], x.text);
                     k++;
                 }
+                argv[k] = NULL;
                 c = (cmd *) malloc(sizeof(cmd));
                 c->argc = argc;
                 c->argv = argv;
