@@ -7,6 +7,8 @@
  ******************************************************************************/
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "parse.h"
 
 /* Print out tokens in array. */
@@ -60,7 +62,7 @@ int test_tokenize(char *test_str) {
     initializeParser();
     tkns = tokenize(test_str, &expected_num_tkns);
     printf("Tokenize called. Returned:\n");
-    // print_tokens(tkns, expected_num_tkns);
+    print_tokens(tkns, expected_num_tkns);
 
     /* return strcmp();*/
     return 0;
