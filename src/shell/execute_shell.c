@@ -67,20 +67,17 @@ int execute_commands(cmd **commands, int n) {
     int status;
     pid_t pid;
 
-    /* Create pipes. */
-
+    /* Create n - 1 pipes for each connection between commands.
+     * Will need 2 * (n - 1) file descriptors because each pipe produces
+     * two file descriptors */
     for (i = 0; i < 2 * (n - 1); i += 2) {
-        /*
-         * fd + 2 * k  corresponds to the pipe for
-         * the parent process to write to the k-th process
-         * and fd + 2 * k + 2 corresponds to the pipe for
-         * the parent process to read from the k-th process. */
         if (pipe(fd + i) < 0) {
             perror("Pipe error");
             exit(EXIT_FAILURE);
         }
     }
 
+    /* Loop through commands */
     for (i = 0; i < n; i++) {
         char **argv = commands[i]->argv;
         int argc = commands[i]->argc;
@@ -90,7 +87,7 @@ int execute_commands(cmd **commands, int n) {
          * before forking.
          */
         if (strcmp(argv[0], "cd") == 0) {
-            char *dir;
+            char *dir = NULL;
             char home_dir[CWD_BUFFER_SIZE];
             if (argc == 1) {
                 strcpy(home_dir, "/home/");
@@ -143,13 +140,15 @@ int execute_commands(cmd **commands, int n) {
             if (input != NULL) {
                 in_fd = open(input, O_RDONLY);
                 if (dup2(in_fd, STDIN_FILENO) != STDIN_FILENO) {
-                    printf("Hi%d\n", i);
                     perror("dup2 error to stdin for input != NULL");
                     exit(EXIT_FAILURE);
                 }
                 close(in_fd);
             }
-            else if (i > 0) {
+            else if (i > 0) { 
+                /* We don't attach stdin to anything on first command
+                Note: for the ith command, we connect it to the file
+                descriptor at index 2 * (i - 1) */
                 // Close all pipes we aren't using
                 // close(fd[2 * i + 1]);
                 for(int j = 0; j < 2 * (n - 1); j++) {
@@ -160,7 +159,6 @@ int execute_commands(cmd **commands, int n) {
 
                 if (dup2(fd[2 * (i - 1)], STDIN_FILENO) != STDIN_FILENO) {
                     perror("dup2 error to stdin"); 
-
                     exit(EXIT_FAILURE);
                 }
             }
@@ -174,6 +172,10 @@ int execute_commands(cmd **commands, int n) {
                 close(out_fd);
             }
             else if (i != n - 1) {
+                /* We don't attach stdout to anything on the last command
+                Note: for the ith command, we connect it to the file
+                descriptor at index 2 * i + 1 */
+
                 // Close all unused pipes
                 for(int j = 0; j < 2 * (n - 1); j++) {
                     if(j != 2 * i + 1) {
