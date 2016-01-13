@@ -10,11 +10,10 @@ mysh: $(OBJS)
 test_execute: test_execute.o execute_shell.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-parser_tests: parser_tests.o parse.o
+test: parser_tests.o parse.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-clean: 
-	rm -f *.o *~ mysh
+clean:
+	rm -f *.o *~ mysh test_execute test
 
 .PHONY: all clean
-
