@@ -114,8 +114,12 @@ int execute_commands(cmd **commands, int n) {
         else if (pid > 0) { /* parent process */
             /* Close both current pipes, because the parent doesn't need to 
              * touch them. */
-            close(fd[2 * i]);
-            close(fd[2 * i + 1]);
+            // if(i > 0) {
+            //     close(fd[2 * i - 1]);
+            // }
+            // if(i < 2 * (n - 1)) {
+            //     close(fd[2 * i]);                
+            // }
             
             // if (dup2(fd[4 * i + 1], fd[0]) != fd[0]) {
             //     perror("dup2 error to stdout");
@@ -134,21 +138,22 @@ int execute_commands(cmd **commands, int n) {
             if (input != NULL) {
                 in_fd = open(input, O_RDONLY);
                 if (dup2(in_fd, STDIN_FILENO) != STDIN_FILENO) {
-                    perror("dup2 error to stdin");
+                    printf("Hi%d\n", i);
+                    perror("dup2 error to stdin for input != NULL");
                     exit(EXIT_FAILURE);
                 }
                 close(in_fd);
             }
-            else if (i != 0) {
+            else if (i > 0) {
                 // Close all pipes we aren't using
                 // close(fd[2 * i + 1]);
                 for(int j = 0; j < 2 * (n - 1); j++) {
-                    if(j != 2 * i) {
+                    if(j != 2 * (i - 1)) {
                        close(fd[j]);
                     }
                 }
 
-                if (dup2(fd[2 * i], STDIN_FILENO) != STDIN_FILENO) {
+                if (dup2(fd[2 * (i - 1)], STDIN_FILENO) != STDIN_FILENO) {
                     perror("dup2 error to stdin"); 
                     exit(EXIT_FAILURE);
                 }
@@ -170,7 +175,7 @@ int execute_commands(cmd **commands, int n) {
                     }
                 }
                 // close(fd[2 * i]);
-                
+
                 if (dup2(fd[2 * i + 1], STDOUT_FILENO) != STDOUT_FILENO) {
                     perror("dup2 error to stdout");
                     exit(EXIT_FAILURE);
