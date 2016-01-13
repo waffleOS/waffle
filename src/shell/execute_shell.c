@@ -63,23 +63,46 @@ void print_prompt() {
  */
 int execute_commands(cmd **commands, int n) {
     int i;
-    int fd[2];
+    int *fd = malloc(4 * n * sizeof(int));
     int status;
     pid_t pid;
     
-    if (pipe(fd) < 0) {
-        perror("Pipe error");
-        exit(EXIT_FAILURE);
+    /* Create pipes. */
+    for (i = 0; i < 4 * n; i += 2) {
+        /* 
+         * fd + 2 * k  corresponds to the pipe for
+         * the parent process to write to the k-th process
+         * and fd + 2 * k + 2 corresponds to the pipe for
+         * the parent process to read from the k-th process. */
+        if (pipe(fd + i) < 0) {
+            perror("Pipe error");
+            exit(EXIT_FAILURE);
+        }
     }
-
+    
     for (i = 0; i < n; i++) {
         char **argv = commands[i]->argv;
+        int argc = commands[i]->argc;
 
         /* 
          * Functions that change program state must be implemented
          * before forking.
          */
         if (strcmp(argv[0], "cd") == 0) {
+            char *dir;
+            if (argc == 1) { 
+                dir = malloc(2);
+                strcpy(dir, "/");
+            }
+            else if (argc > 1) { 
+                dir = argv[1];  
+                printf("%s\n", dir);
+            }
+
+            if (dir == NULL || chdir(dir) == -1) {
+                perror("Invalid directory.");
+                exit(EXIT_FAILURE);
+            }
         }
         else if (strcmp(argv[0], "exit") == 0) { 
             exit(EXIT_SUCCESS);
@@ -89,6 +112,12 @@ int execute_commands(cmd **commands, int n) {
             exit(EXIT_FAILURE);
         }
         else if (pid > 0) {
+            close(fd[4 * i]);
+            if (dup2(fd[4 * i + 1], fd[0]) != fd[0]) {
+                perror("dup2 error to stdout");
+                exit(EXIT_FAILURE);
+            }
+
             wait(&status);
         }
         else { /* child process */
@@ -106,7 +135,8 @@ int execute_commands(cmd **commands, int n) {
                 close(in_fd);
             }
             else if (i != 0) {
-                if (dup2(fd[0], STDIN_FILENO) != STDIN_FILENO) {
+                close(fd[2 * i + 1]);
+                if (dup2(fd[2 * i], STDIN_FILENO) != STDIN_FILENO) {
                     perror("dup2 error to stdin"); 
                     exit(EXIT_FAILURE);
                 }
@@ -121,7 +151,8 @@ int execute_commands(cmd **commands, int n) {
                 close(out_fd);
             }
             else if (i != n - 1) {
-                if (dup2(fd[1], STDOUT_FILENO) != STDOUT_FILENO) {
+                close(fd[2 * i]);
+                if (dup2(fd[2 * i + 1], STDOUT_FILENO) != STDOUT_FILENO) {
                     perror("dup2 error to stdout");
                     exit(EXIT_FAILURE);
                 }
@@ -130,5 +161,12 @@ int execute_commands(cmd **commands, int n) {
             execvp(argv[0], argv);
         }
     }
+
+    /* Clean up pipes and file descriptor memory. */
+    for (i = 0; i < 2 * n; i++) {
+        close(fd[i]);
+    }
+    free(fd);
+
     return 0;
 }

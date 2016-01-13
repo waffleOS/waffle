@@ -15,26 +15,29 @@ int main() {
     test[0] = (cmd *) malloc(sizeof(cmd));
     char **argv = (char **) malloc(3 * sizeof(char *));
     argv[0] = (char *) malloc(3);
-    strcpy(argv[0], "cat");
+    strcpy(argv[0], "cd");
     argv[1] = (char *) malloc(15);
-    strcpy(argv[1], "shell_structs.h");
+    strcpy(argv[1], "tests");
     argv[2] = NULL;
     test[0]->argv = argv;
-    printf("Test 1: cat shell_structs.h\n");
-    execute_commands(test, 1);
+    test[0]->argc = 2;
+    printf("Test 1: cd tests\n");
+    /* execute_commands(test, 1); */
+
 
     /* Redirection test. */
     cmd *test2[1];
     test2[0] = (cmd *) malloc(sizeof(cmd));
     test2[0]->input = (char *) malloc(6);
-    test2[0]->output = NULL;
+    test2[0]->output = (char *) malloc(6);
     strcpy(test2[0]->input, "mysh.c");
+    strcpy(test2[0]->output, "abc.txt");
     argv = (char **) malloc(2 * sizeof(char *));
     argv[0] = (char *) malloc(3);
     strcpy(argv[0], "cat");
     argv[1] = NULL;
     test2[0]->argv = argv;
-    printf("\nTest 2: cat < mysh.c\n");
+    printf("\nTest 2: cat < mysh.c > abc.txt\n");
     execute_commands(test2, 1);
 
     /* Piping test. */
