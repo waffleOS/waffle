@@ -63,12 +63,12 @@ void print_prompt() {
  */
 int execute_commands(cmd **commands, int n) {
     int i;
-    int *fd = malloc(4 * n * sizeof(int));
+    int *fd = malloc(2 * (n - 1) * sizeof(int));
     int status;
     pid_t pid;
     
     /* Create pipes. */
-    for (i = 0; i < 4 * n; i += 2) {
+    for (i = 0; i < 2 * (n - 1); i += 2) {
         /* 
          * fd + 2 * k  corresponds to the pipe for
          * the parent process to write to the k-th process
@@ -111,16 +111,21 @@ int execute_commands(cmd **commands, int n) {
             perror("Fork error");
             exit(EXIT_FAILURE);
         }
-        else if (pid > 0) {
-            close(fd[4 * i]);
-            if (dup2(fd[4 * i + 1], fd[0]) != fd[0]) {
-                perror("dup2 error to stdout");
-                exit(EXIT_FAILURE);
-            }
+        else if (pid > 0) { /* parent process */
+            /* Close both current pipes, because the parent doesn't need to 
+             * touch them. */
+            close(fd[2 * i]);
+            close(fd[2 * i + 1]);
+            
+            // if (dup2(fd[4 * i + 1], fd[0]) != fd[0]) {
+            //     perror("dup2 error to stdout");
+            //     exit(EXIT_FAILURE);
+            // }
 
             wait(&status);
         }
         else { /* child process */
+            /* Note, fd[a] is for reading, fd[a + 1] is for writing */
             int in_fd, out_fd;
             
             char *input = commands[i]->input;
@@ -135,7 +140,14 @@ int execute_commands(cmd **commands, int n) {
                 close(in_fd);
             }
             else if (i != 0) {
-                close(fd[2 * i + 1]);
+                // Close all pipes we aren't using
+                // close(fd[2 * i + 1]);
+                for(int j = 0; j < 2 * (n - 1); j++) {
+                    if(j != 2 * i) {
+                       close(fd[j]);
+                    }
+                }
+
                 if (dup2(fd[2 * i], STDIN_FILENO) != STDIN_FILENO) {
                     perror("dup2 error to stdin"); 
                     exit(EXIT_FAILURE);
@@ -151,7 +163,14 @@ int execute_commands(cmd **commands, int n) {
                 close(out_fd);
             }
             else if (i != n - 1) {
-                close(fd[2 * i]);
+                // Close all unused pipes
+                for(int j = 0; j < 2 * (n - 1); j++) {
+                    if(j != 2 * i + 1) {
+                       close(fd[j]);
+                    }
+                }
+                // close(fd[2 * i]);
+                
                 if (dup2(fd[2 * i + 1], STDOUT_FILENO) != STDOUT_FILENO) {
                     perror("dup2 error to stdout");
                     exit(EXIT_FAILURE);
