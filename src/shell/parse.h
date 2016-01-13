@@ -23,15 +23,15 @@ void createTokenAndRedirect(char c);
 void createRedirectToken(char c);
 void doNOP(char c);
 void executeTransition(char c, token_type token_class);
-token * tokenize(char * buf, int * num_tokens);
+token ** tokenize(char * buf, int * num_tokens);
 void initializeParser();
-cmd * parse(token * tokens, int num_tokens, int * num_commands);
+cmd ** parse(token ** tokens, int num_tokens, int * num_commands);
 
 char * buffer;
 int count;
 int tokenCount;
-token * tokens;
-cmd * cmds;
+token ** tokens;
+cmd ** cmds;
 state currentState;
 
 transition transitions[3][4];
