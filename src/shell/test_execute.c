@@ -26,21 +26,21 @@ int main() {
 
 
     /* Redirection test. */
-    cmd *test2[1];
-    test2[0] = (cmd *) malloc(sizeof(cmd));
-    test2[0]->input = (char *) malloc(6);
-    test2[0]->output = (char *) malloc(7);
-    strcpy(test2[0]->input, "mysh.c");
-    strcpy(test2[0]->output, "abc.txt");
-    test2[0]->error = NULL;
-    argv = (char **) malloc(2 * sizeof(char *));
-    argv[0] = (char *) malloc(3);
-    strcpy(argv[0], "cat");
-    argv[1] = NULL;
-    test2[0]->argv = argv;
-    test2[0]->argc = 1;
-    printf("\nTest 2: cat < mysh.c > abc.txt\n");
-    execute_commands(test2, 1);
+    // cmd *test2[1];
+    // test2[0] = (cmd *) malloc(sizeof(cmd));
+    // test2[0]->input = (char *) malloc(6);
+    // test2[0]->output = (char *) malloc(7);
+    // strcpy(test2[0]->input, "mysh.c");
+    // strcpy(test2[0]->output, "abc.txt");
+    // test2[0]->error = NULL;
+    // argv = (char **) malloc(2 * sizeof(char *));
+    // argv[0] = (char *) malloc(3);
+    // strcpy(argv[0], "cat");
+    // argv[1] = NULL;
+    // test2[0]->argv = argv;
+    // test2[0]->argc = 1;
+    // printf("\nTest 2: cat < mysh.c > abc.txt\n");
+    // execute_commands(test2, 1);
 
     /* Piping test. */
     cmd *test3[2];
@@ -54,6 +54,8 @@ int main() {
     strcpy(argv[0], "cat");
     argv[1] = NULL;
     test3[0]->argv = argv;
+    test3[0]->argc = 1;
+
     test3[1] = (cmd *) malloc(sizeof(cmd));
     test3[1]->input = NULL;
     test3[1]->output = NULL;
@@ -65,6 +67,7 @@ int main() {
     strcpy(argv[1], "int");
     argv[2] = NULL;
     test3[1]->argv = argv;
+    test3[1]->argc = 2;
     printf("\nTest 3: cat < mysh.c | grep int \n");
     execute_commands(test3, 2);
 
