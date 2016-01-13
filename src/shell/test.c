@@ -25,6 +25,6 @@ int main(int argc, char **argv) {
     // token ** tokens = tokenize(buf, &num_tokens);
 
     // PUT WHAT YOU WANT TO TOKENIZE HERE
-    test_tokenize("grep Allow < logfile.txt | grep -v google");
+    test_tokenize("echo \"hello\"");
     return 0;
 }
