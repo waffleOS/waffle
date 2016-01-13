@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "parse.h"
+#include "parser_tests.h"
 
 /* Print out tokens in array. */
 void print_tokens(token **tokens, int n) {
@@ -68,7 +69,7 @@ int test_tokenize(char *test_str) {
     return 0;
 }
 
-int test_command(token * tokens, int num_tokens)
+int test_command(token ** tokens, int num_tokens)
 {
     int num_commands;
     cmd ** cmds;
@@ -95,20 +96,3 @@ int test_command(token * tokens, int num_tokens)
     }
 *//*}
 */
-
-int main(int argc, char **argv) {
-    int num_tokens, i;
-    char * buf = malloc(6 * sizeof(char));
-    strcpy(argv[0], "hello!");
-    // char * str = "";
-    // for(i = 0; i < argc; i++) {
-    //     char * temp = strcat(str, argv[i]);
-    //     str = temp;
-    // }
-    // printf("%s", str);
-    // token ** tokens = tokenize(buf, &num_tokens);
-
-    // PUT WHAT YOU WANT TO TOKENIZE HERE
-    test_tokenize("grep Allow < logfile.txt | grep -v google");
-    return 0;
-}
