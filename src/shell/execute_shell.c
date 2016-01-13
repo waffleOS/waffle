@@ -90,9 +90,12 @@ int execute_commands(cmd **commands, int n) {
          */
         if (strcmp(argv[0], "cd") == 0) {
             char *dir;
+            char home_dir[CWD_BUFFER_SIZE];
             if (argc == 1) { 
-                dir = malloc(2);
-                strcpy(dir, "/");
+                strcpy(home_dir, "/home/");
+                char *login = getlogin();
+                strncat(home_dir, login, CWD_BUFFER_SIZE);
+                dir = home_dir;
             }
             else if (argc > 1) { 
                 dir = argv[1];  
