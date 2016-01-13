@@ -195,7 +195,6 @@ int execute_commands(cmd **commands, int n) {
             for (i = 0; i < 2 * (n - 1); i++) {
                 close(fd[i]);
             }
-            free(fd);
             execvp(argv[0], argv);
         }
     }
