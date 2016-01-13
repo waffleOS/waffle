@@ -19,17 +19,19 @@ typedef struct {
 token_type getTokenType(char c);
 void addChar(char c);
 void createToken(char c);
-void createTokenRedirect(char c);
+void createTokenAndRedirect(char c);
+void createRedirectToken(char c);
 void doNOP(char c);
 void executeTransition(char c, token_type token_class);
 token ** tokenize(char * buf, int * num_tokens);
 void initializeParser();
+cmd ** parse(token ** tokens, int num_tokens, int * num_commands);
 
-char buffer[1000];
+char * buffer;
 int count;
 int tokenCount;
-token * tokens;
-cmd * cmds;
+token ** tokens;
+cmd ** cmds;
 state currentState;
 
 transition transitions[3][4];

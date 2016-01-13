@@ -63,8 +63,18 @@ int test_tokenize(char *test_str) {
     tkns = tokenize(test_str, &expected_num_tkns);
     printf("Tokenize called. Returned:\n");
     print_tokens(tkns, expected_num_tkns);
-
+    test_command(tkns, expected_num_tkns);
     /* return strcmp();*/
+    return 0;
+}
+
+int test_command(token * tokens, int num_tokens)
+{
+    int num_commands;
+    cmd ** cmds;
+    cmds = parse(tokens, num_tokens, &num_commands);
+    printf("Parse called. Returned:\n");
+    print_commands(cmds, num_commands);
     return 0;
 }
 
@@ -99,6 +109,6 @@ int main(int argc, char **argv) {
     // token ** tokens = tokenize(buf, &num_tokens);
 
     // PUT WHAT YOU WANT TO TOKENIZE HERE
-    test_tokenize("hi");
+    test_tokenize("grep Allow < logfile.txt | grep -v google");
     return 0;
 }

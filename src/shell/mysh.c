@@ -1,4 +1,5 @@
 #include "execute_shell.h"
+#include "parse.h"
 
 #include "stdio.h"
 #include "unistd.h"
@@ -11,8 +12,7 @@ int main(int argc, char **argv) {
     print_prompt();
     while (1) {
         if (fgets(buf, INPUT_BUFFER_SIZE, stdin) != NULL) {
-            char c = 'H';
-            printf("%d", c);
+            cmd * cmds =
            print_prompt();
         }
     }
