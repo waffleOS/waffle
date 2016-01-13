@@ -14,6 +14,12 @@ int main(int argc, char **argv) {
     initializeParser();
     while (1) {
         if (fgets(buf, INPUT_BUFFER_SIZE, stdin) != NULL) {
+            int i = 0;
+            while (buf[i] != '\n')
+            {
+                i++;
+            }
+            buf[i] = '\0';
             int num_tokens;
             token ** tokens = tokenize(buf, &num_tokens);
             int num_commands;

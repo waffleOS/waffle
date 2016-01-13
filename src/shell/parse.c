@@ -122,23 +122,6 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
         token t = *tokens[i];
         if (t.type == REDIRECT_TOKEN)
         {
-            if (!newCommand) continue;
-            char ** argv = (char **) malloc(argc * sizeof(char *));
-            int j;
-            int k = 0;
-            for (j = i - argc; j < i; j++)
-            {
-                token x = *tokens[j];
-                argv[k] = (char *) malloc(x.length);
-                strcpy(argv[k], x.text);
-                k++;
-            }
-            c = (cmd *) malloc(sizeof(cmd));
-            c->argc = argc;
-            c->argv = argv;
-            cmds[cmdCount++] = c;
-            newCommand = 0;
-            argc = 0;
             if (strncmp(t.text, "<", 1) == 0)
             {
                 setPreviousInput = 1;
@@ -146,6 +129,26 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
             else if (strncmp(t.text, ">", 1) == 0)
             {
                 setPreviousOutput = 1;
+            }
+
+            if (newCommand)
+            {
+                char ** argv = (char **) malloc(argc * sizeof(char *));
+                int j;
+                int k = 0;
+                for (j = i - argc; j < i; j++)
+                {
+                    token x = *tokens[j];
+                    argv[k] = (char *) malloc(x.length);
+                    strcpy(argv[k], x.text);
+                    k++;
+                }
+                c = (cmd *) malloc(sizeof(cmd));
+                c->argc = argc;
+                c->argv = argv;
+                cmds[cmdCount++] = c;
+                newCommand = 0;
+                argc = 0;
             }
         }
 
