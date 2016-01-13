@@ -1,6 +1,6 @@
 /**
  * execute_shell.c
- * Contains definitions of shell utility functions. 
+ * Contains definitions of shell utility functions.
  */
 #include "execute_shell.h"
 
@@ -14,8 +14,8 @@
 /* Size of char buffer to hold current directory string. */
 #define CWD_BUFFER_SIZE 1000
 
-/** 
- * Either unistd.h call might fail, so we encapsulate all 
+/**
+ * Either unistd.h call might fail, so we encapsulate all
  * possible outcomes in a status enum.
  */
 typedef enum {SUCCESS, LOGIN_FAIL, CWD_FAIL, BOTH_FAIL} error_status;
@@ -31,8 +31,8 @@ void print_prompt() {
     char *login = getlogin();
     char buf[CWD_BUFFER_SIZE];
     char *cwd = getcwd(buf, CWD_BUFFER_SIZE);
-    
-    error_status status = SUCCESS; 
+
+    error_status status = SUCCESS;
 
     if (login == NULL) {
         status = LOGIN_FAIL;
@@ -41,35 +41,35 @@ void print_prompt() {
     if (cwd == NULL && status == LOGIN_FAIL) {
         status = BOTH_FAIL;
     }
-    else if (cwd == NULL) { 
+    else if (cwd == NULL) {
         status = CWD_FAIL;
     }
 
     /* Print prompt even if there is an error for debugging purposes. */
     printf("%s:%s> ", login, cwd);
-    
+
     /* If there is an error, alert the user and terminate. */
     if (status != SUCCESS) {
         printf("\nError %d in reading login or cwd. Exiting...\n"
                "Error 1: LOGIN_FAIL, Error 2: CWD_FAIL, Error 3: "
                "BOTH_FAIL\n", status);
-        exit(1); /* Exit with error. */ 
+        exit(1); /* Exit with error. */
     }
 }
 
 /**
  * int execute_commands(cmd **commands, int n)
- * Executes a sequence of commands, piping between 
+ * Executes a sequence of commands, piping between
  */
 int execute_commands(cmd **commands, int n) {
     int i;
     int *fd = malloc(4 * n * sizeof(int));
     int status;
     pid_t pid;
-    
+
     /* Create pipes. */
     for (i = 0; i < 4 * n; i += 2) {
-        /* 
+        /*
          * fd + 2 * k  corresponds to the pipe for
          * the parent process to write to the k-th process
          * and fd + 2 * k + 2 corresponds to the pipe for
@@ -79,23 +79,23 @@ int execute_commands(cmd **commands, int n) {
             exit(EXIT_FAILURE);
         }
     }
-    
+
     for (i = 0; i < n; i++) {
         char **argv = commands[i]->argv;
         int argc = commands[i]->argc;
 
-        /* 
+        /*
          * Functions that change program state must be implemented
          * before forking.
          */
         if (strcmp(argv[0], "cd") == 0) {
             char *dir;
-            if (argc == 1) { 
+            if (argc == 1) {
                 dir = malloc(2);
                 strcpy(dir, "/");
             }
-            else if (argc > 1) { 
-                dir = argv[1];  
+            else if (argc > 1) {
+                dir = argv[1];
                 printf("%s\n", dir);
             }
 
@@ -104,10 +104,10 @@ int execute_commands(cmd **commands, int n) {
                 exit(EXIT_FAILURE);
             }
         }
-        else if (strcmp(argv[0], "exit") == 0) { 
+        else if (strcmp(argv[0], "exit") == 0) {
             exit(EXIT_SUCCESS);
-        } 
-        else if ((pid = fork()) < 0) { 
+        }
+        else if ((pid = fork()) < 0) {
             perror("Fork error");
             exit(EXIT_FAILURE);
         }
@@ -122,10 +122,10 @@ int execute_commands(cmd **commands, int n) {
         }
         else { /* child process */
             int in_fd, out_fd;
-            
+
             char *input = commands[i]->input;
             char *output = commands[i]->output;
-            
+
             if (input != NULL) {
                 in_fd = open(input, O_RDONLY);
                 if (dup2(in_fd, STDIN_FILENO) != STDIN_FILENO) {
@@ -137,7 +137,7 @@ int execute_commands(cmd **commands, int n) {
             else if (i != 0) {
                 close(fd[2 * i + 1]);
                 if (dup2(fd[2 * i], STDIN_FILENO) != STDIN_FILENO) {
-                    perror("dup2 error to stdin"); 
+                    perror("dup2 error to stdin");
                     exit(EXIT_FAILURE);
                 }
             }
@@ -157,7 +157,7 @@ int execute_commands(cmd **commands, int n) {
                     exit(EXIT_FAILURE);
                 }
             }
-
+            
             execvp(argv[0], argv);
         }
     }

@@ -169,21 +169,24 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
         }
     }
 
-    char ** argv = (char **) malloc(argc * sizeof(char *));
-    int j;
-    int k = 0;
-    for (j = i - argc; j < i; j++)
+    if (newCommand)
     {
-        token x = *tokens[j];
-        argv[k] = (char *) malloc(x.length);
-        strcpy(argv[k], x.text);
-        k++;
+        char ** argv = (char **) malloc(argc * sizeof(char *));
+        int j;
+        int k = 0;
+        for (j = i - argc; j < i; j++)
+        {
+            token x = *tokens[j];
+            argv[k] = (char *) malloc(x.length);
+            strcpy(argv[k], x.text);
+            k++;
+        }
+        c = (cmd *) malloc(sizeof(cmd));
+        c->argc = argc;
+        c->argv = argv;
+        cmds[cmdCount++] = c;
+        argc = 0;
     }
-    c = (cmd *) malloc(sizeof(cmd));
-    c->argc = argc;
-    c->argv = argv;
-    cmds[cmdCount++] = c;
-    argc = 0;
 
     *num_commands = cmdCount;
     return cmds;
