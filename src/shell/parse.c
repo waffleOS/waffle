@@ -150,7 +150,10 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
                     k++;
                 }
                 argv[k] = NULL;
-                c = (cmd *) calloc(sizeof(cmd));
+                c = (cmd *) malloc(sizeof(cmd));
+                c->input = NULL;
+                c->output = NULL;
+                c->error = NULL;
                 c->argc = argc;
                 c->argv = argv;
                 cmds[cmdCount++] = c;
