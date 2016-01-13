@@ -151,11 +151,11 @@ int execute_commands(cmd **commands, int n) {
                 descriptor at index 2 * (i - 1) */
                 // Close all pipes we aren't using
                 // close(fd[2 * i + 1]);
-                for(int j = 0; j < 2 * (n - 1); j++) {
-                    if(j != 2 * (i - 1)) {
-                       close(fd[j]);
-                    }
-                }
+                // for(int j = 0; j < 2 * (n - 1); j++) {
+                //     if(j != 2 * (i - 1)) {
+                //        close(fd[j]);
+                //     }
+                // }
 
                 if (dup2(fd[2 * (i - 1)], STDIN_FILENO) != STDIN_FILENO) {
                     perror("dup2 error to stdin");
@@ -177,11 +177,11 @@ int execute_commands(cmd **commands, int n) {
                 descriptor at index 2 * i + 1 */
 
                 // Close all unused pipes
-                for(int j = 0; j < 2 * (n - 1); j++) {
-                    if(j != 2 * i + 1) {
-                       close(fd[j]);
-                    }
-                }
+                // for(int j = 0; j < 2 * (n - 1); j++) {
+                //     if(j != 2 * i + 1) {
+                //        close(fd[j]);
+                //     }
+                // }
                 // close(fd[2 * i]);
 
                 if (dup2(fd[2 * i + 1], STDOUT_FILENO) != STDOUT_FILENO) {
@@ -190,12 +190,18 @@ int execute_commands(cmd **commands, int n) {
                 }
             }
 
+            // Close all unused pipes
+            /* Clean up pipes and file descriptor memory. */
+            for (i = 0; i < 2 * (n - 1); i++) {
+                close(fd[i]);
+            }
+            free(fd);
             execvp(argv[0], argv);
         }
     }
 
     /* Clean up pipes and file descriptor memory. */
-    for (i = 0; i < 2 * n; i++) {
+    for (i = 0; i < 2 * (n - 1); i++) {
         close(fd[i]);
     }
     free(fd);
