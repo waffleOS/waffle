@@ -102,7 +102,6 @@ int execute_commands(cmd **commands, int n) {
 
             if (dir == NULL || chdir(dir) == -1) {
                 perror("Invalid directory.");
-                exit(EXIT_FAILURE);
             }
         }
         else if (strcmp(argv[0], "exit") == 0) {
