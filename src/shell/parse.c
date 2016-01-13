@@ -42,14 +42,20 @@ token ** tokenize(char * buf, int * num_tokens)
     count = 0;
     tokenCount = 0;
     currentState = INITIAL;
+    token_type lastSeen;
     while (*buf != '\0')
     {
         char c = *buf;
         token_type t = getTokenType(c);
+        lastSeen = t;
         executeTransition(c, t);
         buf++;
     }
-    createToken(' ');
+    if (lastSeen == CHAR)
+    {
+        createToken(' ');
+    }
+    
     *num_tokens = tokenCount;
     return tokens;
 }
