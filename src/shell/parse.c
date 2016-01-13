@@ -51,11 +51,11 @@ token ** tokenize(char * buf, int * num_tokens)
         executeTransition(c, t);
         buf++;
     }
-    if (lastSeen == CHAR)
+    if (lastSeen != REDIRECT && lastSeen != SPACE)
     {
         createToken(' ');
     }
-    
+
     *num_tokens = tokenCount;
     return tokens;
 }
