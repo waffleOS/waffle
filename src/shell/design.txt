@@ -3,7 +3,7 @@
 			| PROJECT 1: SHELL |
 			|  DESIGN DOCUMENT |
 			+------------------+
-				   
+
 ---- GROUP ----
 
 >> Fill in the names and email addresses of your group members.
@@ -12,13 +12,13 @@ Rahul Bachal <rbachal@caltech.edu>
 Robert Eng <reng@caltech.edu>
 David Qu <dqu@caltech.edu>
 
->> Specify how many late tokens you are using on this assignment:  
+>> Specify how many late tokens you are using on this assignment:
 
 >> What is the Git repository and commit hash for your submission?
    (You only need to include the commit-hash in the file you submit
    on Moodle.)
 
-   Repository URL:  
+   Repository URL:
    commit ...
 
 ---- PRELIMINARIES ----
@@ -45,8 +45,8 @@ which parts.
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
 
-Rahul: Command tokenizing and parsing. Integration of parser and command
-       execution.
+Rahul: Command tokenizing and parsing. Design and implementation of finite state
+       machine to tokenize. Integration of parser and command execution.
 Robert: Testing infrastructure for tokenizing and parsing, design and
         implementation of piping.
 David: UNIX system calls, cd/exit implementation, basic process running and
@@ -59,11 +59,41 @@ David: UNIX system calls, cd/exit implementation, basic process running and
 >> command "a arg1 arg2 | b arg1 | c arg1 arg2 arg3".  How does your
 >> shell internally represent such a command?
 
+Parsing:
+    Our shell represents each command as a token. For example, in the above
+    command, the tokens are:
+        [a, arg1, arg2, |, arg1, |, c, arg1, arg2, arg3]
+    After creating these tokens, the parser then creates command structs by
+    parsing tokens until it reaches a pipe and then setting the stdin, stdout,
+    stderr, argc, and argv of the command. The command struct looks like the
+    following:
+    typedef struct {
+        char *input;  /* NULL iff stdin. */
+        char *output; /* NULL iff stdout. */
+        char *error;  /* NULL iff stderr. */
+        int pipe; /* Whether we need to pipe. */
+        int argc;
+        char **argv;
+    } cmd;
+    See the attached image graph.png for a visual description of the finite
+    state machine.
+
 
 >> A2: Now, given the command:
 >> "a arg1 arg2 < inp.txt | b arg1 | c arg1 arg2 arg3 > out.txt"
 >> Briefly explain specifically how the redirections are parsed and
 >> represented, and by what processes.
+
+Parsing:
+    The redirection tokens are parsed by setting the stdin or stdout of the
+    previous command to the token after the redirection token. For example, in
+    the above command, when the parser reaches "<", it sets the stdin of command
+    a to inp.txt. The parser then moves on to the next token for a new command.
+    This is implemented by scanning forward until the parser reaches a
+    redirection token while keeping a count of the number of tokens seen so far,
+    then going back to the first token for the command and adding it to argv.
+    If the redirection token is a pipe, then the command is fully constructed
+    and the parser moves on to the next  command.
 
 ---- ALGORITHMS ----
 
@@ -71,7 +101,7 @@ David: UNIX system calls, cd/exit implementation, basic process running and
 >> redirection in a simple command like "a < inp.txt > out.txt", by
 >> describing what process takes care of the redirection and when.
 
-The input and output of the command are represented by strings, 
+The input and output of the command are represented by strings,
 so the child of the fork opens the input file and sets it to
 
 
@@ -111,6 +141,9 @@ penalized.  We can't fix things until we know about them.  :-)
 >> In your opinion, was this assignment, or any one of the three problems
 >> in it, too easy or too hard?  Did it take too long or too little time?
 
+This assignment was very interesting. It took a reasonable amount of time to
+complete, though we did find that debugging was a considerable time sink.
+
 >> Did you find that working on a particular part of the assignment gave
 >> you greater insight into some aspect of OS design?
 
@@ -126,4 +159,3 @@ penalized.  We can't fix things until we know about them.  :-)
 >> projects?
 
 >> Any other comments?
-

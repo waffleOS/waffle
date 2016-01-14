@@ -26,5 +26,6 @@ int main(int argc, char **argv) {
 
     // PUT WHAT YOU WANT TO TOKENIZE HERE
     test_tokenize("echo \"hello\"");
+    //test_tokenize("echo \"hello\"");
     return 0;
 }
