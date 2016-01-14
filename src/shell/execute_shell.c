@@ -200,9 +200,11 @@ int execute_commands(cmd **commands, int n) {
             for (i = 0; i < 2 * (n - 1); i++) {
                 close(fd[i]);
             }
-            // printf("im here about to execute thing\n");
-            execvp(argv[0], argv);
-            // printf("Debug: Exiting child\n");
+
+            if(execvp(argv[0], argv) != -1) {
+                perror("Execution error");
+            }
+
             exit(EXIT_SUCCESS);
         }
     }
