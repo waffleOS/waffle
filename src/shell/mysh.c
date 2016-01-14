@@ -39,6 +39,7 @@ int main(int argc, char **argv) {
                 {
                     free(cmd->argv[k]);
                 }
+                free(cmd->argv);
                 free(cmd);
             }
             free(cmds);
