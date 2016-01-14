@@ -1,0 +1,214 @@
+			+------------------+
+			|      CS 124      |
+			| PROJECT 1: SHELL |
+			|  DESIGN DOCUMENT |
+			+------------------+
+
+---- GROUP ----
+
+>> Fill in the names and email addresses of your group members.
+
+Rahul Bachal <rbachal@caltech.edu>
+Robert Eng <reng@caltech.edu>
+David Qu <dqu@caltech.edu>
+
+>> Specify how many late tokens you are using on this assignment:
+
+>> What is the Git repository and commit hash for your submission?
+   (You only need to include the commit-hash in the file you submit
+   on Moodle.)
+
+   Repository URL:
+   commit ...
+
+---- PRELIMINARIES ----
+
+>> If you have any preliminary comments on your submission, notes for the
+>> TAs, or extra credit, please include them here.
+
+>> Please cite any offline or online sources you consulted while
+>> preparing your submission, other than the Pintos documentation, course
+>> text, lecture notes, and course instructors.
+
+			   COMMAND SHELL
+			   =============
+
+---- LOGISTICS ----
+
+These questions will help us to keep track of the difficulty level of
+assignments, as well as keeping track of which team members worked on
+which parts.
+
+>> L1: How many hours did each team member spend on this assignment?
+   Make sure that each member's total time is listed.
+   Rahul: 12 hours
+   Robert: 12 hours
+   David: 12 hours
+
+>> L2: What did each team member focus on for this assignment?  Keep
+   descriptions to 25-30 words or less.
+
+Rahul: Command tokenizing and parsing. Design and implementation of finite state
+       machine to tokenize. Integration of parser and command execution.
+Robert: Testing infrastructure for tokenizing and parsing, design and
+        implementation of piping.
+David: UNIX system calls, cd/exit implementation, basic process running and
+       redirects, and piping design and implementation.
+
+---- DATA STRUCTURES ----
+
+>> A1: Describe how your command shell manages parsing and executing
+>> commands that contain arguments and pipes, using the example
+>> command "a arg1 arg2 | b arg1 | c arg1 arg2 arg3".  How does your
+>> shell internally represent such a command?
+
+Parsing:
+    Our shell represents each command as a token. For example, in the above
+    command, the tokens are:
+        [a, arg1, arg2, |, arg1, |, c, arg1, arg2, arg3]
+    After creating these tokens, the parser then creates command structs by
+    parsing tokens until it reaches a pipe and then setting the stdin, stdout,
+    stderr, argc, and argv of the command. The command struct looks like the
+    following:
+    typedef struct {
+        char *input;  /* NULL iff stdin. */
+        char *output; /* NULL iff stdout. */
+        char *error;  /* NULL iff stderr. */
+        int pipe; /* Whether we need to pipe. */
+        int argc;
+        char **argv;
+    } cmd;
+    See the attached image graph.png for a visual description of the finite
+    state machine.
+
+
+>> A2: Now, given the command:
+>> "a arg1 arg2 < inp.txt | b arg1 | c arg1 arg2 arg3 > out.txt"
+>> Briefly explain specifically how the redirections are parsed and
+>> represented, and by what processes.
+
+Parsing:
+    The redirection tokens are parsed by setting the stdin or stdout of the
+    previous command to the token after the redirection token. For example, in
+    the above command, when the parser reaches "<", it sets the stdin of command
+    a to inp.txt. The parser then moves on to the next token for a new command.
+    This is implemented by scanning forward until the parser reaches a
+    redirection token while keeping a count of the number of tokens seen so far,
+    then going back to the first token for the command and adding it to argv.
+    If the redirection token is a pipe, then the command is fully constructed
+    and the parser moves on to the next  command.
+
+---- ALGORITHMS ----
+
+>> A3: Illustrate how you solved the problem of setting up
+>> redirection in a simple command like "a < inp.txt > out.txt", by
+>> describing what process takes care of the redirection and when.
+
+    The input and output of the command are represented by strings,
+    so the child of the fork opens the input file (inp.txt), takes input file's
+    file descriptor and replaces its stdin with it. The same process occurs with
+    the output file (out.txt) descriptor replacing stdout.
+    With the file descriptors hooked up correctly, inp.txt should get read
+    into a and the output of a should redirect to out.txt when execvp is called
+    on the command.
+
+
+>> A4: Illustrate how you solved the problem of setting up the pipes
+>> between multiple operations in a single command, by describing
+>> what each process is responsible for.  For example, given the
+>> command "a | b | c", describe the sequence of steps in setting up
+>> the processes and their pipes, starting with your command shell's
+>> process, and going through the execution of programs a, b and c.
+>> Keep your description of each process' responsibilities limited to
+>> ~25 words or less.
+
+    The command shell creates the number of pipes needed and puts each pipe's
+    file descriptors in the fd array.
+    The command shell process forks the first child process command a.
+    In the child process, a's stdout is replaced with the writing file
+    descriptor of the first pipe. a is executed and finishes.
+    Then the shell forks command b. Again, this child process configures the
+    pipes with the rear end of the first pipe replacing stdin of b and
+    the write end of the second pipe replacing stdout of b. b is executed and
+    finishes.
+    Then finally the same process occurs with c. The shell forks the new
+    c process and replaces c's stdin with the read end of the second pipe.
+    c is executed and finishes.
+    Note at the end of each command's execution, all file descriptors in the
+    child process are closed.
+
+
+>> A5: Similarly, describe the details of how terminated processes are
+>> reaped in the example command "a | b | c".
+
+    When a child process is forked and the command executed, the parent process
+    waits for that child process to finish. In this example, the shell forks a
+    and while a is executing, the shell is waiting for a to finish so it can
+    be reaped. After a is reaped, b is forked and executed while the shell waits.
+    After b finishes, it is reaped by the shell. c is then forked and executed
+    while the shell waits. When c finishes, the shell reaps it.
+
+
+>> A6: Similarly, describe which processes are responsible for setting
+>> up the redirections in the example command
+>> "a < inp.txt | b | c > out.txt".
+
+    The shell command forks the child process for a. The child attaches the inp.txt
+    file descriptor to its stdin and the 1st pipe file descriptor to its stdout.
+    After a's execution, the shell command forks the child process for b.
+    The child attaches the 1st pipe's read file descriptor to the stdin of b
+    and the 2nd pipe's write file descriptor to the stdout of b. b is executed.
+    The shell then forks the third child for c. The child attaches the read end
+    of the second pipe to its stdin and the out.txt file descriptor to its
+    stdout.
+
+---- RATIONALE ----
+
+>> A7: Why must the chdir and exit commands be implemented as built-in
+>> functions, rather than external programs?
+
+    These two commands change the state of the shell itself and thus must be run
+    in the shell process and not as a child process as most commands are run.
+
+>> A8: Why did you ultimately choose this design?  In what ways is it
+>> superior to other designs you considered as you developed your solution?
+
+    Parser:
+    We chose to use a FSM for the parser since using this makes the logic to
+    tokenize simple and clean. It especially makes handling quotes easy. This
+    is better than splitting the buffer with spaces and quotes since this
+    entails additional logic to determine where quotes start and end. Using a
+    FSM also makes handling redirection tokens simpler.
+
+
+
+			  SURVEY QUESTIONS
+			  ================
+
+Answering these questions is optional, but it will help us improve the
+course in future years.  Feel free to tell us anything you want - these
+questions are just to spur your thoughts.  Also, feel free to be completely
+honest if there are issues with the assignment or the course - you won't be
+penalized.  We can't fix things until we know about them.  :-)
+
+>> In your opinion, was this assignment, or any one of the three problems
+>> in it, too easy or too hard?  Did it take too long or too little time?
+
+This assignment was very interesting. It took a reasonable amount of time to
+complete, though we did find that debugging was a considerable time sink.
+
+>> Did you find that working on a particular part of the assignment gave
+>> you greater insight into some aspect of OS design?
+
+>> Were there any parts of the assignment that you felt were unnecessarily
+>> tedious or pointless?
+
+>> Is there some particular fact or hint we should give students in
+>> future quarters to help them solve the problems?  Conversely, did you
+>> find any of our guidance to be misleading?
+
+>> Do you have any suggestions for the instructor and/or TAs to more
+>> effectively assist students, either for future quarters or the remaining
+>> projects?
+
+>> Any other comments?

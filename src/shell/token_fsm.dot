@@ -1,0 +1,23 @@
+digraph {
+
+graph [fontsize=8, dpi=500]
+node [fontsize=8]
+edge [fontsize=8]
+
+Initial
+ReceivedChar
+ReceivedQuote
+
+Initial -> ReceivedChar [label="char\naddChar"];
+Initial -> ReceivedQuote [label="quote\nNOP"]
+Initial -> Initial [label="redirect\ncreateToken"]
+Initial -> Initial [label="space\nNOP"]
+
+ReceivedChar -> ReceivedChar [label="char\naddChar"]
+ReceivedChar -> ReceivedQuote [label="quote\nNOP"]
+ReceivedChar -> Initial [label="redirect\ncreateTokenRedirect"]
+ReceivedChar -> Initial [label="space\ncreateToken"]
+
+ReceivedQuote -> ReceivedQuote [label="char, redirect, space\naddChar"]
+ReceivedQuote -> ReceivedChar [label="quote\nNOP"]
+}

@@ -1,3 +1,7 @@
+# Editor files
+*~
+*.swp
+
 # Object files
 *.o
 *.ko
@@ -27,6 +31,8 @@
 *.i*86
 *.x86_64
 *.hex
+src/shell/mysh
+src/shell/test_execute
 
 # Debug files
 *.dSYM/
