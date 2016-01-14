@@ -4,6 +4,7 @@
 
 #include "stdio.h"
 #include "unistd.h"
+#include <stdlib.h>
 
 #define INPUT_BUFFER_SIZE 5000
 
