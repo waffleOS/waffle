@@ -11,7 +11,6 @@ int main(int argc, char **argv) {
     char buf[INPUT_BUFFER_SIZE];
 
     print_prompt();
-    initializeParser();
     while (1) {
         if (fgets(buf, INPUT_BUFFER_SIZE, stdin) != NULL) {
             initializeParser();
