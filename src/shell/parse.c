@@ -9,6 +9,7 @@
 
 void initializeParser()
 {
+    // Initialize buffers
     buffer = malloc(1000 * sizeof(char));
     tokens = malloc(1000 * sizeof(token *));
     cmds = malloc(1000 * sizeof(cmd *));
