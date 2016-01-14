@@ -124,7 +124,7 @@ Parsing:
 
     The command shell creates the number of pipes needed and puts each pipe's
     file descriptors in the fd array.
-    The command shell process forks the first child process command a. 
+    The command shell process forks the first child process command a.
     In the child process, a's stdout is replaced with the writing file
     descriptor of the first pipe. a is executed and finishes.
     Then the shell forks command b. Again, this child process configures the
@@ -173,15 +173,15 @@ Parsing:
 >> A8: Why did you ultimately choose this design?  In what ways is it
 >> superior to other designs you considered as you developed your solution?
 
-Parser:
+    Parser:
     We chose to use a FSM for the parser since using this makes the logic to
     tokenize simple and clean. It especially makes handling quotes easy. This
     is better than splitting the buffer with spaces and quotes since this
     entails additional logic to determine where quotes start and end. Using a
     FSM also makes handling redirection tokens simpler.
 
-Execution:
-    
+    Execution:
+        
 
 
 			  SURVEY QUESTIONS
