@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
             token ** tokens = tokenize(buf, &num_tokens);
             int num_commands;
             cmd ** cmds = parse(tokens, num_tokens, &num_commands);
-            print_commands(cmds, num_commands);
+            // print_commands(cmds, num_commands);
             execute_commands(cmds, num_commands);
             print_prompt();
         }

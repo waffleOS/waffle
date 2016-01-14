@@ -67,6 +67,7 @@ int execute_commands(cmd **commands, int n) {
     int status;
     pid_t pid;
 
+
     /* Create n - 1 pipes for each connection between commands.
      * Will need 2 * (n - 1) file descriptors because each pipe produces
      * two file descriptors */
@@ -115,12 +116,12 @@ int execute_commands(cmd **commands, int n) {
             /* Close both current pipes, because the parent doesn't need to
              * touch them. */
 
-            // if(i > 0) {
-            //     close(fd[2 * i - 1]);
-            // }
-            // if(i < 2 * (n - 1)) {
-            //     close(fd[2 * i]);
-            // }
+            if(i > 0) {
+                close(fd[2 * (i - 1)]);
+            }
+            if(i < n - 1) {
+                close(fd[2 * i + 1]);
+            }
 
             // if (dup2(fd[4 * i + 1], fd[0]) != fd[0]) {
             //     perror("dup2 error to stdout");
@@ -128,6 +129,11 @@ int execute_commands(cmd **commands, int n) {
             // }
 
             wait(&status);
+            // if(WIFEXITED(status)) {
+            //     printf("Debug: Exited normally.\n");
+            // } else {
+            //     printf("Debug: Did not exit normally.\n");
+            // }
         }
         else { /* child process */
             /* Note, fd[a] is for reading, fd[a + 1] is for writing */
@@ -158,7 +164,7 @@ int execute_commands(cmd **commands, int n) {
 
                 if (dup2(fd[2 * (i - 1)], STDIN_FILENO) != STDIN_FILENO) {
                     perror("dup2 error to stdin");
-                    exit(EXIT_FAILURE);
+                    // exit(EXIT_FAILURE);
                 }
             }
 
@@ -194,15 +200,19 @@ int execute_commands(cmd **commands, int n) {
             for (i = 0; i < 2 * (n - 1); i++) {
                 close(fd[i]);
             }
+            // printf("im here about to execute thing\n");
             execvp(argv[0], argv);
+            // printf("Debug: Exiting child\n");
+            exit(EXIT_SUCCESS);
         }
     }
 
     /* Clean up pipes and file descriptor memory. */
-    for (i = 0; i < 2 * (n - 1); i++) {
-        close(fd[i]);
-    }
+    // for (i = 0; i < 2 * (n - 1); i++) {
+    //     close(fd[i]);
+    // }
     free(fd);
+
 
     return 0;
 }

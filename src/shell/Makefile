@@ -1,6 +1,6 @@
 CFLAGS = -Wall -g -std=c99
 
-OBJS = mysh.o execute_shell.o parse.o
+OBJS = mysh.o execute_shell.o parse.o parser_tests.o
 
 all: mysh test_execute parser_tests
 

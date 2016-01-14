@@ -26,7 +26,7 @@ void print_commands(cmd **commands, int n) {
     for(i = 0; i < n; i++) {
         printf("Command %d with %d arguments. Arguments:\n", i, commands[i]->argc);
         for(j = 0; j < commands[i]->argc; j++) {
-            printf("%s\n", (commands[i]->argv)[j]);
+            printf("%d: %s\n", i, (commands[i]->argv)[j]);
         }
 
         if(commands[i]->input == NULL) {
