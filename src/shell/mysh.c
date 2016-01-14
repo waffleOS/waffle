@@ -27,11 +27,14 @@ int main(int argc, char **argv) {
             cmd ** cmds = parse(tokens, num_tokens, &num_commands);
             // print_commands(cmds, num_commands);
             execute_commands(cmds, num_commands);
+
+            // Free commands
             for (int j = 0; j < num_commands; j++)
             {
                 cmd * cmd = cmds[j];
                 free(cmd);
             }
+            free(cmds);
             print_prompt();
         }
     }
