@@ -18,8 +18,9 @@ David Qu <dqu@caltech.edu>
    (You only need to include the commit-hash in the file you submit
    on Moodle.)
 
-   Repository URL:
-   commit ...
+   Repository URL: /cs/courses/cs124/teams/waffle.git
+                    https://github.com/waffleOS/waffle
+   commit 751747ed8442824d6f6b0a8624c1e0ae6b9ce7f4
 
 ---- PRELIMINARIES ----
 
