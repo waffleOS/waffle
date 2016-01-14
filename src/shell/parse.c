@@ -7,14 +7,6 @@
 
 #define INPUT_BUFFER_SIZE 5000
 
-// int main(int argc, char **argv)
-// {
-//     int num_tokens;
-//     char * buf = malloc(6 * sizeof(char));
-//     strcpy(argv[0], "hello!");
-//     token ** tokens = tokenize(buf, &num_tokens);
-// }
-
 void initializeParser()
 {
     buffer = malloc(1000 * sizeof(char));
@@ -264,5 +256,8 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
     }
 
     *num_commands = cmdCount;
+    free(buffer);
+    free(tokens);
+    free(cmds);
     return cmds;
 }
