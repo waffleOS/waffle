@@ -32,6 +32,13 @@ int main(int argc, char **argv) {
             for (int j = 0; j < num_commands; j++)
             {
                 cmd * cmd = cmds[j];
+                free(cmd->input);
+                free(cmd->output);
+                free(cmd->error);
+                for (int k = 0; k < cmd->argc; k++)
+                {
+                    free(cmd->argv[k]);
+                }
                 free(cmd);
             }
             free(cmds);
