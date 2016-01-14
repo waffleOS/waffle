@@ -41,6 +41,7 @@ void print_prompt() {
     if (cwd == NULL && status == LOGIN_FAIL) {
         status = BOTH_FAIL;
     }
+
     else if (cwd == NULL) {
         status = CWD_FAIL;
     }
@@ -70,7 +71,8 @@ int execute_commands(cmd **commands, int n) {
 
     /* Create n - 1 pipes for each connection between commands.
      * Will need 2 * (n - 1) file descriptors because each pipe produces
-     * two file descriptors */
+     * two file descriptors. Pipes are represented by every two spaces in
+     * the fd array. */
     for (i = 0; i < 2 * (n - 1); i += 2) {
         if (pipe(fd + i) < 0) {
             perror("Pipe error");
@@ -123,17 +125,7 @@ int execute_commands(cmd **commands, int n) {
                 close(fd[2 * i + 1]);
             }
 
-            // if (dup2(fd[4 * i + 1], fd[0]) != fd[0]) {
-            //     perror("dup2 error to stdout");
-            //     exit(EXIT_FAILURE);
-            // }
-
             wait(&status);
-            // if(WIFEXITED(status)) {
-            //     printf("Debug: Exited normally.\n");
-            // } else {
-            //     printf("Debug: Did not exit normally.\n");
-            // }
         }
         else { /* child process */
             /* Note, fd[a] is for reading, fd[a + 1] is for writing */
@@ -154,17 +146,10 @@ int execute_commands(cmd **commands, int n) {
                 /* We don't attach stdin to anything on first command
                 Note: for the ith command, we connect it to the file
                 descriptor at index 2 * (i - 1) */
-                // Close all pipes we aren't using
-                // close(fd[2 * i + 1]);
-                // for(int j = 0; j < 2 * (n - 1); j++) {
-                //     if(j != 2 * (i - 1)) {
-                //        close(fd[j]);
-                //     }
-                // }
 
                 if (dup2(fd[2 * (i - 1)], STDIN_FILENO) != STDIN_FILENO) {
                     perror("dup2 error to stdin");
-                    // exit(EXIT_FAILURE);
+                    exit(EXIT_FAILURE);
                 }
             }
 
@@ -180,14 +165,6 @@ int execute_commands(cmd **commands, int n) {
                 /* We don't attach stdout to anything on the last command
                 Note: for the ith command, we connect it to the file
                 descriptor at index 2 * i + 1 */
-
-                // Close all unused pipes
-                // for(int j = 0; j < 2 * (n - 1); j++) {
-                //     if(j != 2 * i + 1) {
-                //        close(fd[j]);
-                //     }
-                // }
-                // close(fd[2 * i]);
 
                 if (dup2(fd[2 * i + 1], STDOUT_FILENO) != STDOUT_FILENO) {
                     perror("dup2 error to stdout");
@@ -209,12 +186,7 @@ int execute_commands(cmd **commands, int n) {
         }
     }
 
-    /* Clean up pipes and file descriptor memory. */
-    // for (i = 0; i < 2 * (n - 1); i++) {
-    //     close(fd[i]);
-    // }
     free(fd);
-
 
     return 0;
 }
