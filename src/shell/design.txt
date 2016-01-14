@@ -104,13 +104,13 @@ Parsing:
 >> redirection in a simple command like "a < inp.txt > out.txt", by
 >> describing what process takes care of the redirection and when.
 
-The input and output of the command are represented by strings,
-so the child of the fork opens the input file (inp.txt), takes input file's
-file descriptor and replaces its stdin with it. The same process occurs with
-the output file (out.txt) descriptor replacing stdout.
-With the file descriptors hooked up correctly, inp.txt should get read
-into a and the output of a should redirect to out.txt when execvp is called
-on the command.
+    The input and output of the command are represented by strings,
+    so the child of the fork opens the input file (inp.txt), takes input file's
+    file descriptor and replaces its stdin with it. The same process occurs with
+    the output file (out.txt) descriptor replacing stdout.
+    With the file descriptors hooked up correctly, inp.txt should get read
+    into a and the output of a should redirect to out.txt when execvp is called
+    on the command.
 
 
 >> A4: Illustrate how you solved the problem of setting up the pipes
@@ -122,52 +122,52 @@ on the command.
 >> Keep your description of each process' responsibilities limited to
 >> ~25 words or less.
 
-The command shell creates the number of pipes needed and puts each pipe's
-file descriptors in the fd array.
-The command shell process forks the first child process command a. 
-In the child process, a's stdout is replaced with the writing file
-descriptor of the first pipe. a is executed and finishes.
-Then the shell forks command b. Again, this child process configures the
-pipes with the rear end of the first pipe replacing stdin of b and
-the write end of the second pipe replacing stdout of b. b is executed and
-finishes.
-Then finally the same process occurs with c. The shell forks the new
-c process and replaces c's stdin with the read end of the second pipe.
-c is executed and finishes.
-Note at the end of each command's execution, all file descriptors in the
-child process are closed.
+    The command shell creates the number of pipes needed and puts each pipe's
+    file descriptors in the fd array.
+    The command shell process forks the first child process command a. 
+    In the child process, a's stdout is replaced with the writing file
+    descriptor of the first pipe. a is executed and finishes.
+    Then the shell forks command b. Again, this child process configures the
+    pipes with the rear end of the first pipe replacing stdin of b and
+    the write end of the second pipe replacing stdout of b. b is executed and
+    finishes.
+    Then finally the same process occurs with c. The shell forks the new
+    c process and replaces c's stdin with the read end of the second pipe.
+    c is executed and finishes.
+    Note at the end of each command's execution, all file descriptors in the
+    child process are closed.
 
 >> A5: Similarly, describe the details of how terminated processes are
 >> reaped in the example command "a | b | c".
 
-When a child process is forked and the command executed, the parent process
-waits for that child process to finish. In this example, the shell forks a
-and while a is executing, the shell is waiting for a to finish so it can
-be reaped. After a is reaped, b is forked and executed while the shell waits.
-After b finishes, it is reaped by the shell. c is then forked and executed
-while the shell waits. When c finishes, the shell reaps it.
+    When a child process is forked and the command executed, the parent process
+    waits for that child process to finish. In this example, the shell forks a
+    and while a is executing, the shell is waiting for a to finish so it can
+    be reaped. After a is reaped, b is forked and executed while the shell waits.
+    After b finishes, it is reaped by the shell. c is then forked and executed
+    while the shell waits. When c finishes, the shell reaps it.
 
 
 >> A6: Similarly, describe which processes are responsible for setting
 >> up the redirections in the example command
 >> "a < inp.txt | b | c > out.txt".
 
-The shell command forks the child process for a. The child attaches the inp.txt
-file descriptor to its stdin and the 1st pipe file descriptor to its stdout.
-After a's execution, the shell command forks the child process for b.
-The child attaches the 1st pipe's read file descriptor to the stdin of b
-and the 2nd pipe's write file descriptor to the stdout of b. b is executed.
-The shell then forks the third child for c. The child attaches the read end
-of the second pipe to its stdin and the out.txt file descriptor to its
-stdout.
+    The shell command forks the child process for a. The child attaches the inp.txt
+    file descriptor to its stdin and the 1st pipe file descriptor to its stdout.
+    After a's execution, the shell command forks the child process for b.
+    The child attaches the 1st pipe's read file descriptor to the stdin of b
+    and the 2nd pipe's write file descriptor to the stdout of b. b is executed.
+    The shell then forks the third child for c. The child attaches the read end
+    of the second pipe to its stdin and the out.txt file descriptor to its
+    stdout.
 
 ---- RATIONALE ----
 
 >> A7: Why must the chdir and exit commands be implemented as built-in
 >> functions, rather than external programs?
 
-These two commands change the state of the shell itself and thus must be run
-in the shell process and not as a child process as most commands are run.
+    These two commands change the state of the shell itself and thus must be run
+    in the shell process and not as a child process as most commands are run.
 
 >> A8: Why did you ultimately choose this design?  In what ways is it
 >> superior to other designs you considered as you developed your solution?
