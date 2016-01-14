@@ -180,8 +180,6 @@ Parsing:
     entails additional logic to determine where quotes start and end. Using a
     FSM also makes handling redirection tokens simpler.
 
-    Execution:
-        
 
 
 			  SURVEY QUESTIONS
