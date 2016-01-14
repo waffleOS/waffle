@@ -256,5 +256,8 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
     }
 
     *num_commands = cmdCount;
+    free(buffer)
+    free(tokens)
+    free(cmds)
     return cmds;
 }
