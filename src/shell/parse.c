@@ -5,13 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define INPUT_BUFFER_SIZE 5000
+#define INPUT_BUFFER_SIZE 1000
 
 void initializeParser()
 {
-    buffer = malloc(1000 * sizeof(char));
-    tokens = malloc(1000 * sizeof(token *));
-    cmds = malloc(1000 * sizeof(cmd *));
+    // Initialize buffers
+    buffer = malloc(INPUT_BUFFER_SIZE * sizeof(char));
+    tokens = malloc(INPUT_BUFFER_SIZE * sizeof(token *));
+    cmds = malloc(INPUT_BUFFER_SIZE * sizeof(cmd *));
 
     // Initialize FSM
     transitions[INITIAL][CHAR] = (transition) {&addChar, RECEIVED_CHAR};

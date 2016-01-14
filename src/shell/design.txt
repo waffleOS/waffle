@@ -41,6 +41,9 @@ which parts.
 
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
+   Rahul: 12 hours
+   Robert: 12 hours
+   David: 12 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
