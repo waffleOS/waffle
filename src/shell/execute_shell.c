@@ -142,7 +142,7 @@ int execute_commands(cmd **commands, int n) {
                 }
                 close(in_fd);
             }
-            else if (i > 0) { 
+            else if (i > 0) {
                 /* We don't attach stdin to anything on first command
                 Note: for the ith command, we connect it to the file
                 descriptor at index 2 * (i - 1) */

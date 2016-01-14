@@ -241,6 +241,8 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
             argv[k] = (char *) malloc(x.length);
             strcpy(argv[k], x.text);
             k++;
+            free(tokens[j]->text);
+            free(tokens[j]);
         }
         // Add a NULL token to the end of the array.
         argv[k] = NULL;
@@ -258,6 +260,5 @@ cmd ** parse(token ** tokens, int num_tokens, int * num_commands)
     *num_commands = cmdCount;
     free(buffer);
     free(tokens);
-    free(cmds);
     return cmds;
 }
