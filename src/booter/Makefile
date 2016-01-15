@@ -33,12 +33,15 @@ $(BOOT_BIN): boot.o
 # Build the main program binary file.  We take the final .o file and strip out
 # all the stuff we don't care about, so we end up with a simple ELF file.
 
-
-program.lds.s: CPPFLAGS += -P
-program.lds.s: program.lds.S boot.h
+# Run the C preprocessor on the linker script, to apply definitions in boot.h
+# Note:  CPP is the C compiler, not "cpp", so we need to specify the input and
+#        output files differently from what cpp requires.
+prog.lds.s: CPPFLAGS += -P
+prog.lds.s: program.lds.S boot.h
+	$(CPP) $(CPPFLAGS) -o $@ $<
 
 # $< is the first prerequisite, so that has to be the linker script.
-$(PROGRAM_OBJ): program.lds.s $(OBJS)
+$(PROGRAM_OBJ): prog.lds.s $(OBJS)
 	$(LD) -T $< -o $@ $(OBJS)
 
 $(PROGRAM_BIN): $(PROGRAM_OBJ)
@@ -55,7 +58,7 @@ debug-qemu: $(FLOPPY_IMG)
 	qemu-system-i386 -soundhw pcspk -s -S $(FLOPPY_IMG)
 
 clean:
-	rm -f *.o program.lds.s $(BOOT_BIN) $(PROGRAM_BIN) $(FLOPPY_IMG)
+	rm -f *.o prog.lds.s $(BOOT_BIN) $(PROGRAM_BIN) $(FLOPPY_IMG)
 
-.PHONY: all clean run-qemu
+.PHONY: all clean run-qemu debug-qemu
 
