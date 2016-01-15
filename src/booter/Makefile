@@ -1,0 +1,61 @@
+# IMPORTANT NOTE:
+#     Most files in this project are run through the C preprocessor
+#     before they are processed - even the assembly language boot.S
+#     file is processed this way.  This allows us to use header files
+#     to hold widely used constants.  The consequence of this is that
+#     we invoke gcc to assemble boot.S, and we use gcc to process the
+#     linker script, and so forth.
+
+CFLAGS=-g
+
+BOOT_BIN = boot.bin
+
+OBJS = game.o video.o interrupts.o handlers.o timer.o keyboard.o
+PROGRAM_OBJ = program.o
+PROGRAM_BIN = program.bin
+
+FLOPPY_IMG = floppy.img
+
+
+all : $(FLOPPY_IMG)
+
+
+# Use gcc to build our assembly code so that we can use the C preprocessor
+# to #define constants for our bootloader.  The "-Wa,--gstabs" argument tells
+# gcc to pass "--gstabs" to the assembler.
+boot.o: boot.S boot.h
+	gcc -c boot.S -Wa,--gstabs
+
+# Build the bootloader binary file.
+$(BOOT_BIN): boot.o
+	$(LD) -N -e 0 -Ttext 0x7c00 --oformat binary -o $@ $^
+
+# Build the main program binary file.  We take the final .o file and strip out
+# all the stuff we don't care about, so we end up with a simple ELF file.
+
+
+program.lds.s: CPPFLAGS += -P
+program.lds.s: program.lds.S boot.h
+
+# $< is the first prerequisite, so that has to be the linker script.
+$(PROGRAM_OBJ): program.lds.s $(OBJS)
+	$(LD) -T $< -o $@ $(OBJS)
+
+$(PROGRAM_BIN): $(PROGRAM_OBJ)
+	objcopy -R .note -R .comment -S $< $@
+
+$(FLOPPY_IMG): $(BOOT_BIN) $(PROGRAM_BIN)
+	cat $(BOOT_BIN) $(PROGRAM_BIN) > $@
+	truncate -s 1474560 $@
+
+run-qemu: $(FLOPPY_IMG)
+	qemu-system-i386 -soundhw pcspk $(FLOPPY_IMG)
+
+debug-qemu: $(FLOPPY_IMG)
+	qemu-system-i386 -soundhw pcspk -s -S $(FLOPPY_IMG)
+
+clean:
+	rm -f *.o program.lds.s $(BOOT_BIN) $(PROGRAM_BIN) $(FLOPPY_IMG)
+
+.PHONY: all clean run-qemu
+
