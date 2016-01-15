@@ -45,7 +45,7 @@ boot_start:
 	call	print_str
 
 	#---------------------------------------------------------------------
-	# TODO:  Load the remainder of the program into memory using int 10h
+	# TODO:  Load the remainder of the program into memory using int 13h
 	#        "Extended Read Operation."  If it fails, jump to boot_fail.
 	#
 	#        REMOVE THIS COMMENT BLOCK WHEN YOU WRITE THIS CODE.
