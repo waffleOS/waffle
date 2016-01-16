@@ -1,6 +1,6 @@
 boot.bin
 program.bin
 floppy.img
-program.lds.s
+prog.lds.s
 *.o
 
