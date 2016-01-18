@@ -225,4 +225,9 @@ void install_interrupt_handler(int num, void *handler) {
      *        REMOVE THIS COMMENT WHEN YOU WRITE THE CODE.  (FEEL FREE TO
      *        INCORPORATE THE ABOVE COMMENTS IF YOU WISH.)
      */
+
+     interrupt_descriptor_table[num].offset_15_0 = (handler << 16) >> 16;
+     interrupt_descriptor_table[num].offset_31_16 = handler >> 16;
+     interrupt_descriptor_table[num].selector = SEL_CODESEG;
+     interrupt_descriptor_table[num].type_attr = 0;
 }
