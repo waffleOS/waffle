@@ -31,3 +31,28 @@ void c_start(void) {
     /* Loop forever, so that we don't fall back into the bootloader code. */
     while (1) {}
 }
+
+typedef struct Player {
+    int paddle_x;
+    int paddle_y;
+    int score;
+} Player;
+
+#define PADDLE_LENGTH 3
+
+movePaddle(int x, int y, Player *p) {
+    int i;
+
+    // Remove previous paddle position
+    for(i = 0; i < PADDLE_LENGTH; i++) {
+        clearPixel(p->paddle_x, paddle_y + i);
+    }
+
+    // Draw new paddle
+    for(i = 0; i < PADDLE_LENGTH; i++) {
+        setPixel(x, y + i, GREEN, (char) 186);
+    }
+
+    p->paddle_x = x;
+    p->paddle_y = y;
+}
