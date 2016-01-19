@@ -35,6 +35,8 @@ void init_video(void) {
     /* TODO:  Do any video display initialization you might want to do, such
      *        as clearing the screen, initializing static variable state, etc.
      */
+     background_color = BLACK;
+     setBackground(background_color);
 }
 
 
@@ -45,7 +47,10 @@ void setPixel(int x, int y, char color, char value) {
 }
 
 void clearForeground() {
-
+	int i;
+	for(i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH * 2; i += 2) {
+		*((char *)VIDEO_BUFFER + i) = ' ';
+	}
 }
 
 void setBackground(char color) {
@@ -60,5 +65,5 @@ void setBackground(char color) {
 }
 
 void clearPixel(int x, int y) {
-
+	*((char *)VIDEO_BUFFER + MAP_XY_TO_INDEX(x, y)) = ' ';
 }
