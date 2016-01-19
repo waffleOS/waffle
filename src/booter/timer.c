@@ -1,5 +1,7 @@
 #include "timer.h"
 #include "ports.h"
+#include "handlers.h"
+#include "interrupts.h"
 
 /*============================================================================
  * PROGRAMMABLE INTERVAL TIMER
@@ -66,4 +68,11 @@ void init_timer(void) {
     /* TODO:  You might want to install your timer interrupt handler
      *        here as well.
      */
+
+     install_interrupt_handler(TIMER_INTERRUPT, timer_handler);
+}
+
+void timerHandler(void)
+{
+
 }

@@ -29,3 +29,25 @@
 #
 #                popa    # Restore all registers
 #                iret    # Go back to interrupted code
+
+.align 4
+.global keyboard_handler
+keyboard_handler:
+    PUSHA
+    CLD
+    CALL keyboardHandler
+    MOV  $0x20, %al
+    OUT  %al, $0x20
+    POPA
+    IRET
+
+.align 4
+.global timer_handler
+timer_handler:
+    PUSHA
+    CLD
+    CALL timerHandler
+    MOV  $0x20, %al
+    OUT  %al, $0x20
+    POPA
+    IRET

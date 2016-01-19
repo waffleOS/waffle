@@ -1,5 +1,6 @@
 #include "ports.h"
-
+#include "handlers.h"
+#include "interrupts.h"
 /* This is the IO port of the PS/2 controller, where the keyboard's scan
  * codes are made available.  Scan codes can be read as follows:
  *
@@ -25,6 +26,7 @@
 #define QUEUE_SIZE 1024
 
 
+
 /* TODO:  You can create static variables here to hold keyboard state.
  *        Note that if you create some kind of circular queue (a very good
  *        idea, you should declare it "volatile" so that the compiler knows
@@ -41,7 +43,13 @@
      int headIndex;
      int tailIndex;
      char values[QUEUE_SIZE];
+     int empty;
+     int full;
  } Queue;
+
+ void initializeQueue(Queue * q);
+
+
 
  Queue q;
 
@@ -49,13 +57,65 @@
 void init_keyboard(void) {
     /* TODO:  Initialize any state required by the keyboard handler. */
 
+    initializeQueue(&q);
+
     /* TODO:  You might want to install your keyboard interrupt handler
      *        here as well.
      */
+
+     install_interrupt_handler(KEYBOARD_INTERRUPT, keyboard_handler);
 }
 
-void initializeQueue(Queue q)
+void initializeQueue(Queue * q)
 {
-    q.headIndex = 0;
-    q.tailIndex = 0;
+    q->headIndex = 0;
+    q->tailIndex = 0;
+    q->empty = 1;
+    q->full = 0;
+}
+
+int isEmpty(Queue * q)
+{
+    return q->empty;
+}
+
+int isFull(Queue * q)
+{
+    return q->full;
+}
+
+void enqueue(Queue * q, char scan_code)
+{
+    while (isFull(q))
+    {
+
+    }
+
+    q->values[q->tailIndex++] = scan_code;
+    if (q->tailIndex == q->headIndex)
+    {
+        q->full = 1;
+    }
+}
+
+char dequeue(Queue * q)
+{
+    while (isEmpty(q))
+    {
+
+    }
+
+    char scan_code = q->values[q->headIndex++];
+    if (q->headIndex == q->tailIndex)
+    {
+        q->empty = 1;
+    }
+
+    return scan_code;
+}
+
+void keyboardHandler(void)
+{
+    unsigned char scan_code = inb(KEYBOARD_PORT);
+    enqueue(&q, scan_code);
 }
