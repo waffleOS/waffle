@@ -20,6 +20,9 @@
  */
 #define VIDEO_BUFFER ((void *) 0xB8000)
 
+#define SCREEN_HEIGHT 40
+#define SCREEN_WIDTH 80
+#define MAP_XY_TO_INDEX(x, y) (2 * (SCREEN_WIDTH * (y) + (x)))
 
 /* TODO:  You can create static variables here to hold video display state,
  *        such as the current foreground and background color, a cursor
@@ -33,3 +36,19 @@ void init_video(void) {
      */
 }
 
+
+void setPixel(int x, int y, char color, char value) {
+	MAP_XY_TO_INDEX(x, y)
+}
+
+void clearForeground() {
+
+}
+
+void setBackground(char color) {
+
+}
+
+void clearPixel(int x, int y) {
+
+}
