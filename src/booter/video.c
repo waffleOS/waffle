@@ -40,8 +40,8 @@ void init_video(void) {
 
 void setPixel(int x, int y, char color, char value) {
 	int index = MAP_XY_TO_INDEX(x, y);
-    *(VIDEO_BUFFER + index) = value;
-    *(VIDEO_BUFFER + index + 1) = (background_color << 4) | color;
+    *((char *) VIDEO_BUFFER + index) = value;
+    *((char *) VIDEO_BUFFER + index + 1) = (background_color << 4) | color;
 }
 
 void clearForeground() {
@@ -53,8 +53,8 @@ void setBackground(char color) {
     int i;
     for (i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH * 2; i += 2)
     {
-        char color = *(VIDEO_BUFFER + i + 1);
-        *(VIDEO_BUFFER + i + 1) = ((color << 4) >> 4) | (color << 4);
+        char color = *((char *) VIDEO_BUFFER + i + 1);
+        *((char *) VIDEO_BUFFER + i + 1) = ((color << 4) >> 4) | (color << 4);
     }
 
 }
