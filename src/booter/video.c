@@ -39,13 +39,18 @@ void init_video(void) {
      setBackground(background_color);
 }
 
-
+/* Given an x y coordinate, a foreground color, and a value, sets that
+ * coordinate in the video buffer.
+ */
 void setPixel(int x, int y, char color, char value) {
 	int index = MAP_XY_TO_INDEX(x, y);
     *(VIDEO_BUFFER + index) = value;
     *(VIDEO_BUFFER + index + 1) = (background_color << 4) | color;
 }
 
+/* Clears all the foreground values in the video buffer leaving a blank screen
+ * of just the background color
+ */
 void clearForeground() {
 	int i;
 	for(i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH * 2; i += 2) {
@@ -53,6 +58,9 @@ void clearForeground() {
 	}
 }
 
+/* Sets the background color of everything in the video buffer and redraws
+ * all coordinates with this new background.
+ */
 void setBackground(char color) {
     background_color = color;
     int i;
@@ -64,6 +72,8 @@ void setBackground(char color) {
 
 }
 
+/* Given an x y coordinate, clears the value at the specified coordinate.
+ */
 void clearPixel(int x, int y) {
 	*((char *)VIDEO_BUFFER + MAP_XY_TO_INDEX(x, y)) = ' ';
 }
