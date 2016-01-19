@@ -59,8 +59,8 @@ boot_start:
     push $0 
     push $0
     push $1      # Least significant word of sector index
-    push $0      # Offset of buffer.
-    push $0x2000 # Segment of buffer.
+    push $0x2000 # Offset of buffer.
+    push $0      # Segment of buffer.
     push $10     # Number of 512-byte sectors to read.
     push $0x10   # Size of packet, 16 bytes.
 

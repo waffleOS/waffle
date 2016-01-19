@@ -29,6 +29,7 @@
  *        position, or any other details you might want to keep track of!
  */
 
+char background_color;
 
 void init_video(void) {
     /* TODO:  Do any video display initialization you might want to do, such
@@ -40,7 +41,9 @@ void init_video(void) {
 
 
 void setPixel(int x, int y, char color, char value) {
-	MAP_XY_TO_INDEX(x, y)
+	int index = MAP_XY_TO_INDEX(x, y);
+    *(VIDEO_BUFFER + index) = value;
+    *(VIDEO_BUFFER + index + 1) = (background_color << 4) | color;
 }
 
 void clearForeground() {
@@ -51,6 +54,13 @@ void clearForeground() {
 }
 
 void setBackground(char color) {
+    background_color = color;
+    int i;
+    for (i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH * 2; i += 2)
+    {
+        char color = *(VIDEO_BUFFER + i + 1);
+        *(VIDEO_BUFFER + i + 1) = ((color << 4) >> 4) | (color << 4);
+    }
 
 }
 
