@@ -46,7 +46,7 @@ void setPixel(int x, int y, char color, char value) {
     *((char *) VIDEO_BUFFER + index + 1) = (background_color << 4) | color;
 }
 
-void clearForeground() {
+void clearForeground(void) {
 	int i;
 	for(i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH * 2; i += 2) {
 		*((char *)VIDEO_BUFFER + i) = ' ';

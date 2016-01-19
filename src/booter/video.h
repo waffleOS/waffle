@@ -24,6 +24,10 @@
 
 
 void init_video(void);
+void setPixel(int x, int y, char color, char value);
+void clearForeground(void);
+void setBackground(char color);
+void clearPixel(int x, int y);
 
 
 #endif /* VIDEO_H */
