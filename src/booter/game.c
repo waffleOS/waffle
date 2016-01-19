@@ -8,9 +8,18 @@ void c_start(void) {
      *        do whatever else you decide to do!
      */
      init_video();
-     //setBackground(RED);
-     setPixel(0,0,GREEN,'H');
-     setPixel(10,10,BLUE,'i');
+     setBackground(RED);
+     int i;
+     for (i = 0; i < SCREEN_HEIGHT; i++)
+     {
+         setPixel(0,i,GREEN,'0' + i);
+     }
+     for (i = 0; i < SCREEN_WIDTH; i++)
+     {
+         setPixel(i,0,GREEN,'0' + i);
+     }
+     //setPixel(0,0,GREEN,'0');
+     //setPixel(10,10,BLUE,'i');
 
     /* Loop forever, so that we don't fall back into the bootloader code. */
     while (1) {}

@@ -19,9 +19,6 @@
  * the VGA links in the "Video" section.
  */
 #define VIDEO_BUFFER ((void *) 0xB8000)
-
-#define SCREEN_HEIGHT 40
-#define SCREEN_WIDTH 80
 #define MAP_XY_TO_INDEX(x, y) (2 * (SCREEN_WIDTH * (y) + (x)))
 
 /* TODO:  You can create static variables here to hold video display state,
@@ -35,13 +32,14 @@ void init_video(void) {
     /* TODO:  Do any video display initialization you might want to do, such
      *        as clearing the screen, initializing static variable state, etc.
      */
-     background_color = YELLOW;
+     background_color = BLACK;
      setBackground(background_color);
 
-     int i;
-     for(i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH * 2; i += 2) {
-     	*((char *) VIDEO_BUFFER + i) = '0';
-     }
+     //int i;
+     //for(i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH * 2; i += 2) {
+         //setPixel(i/2,i/2,WHITE,'H');
+     	//*((char *) VIDEO_BUFFER + i) = 'H';
+     //}
 }
 
 /* Given an x y coordinate, a foreground color, and a value, sets that

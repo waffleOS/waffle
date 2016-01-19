@@ -22,6 +22,9 @@
 #define YELLOW        14
 #define WHITE         15
 
+#define SCREEN_HEIGHT 30
+#define SCREEN_WIDTH 80
+
 
 void init_video(void);
 void setPixel(int x, int y, char color, char value);
