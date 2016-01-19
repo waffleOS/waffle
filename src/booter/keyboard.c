@@ -51,7 +51,7 @@
 
 
 
- Queue q;
+ Queue volatile q;
 
 
 void init_keyboard(void) {
@@ -91,7 +91,9 @@ void enqueue(Queue * q, char scan_code)
 
     }
 
+
     q->values[q->tailIndex++] = scan_code;
+    q->tailIndex %= QUEUE_SIZE;
     if (q->tailIndex == q->headIndex)
     {
         q->full = 1;
@@ -106,6 +108,7 @@ char dequeue(Queue * q)
     }
 
     char scan_code = q->values[q->headIndex++];
+    q->headIndex %= QUEUE_SIZE;
     if (q->headIndex == q->tailIndex)
     {
         q->empty = 1;
