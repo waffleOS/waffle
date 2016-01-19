@@ -45,7 +45,7 @@ movePaddle(int x, int y, Player *p) {
 
     // Remove previous paddle position
     for(i = 0; i < PADDLE_LENGTH; i++) {
-        clearPixel(p->paddle_x, paddle_y + i);
+        clearPixel(p->paddle_x, p->paddle_y + i);
     }
 
     // Draw new paddle
