@@ -22,7 +22,7 @@
 #define YELLOW        14
 #define WHITE         15
 
-#define SCREEN_HEIGHT 30
+#define SCREEN_HEIGHT 25
 #define SCREEN_WIDTH 80
 
 

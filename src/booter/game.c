@@ -8,7 +8,7 @@ void c_start(void) {
      *        do whatever else you decide to do!
      */
      init_video();
-     setBackground(RED);
+     setBackground(BLACK);
      int i;
      for (i = 0; i < SCREEN_HEIGHT; i++)
      {
@@ -18,6 +18,8 @@ void c_start(void) {
      {
          setPixel(i,0,GREEN,'0' + i);
      }
+
+     setBackground(RED);
      //setPixel(0,0,GREEN,'0');
      //setPixel(10,10,BLUE,'i');
 
