@@ -35,12 +35,12 @@ void init_video(void) {
     /* TODO:  Do any video display initialization you might want to do, such
      *        as clearing the screen, initializing static variable state, etc.
      */
-     background_color = BLACK;
+     background_color = YELLOW;
      setBackground(background_color);
 
      int i;
      for(i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH * 2; i += 2) {
-     	*(char *) VIDEO_BUFFER + i) = ' ';
+     	*((char *) VIDEO_BUFFER + i) = '0';
      }
 }
 

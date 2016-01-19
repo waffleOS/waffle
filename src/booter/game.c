@@ -1,3 +1,4 @@
+#include "video.h"
 /* This is the entry-point for the game! */
 void c_start(void) {
     /* TODO:  You will need to initialize various subsystems here.  This
@@ -6,9 +7,10 @@ void c_start(void) {
      *        enable_interrupts() to start interrupt handling, and go on to
      *        do whatever else you decide to do!
      */
-
-     setPixel(0,0,2,"H");
-     setBackground(RED);
+     init_video();
+     //setBackground(RED);
+     setPixel(0,0,GREEN,'H');
+     setPixel(10,10,BLUE,'i');
 
     /* Loop forever, so that we don't fall back into the bootloader code. */
     while (1) {}
