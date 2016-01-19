@@ -25,6 +25,7 @@
 #define QUEUE_SIZE 1024
 
 
+
 /* TODO:  You can create static variables here to hold keyboard state.
  *        Note that if you create some kind of circular queue (a very good
  *        idea, you should declare it "volatile" so that the compiler knows
@@ -44,6 +45,10 @@
      int empty;
      int full;
  } Queue;
+
+ void initializeQueue(Queue * q);
+
+
 
  Queue q;
 
@@ -66,12 +71,12 @@ void initializeQueue(Queue * q)
     q->full = 0;
 }
 
-void isEmpty(Queue * q)
+int isEmpty(Queue * q)
 {
     return q->empty;
 }
 
-void isFull(Queue * q)
+int isFull(Queue * q)
 {
     return q->full;
 }
