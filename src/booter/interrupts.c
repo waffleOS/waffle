@@ -190,6 +190,14 @@ void init_interrupts(void) {
 
      lidt(interrupt_descriptor_table, NUM_INTERRUPTS * sizeof(IDT_Descriptor));
 
+     for (i = 0; i < NUM_INTERRUPTS; i++)
+     {
+         IRQ_set_mask(i);
+     }
+
+     IRQ_clear_mask(KEYBOARD_INTERRUPT);
+     IRQ_clear_mask(TIMER_INTERRUPT);
+
     /* Remap the Programmable Interrupt Controller to deliver its interrupts
      * to 0x20-0x33 (32-45), so that they don't conflict with the IA32 built-
      * in protected-mode interrupts.  (Each PIC services 7 interrupts, and

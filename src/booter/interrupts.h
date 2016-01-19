@@ -42,4 +42,3 @@ static inline void enable_interrupts(void) {
 
 
 #endif /* INTERRUPTS_H */
-
