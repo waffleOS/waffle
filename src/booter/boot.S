@@ -44,8 +44,6 @@ boot_start:
 	mov	$STR_LOADING, %si
 	call	print_str
 
-
-
 	# Load the remainder of the program into memory using int 13h
 	# "Extended Read Operation."  If it fails, jump to boot_fail.
 
@@ -59,8 +57,8 @@ boot_start:
     push $0 
     push $0
     push $1      # Least significant word of sector index
-    push $0x2000 # Offset of buffer.
-    push $0      # Segment of buffer.
+    push $0x2000 # Buffer address.
+    push $0     
     push $10     # Number of 512-byte sectors to read.
     push $0x10   # Size of packet, 16 bytes.
 
@@ -74,16 +72,6 @@ boot_start:
 	mov	$STR_LOADED, %si
 	call	print_str
 
-	#---------------------------------------------------------------------
-	# TODO:  If you want to do anything else with the computer hardware
-	#        using the BIOS, here is the place to do it.  After this we
-	#        will transition into 32-bit protected mode, and the BIOS will
-	#        no longer be available to use.
-	#
-	#        REMOVE THIS COMMENT BLOCK WHEN YOU WRITE THIS CODE.
-	#        (OR IF YOU DECIDE YOU DON'T WANT TO PUT ANYTHING HERE.)
-	#---------------------------------------------------------------------
-
 	#=====================================================================
 	# Next, set up for transition from 16-bit real mode to 32-bit
 	# protected mode.  All we strictly need for this is a Global
@@ -92,45 +80,6 @@ boot_start:
 
 start_protected:
 
-	#---------------------------------------------------------------------
-	# TODO:  Switch from real mode into protected mode.  The process is
-	#        straightforward:
-	#
-	#        1)  Disable interrupts, since any interrupt during this
-	#            process would demolish us.  (We don't turn interrupts
-	#            back on until we are safely in our C program, and have
-	#            set up an Interrupt Descriptor Table.)
-	#
-	#        2)  Set the Global Descriptor Table Register (GDTR) to our
-	#            simple Global Descriptor Table specified at the end of
-	#            the boot-loader.  You will need to write it like this,
-	#            since we are still in 16-bit real mode:
-	#
-	#            data32 addr32 lgdt gdtdesc
-	#
-	#            (We need a data32 prefix to ensure that all 32 bits of
-	#            the GDT descriptor are loaded; default is to load only
-	#            24 bits.  The CPU doesn't need an addr32 prefix but ELF
-	#            doesn't do 16-bit relocations.)
-	#
-	#        3)  Turn on protected mode by modifying Control Register cr0.
-	#            See IA32 Manual Volume 3A, Section 2.5 for details of
-	#            which bit(s) to set.  Don't turn on paging - we don't
-	#            need it!  Also, you should not modify any other bits in
-	#            cr0:  read it, OR in the appropriate bit(s), then write
-	#            it back.
-	#
-	#            You should use the constants in the boot.h header file
-	#            for this step, to make your code more readable.
-	#
-	#        See also IA32 Manual Volume 3A, Section 8.9.1 for the general
-	#        overview.  (We only do the parts that are relevant to our
-	#        needs in this project!)
-	#
-	#        REMOVE THIS COMMENT BLOCK WHEN YOU WRITE THIS CODE.  (FEEL
-	#        FREE TO INCORPORATE ANY OF THE ABOVE COMMENTS INTO YOUR CODE!)
-	#---------------------------------------------------------------------
-    
     cli                        # Disable interrupts.
     data32 addr32 lgdt gdtdesc # Set up Global Descriptor Table Register.
     mov %cr0, %eax             # Read in Control Register 0.
@@ -167,28 +116,8 @@ call_c_entry:
 	cld			# C code expects this...
 	movl $0, %ebp		# Null-terminate the program's backtrace
 
-	#---------------------------------------------------------------------
-	# TODO:  Call the entry-point of the C program!  The program is
-	#        compiled and linked into an ELF file, so the file's ELF
-	#        header will specify the entry-point into the program.  See
-	#        the e_entry field; it is a 32-bit value.
-	#
-	#        The ELF-header is the very first data-structure in the data
-	#        that was loaded by the boot-loader, so the e_entry field
-	#        will be at a fixed offset from the start of the file data.
-	#
-	#        You will need to use an indirect call, where the address to
-	#        call is in a register.  The format is:  call *%somereg
-	#
-	#        Don't forget that you are calling a C function, so follow
-	#        cdecl!
-	#
-	#        REMOVE THIS COMMENT BLOCK WHEN YOU WRITE THIS CODE.  (FEEL
-	#        FREE TO INCORPORATE ANY OF THE ABOVE COMMENTS INTO YOUR CODE!)
-	#---------------------------------------------------------------------
-    mov PROGRAM_BASE_ADDR + ELF_E_ENTRY, %eax 
-    # mov $0x20094, %eax;
-    call *%eax
+    mov PROGRAM_BASE_ADDR + ELF_E_ENTRY, %eax # Get pointer to entry point.
+    call *%eax                                # Call entry-point of game.
 
 	#=====================================================================
 	# The rest of this file contains helper functions for the 16-bit
