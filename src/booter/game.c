@@ -25,6 +25,12 @@ movePaddle(int x, int y, Player *p) {
     p->paddle_x = x;
     p->paddle_y = y;
 }
+
+void welcome_screen() {
+    printString(20, 10, "Welcome to Pong!");
+
+}
+
 /* This is the entry-point for the game! */
 void c_start(void) {
     /* TODO:  You will need to initialize various subsystems here.  This
@@ -46,6 +52,7 @@ void c_start(void) {
      }
 
      setBackground(RED);
+     welcome_screen();
 
      init_interrupts();
      init_timer();
