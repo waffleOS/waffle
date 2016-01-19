@@ -195,7 +195,9 @@ void init_interrupts(void) {
          IRQ_set_mask(i);
      }
 
-     //IRQ_clear_mask(0);
+     /* 0 is the IRQ number for the timer. */
+     IRQ_clear_mask(0); 
+     /* 1 is the IRQ number for the keyboard. */
      IRQ_clear_mask(1);
 
     /* Remap the Programmable Interrupt Controller to deliver its interrupts
@@ -237,5 +239,12 @@ void install_interrupt_handler(int num, void *handler) {
      interrupt_descriptor_table[num].offset_15_0 = ((unsigned int) handler << 16) >> 16;
      interrupt_descriptor_table[num].offset_31_16 = (unsigned int) handler >> 16;
      interrupt_descriptor_table[num].selector = SEL_CODESEG;
-     interrupt_descriptor_table[num].type_attr = 0;
+
+     /*
+      * Set the type_attr to indicate an interrupt gate.
+      * 1------- Segment present flag.
+      * -00----- Descriptor Privilege Level (0 allows anything to invoke)
+      * ---01110 Interrupt Gate signature.
+      */
+     interrupt_descriptor_table[num].type_attr = 0x8E;
 }
