@@ -22,3 +22,5 @@
 #define SEL_CODESEG       0x08    /* Code selector. */
 #define SEL_DATASEG       0x10    /* Data selector. */
 
+/* ELF Offset values. */ 
+#define ELF_E_ENTRY       16 + 8 /* Offset of e_entry */
