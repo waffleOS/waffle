@@ -195,8 +195,8 @@ void init_interrupts(void) {
          IRQ_set_mask(i);
      }
 
-     IRQ_clear_mask(KEYBOARD_INTERRUPT);
-     IRQ_clear_mask(TIMER_INTERRUPT);
+     //IRQ_clear_mask(0);
+     IRQ_clear_mask(1);
 
     /* Remap the Programmable Interrupt Controller to deliver its interrupts
      * to 0x20-0x33 (32-45), so that they don't conflict with the IA32 built-
