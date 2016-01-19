@@ -35,12 +35,6 @@ void init_video(void) {
      background_color = BLACK;
      setBackground(background_color);
      clearForeground();
-
-     //int i;
-     //for(i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH * 2; i += 2) {
-         //setPixel(i/2,i/2,WHITE,'H');
-     	//*((char *) VIDEO_BUFFER + i) = 'H';
-     //}
 }
 
 /* Given an x y coordinate, a foreground color, and a value, sets that
