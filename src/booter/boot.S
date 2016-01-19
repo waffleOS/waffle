@@ -44,12 +44,32 @@ boot_start:
 	mov	$STR_LOADING, %si
 	call	print_str
 
-	#---------------------------------------------------------------------
-	# TODO:  Load the remainder of the program into memory using int 13h
-	#        "Extended Read Operation."  If it fails, jump to boot_fail.
-	#
-	#        REMOVE THIS COMMENT BLOCK WHEN YOU WRITE THIS CODE.
-	#---------------------------------------------------------------------
+
+
+	# Load the remainder of the program into memory using int 13h
+	# "Extended Read Operation."  If it fails, jump to boot_fail.
+
+    # Prepare for extended read-sector from disk.
+    mov $0x42, %ah
+
+    # Set up Disk Address Packet on the stack.
+    # Push one 16-bit word at a time, backwards, most significant word
+    # at a time.
+    push $0
+    push $0 
+    push $0
+    push $1      # Least significant word of sector index
+    push $0      # Offset of buffer.
+    push $0x2000 # Segment of buffer.
+    push $10     # Number of 512-byte sectors to read.
+    push $0x10   # Size of packet, 16 bytes.
+
+    # Set %si to point to the Disk Address Packet on the stack.
+    mov %sp, %si
+    int $0x13
+
+    # If the extended read fails, jump to boot_fail.
+    jc boot_fail
 
 	mov	$STR_LOADED, %si
 	call	print_str
@@ -110,6 +130,12 @@ start_protected:
 	#        REMOVE THIS COMMENT BLOCK WHEN YOU WRITE THIS CODE.  (FEEL
 	#        FREE TO INCORPORATE ANY OF THE ABOVE COMMENTS INTO YOUR CODE!)
 	#---------------------------------------------------------------------
+    
+    cli                        # Disable interrupts.
+    data32 addr32 lgdt gdtdesc # Set up Global Descriptor Table Register.
+    mov %cr0, %eax             # Read in Control Register 0.
+    or CR0_PE, %eax            # Set Protection Enable.
+    mov %eax, %cr0             # Now in protected mode.
 
 	# We're now in protected mode, but still in a 16-bit segment.  The
 	# CPU still has the real-mode code segment cached in %cs's segment
@@ -160,6 +186,9 @@ call_c_entry:
 	#        REMOVE THIS COMMENT BLOCK WHEN YOU WRITE THIS CODE.  (FEEL
 	#        FREE TO INCORPORATE ANY OF THE ABOVE COMMENTS INTO YOUR CODE!)
 	#---------------------------------------------------------------------
+    mov PROGRAM_BASE_ADDR + ELF_E_ENTRY, %eax 
+    # mov $0x20094, %eax;
+    call *%eax
 
 	#=====================================================================
 	# The rest of this file contains helper functions for the 16-bit
