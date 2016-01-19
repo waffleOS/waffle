@@ -8,6 +8,7 @@ void c_start(void) {
      */
 
      setPixel(0,0,2,"H");
+     setBackground(RED);
 
     /* Loop forever, so that we don't fall back into the bootloader code. */
     while (1) {}
