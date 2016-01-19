@@ -22,6 +22,7 @@
  * See http://wiki.osdev.org/PS/2_Keyboard for details.
  */
 #define KEYBOARD_PORT 0x60
+#define QUEUE_SIZE 1024
 
 
 /* TODO:  You can create static variables here to hold keyboard state.
@@ -36,6 +37,14 @@
  *        so that nothing gets mangled...
  */
 
+ typedef struct Queue {
+     int headIndex;
+     int tailIndex;
+     char values[QUEUE_SIZE];
+ } Queue;
+
+ Queue q;
+
 
 void init_keyboard(void) {
     /* TODO:  Initialize any state required by the keyboard handler. */
@@ -45,3 +54,8 @@ void init_keyboard(void) {
      */
 }
 
+void initializeQueue(Queue q)
+{
+    q.headIndex = 0;
+    q.tailIndex = 0;
+}
