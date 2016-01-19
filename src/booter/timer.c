@@ -75,7 +75,7 @@ void init_timer(void) {
 
 void timerHandler(void)
 {
-    /*
+
     if (x < 20)
     {
         x++;
@@ -90,7 +90,7 @@ void timerHandler(void)
     }
     else {
         y = 0;
-    } */
-    setPixel(0, 0, 20, "X");
+    }
+    setPixel(x, y, 1, "X");
 
 }

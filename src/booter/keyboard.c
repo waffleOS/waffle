@@ -47,7 +47,7 @@
      int full;
  } Queue;
 
- void initializeQueue(Queue * q);
+ void initializeQueue(volatile Queue * q);
 
 
 
@@ -66,7 +66,7 @@ void init_keyboard(void) {
      install_interrupt_handler(KEYBOARD_INTERRUPT, keyboard_handler);
 }
 
-void initializeQueue(Queue * q)
+void initializeQueue(volatile Queue * q)
 {
     q->headIndex = 0;
     q->tailIndex = 0;
@@ -74,17 +74,17 @@ void initializeQueue(Queue * q)
     q->full = 0;
 }
 
-int isEmpty(Queue * q)
+int isEmpty(volatile Queue * q)
 {
     return q->empty;
 }
 
-int isFull(Queue * q)
+int isFull(volatile Queue * q)
 {
     return q->full;
 }
 
-void enqueue(Queue * q, char scan_code)
+void enqueue(volatile Queue * q, char scan_code)
 {
     while (isFull(q))
     {
