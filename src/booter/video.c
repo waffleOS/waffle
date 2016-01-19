@@ -34,6 +34,7 @@ void init_video(void) {
      */
      background_color = BLACK;
      setBackground(background_color);
+     clearForeground();
 
      //int i;
      //for(i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH * 2; i += 2) {
@@ -64,13 +65,13 @@ void clearForeground(void) {
 /* Sets the background color of everything in the video buffer and redraws
  * all coordinates with this new background.
  */
-void setBackground(char color) {
-    background_color = color;
+void setBackground(char bcolor) {
+    background_color = bcolor;
     int i;
     for (i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH * 2; i += 2)
     {
         char color = *((char *) VIDEO_BUFFER + i + 1);
-        *((char *) VIDEO_BUFFER + i + 1) = ((color << 4) >> 4) | (color << 4);
+        *((char *) VIDEO_BUFFER + i + 1) = ((color << 4) >> 4) | (bcolor << 4);
     }
 
 }
