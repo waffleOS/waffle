@@ -1,4 +1,6 @@
+#include "interrupts.h"
 #include "video.h"
+
 /* This is the entry-point for the game! */
 void c_start(void) {
     /* TODO:  You will need to initialize various subsystems here.  This
@@ -20,6 +22,11 @@ void c_start(void) {
      }
      //setPixel(0,0,GREEN,'0');
      //setPixel(10,10,BLUE,'i');
+
+     init_interrupts();
+     init_timer();
+     init_keyboard();
+     enable_interrupts();
 
     /* Loop forever, so that we don't fall back into the bootloader code. */
     while (1) {}
