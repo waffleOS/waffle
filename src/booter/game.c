@@ -12,16 +12,14 @@ void c_start(void) {
      int i;
      for (i = 0; i < SCREEN_HEIGHT; i++)
      {
-         setPixel(0,i,GREEN,'0' + i);
+         setPixel(0,i,GREEN,'0' + i % 10);
      }
      for (i = 0; i < SCREEN_WIDTH; i++)
      {
-         setPixel(i,0,GREEN,'0' + i);
+         setPixel(i,0,GREEN,'0' + i % 10);
      }
 
      setBackground(RED);
-     //setPixel(0,0,GREEN,'0');
-     //setPixel(10,10,BLUE,'i');
 
     /* Loop forever, so that we don't fall back into the bootloader code. */
     while (1) {}
