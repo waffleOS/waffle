@@ -1,7 +1,7 @@
 #include "interrupts.h"
 #include "video.h"
 #include "game.h"
-
+#include "keyboard.h"
 
 #define PADDLE_LENGTH 3
 #define PADDLE_CHAR 186
@@ -42,6 +42,7 @@ void initPlayers() {
     int i;
     for (i = 0; i < NUM_PLAYERS; i++) {
         players[i].score = 0;
+        playerSpeeds[i] = 0;
     }
     movePaddle(1, 20, players);
     movePaddle(78, 20, players + 1);
@@ -98,8 +99,22 @@ void updateBall() {
     setPixel(pong_ball.x, pong_ball.y, WHITE, (char) BALL_CHAR);
 }
 
+void updatePlayers(void)
+{
+    int i;
+    for (i = 0; i < NUM_PLAYERS; i++)
+    {
+        movePaddle(players[i].paddle_x, players[i].paddle_y + playerSpeeds[i], &(players[i]));
+    }
+}
+
 /* Moves the paddle of a given player. */
 void movePaddle(int x, int y, Player *p) {
+
+    if (y < 0 || y + PADDLE_LENGTH > SCREEN_HEIGHT)
+    {
+        return;
+    }
     int i;
 
     // Remove previous paddle position
@@ -158,6 +173,42 @@ void getKey(void)
     if (keyPressed)
     {
         unsigned int scanCodeValue = (unsigned int) scan_code;
+        switch (scanCodeValue)
+        {
+            case E_DOWN:
+                playerSpeeds[0] = -1;
+                break;
+            case E_UP:
+                playerSpeeds[0] = 0;
+                break;
+            case D_DOWN:
+                playerSpeeds[0] = 1;
+                break;
+            case D_UP:
+                playerSpeeds[0] = 0;
+                break;
+            case I_DOWN:
+                playerSpeeds[1] = -1;
+                break;
+            case I_UP:
+                playerSpeeds[1] = 0;
+                break;
+            case K_DOWN:
+                playerSpeeds[1] = 1;
+                break;
+            case K_UP:
+                playerSpeeds[1] = 0;
+                break;
+            case SPACE_DOWN:
+                clear_welcome_screen();
+                initBall(0);
+                break;
+
+
+
+        }
+        /*
+        unsigned int scanCodeValue = (unsigned int) scan_code;
         int i;
         unsigned int divisor = 100;
         for (i = 0; i < 3; i++)
@@ -167,7 +218,7 @@ void getKey(void)
             divisor /= 10;
             setPixel(40 + i, 10, BLACK, '0' + digit);
         }
-        //setPixel(40,10,BLACK,scan_code);
+        */
     }
 }
 
@@ -180,7 +231,6 @@ void c_start(void) {
 
     /* Add players and balls. */
     initPlayers();
-    initBall(0);
 
     /* Set up and enable interrupts. */
     init_interrupts();

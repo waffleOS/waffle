@@ -24,6 +24,7 @@ typedef struct {
 /* Global variables. */
 game_state pong_state = WELCOME;
 Player players[NUM_PLAYERS];
+int playerSpeeds[NUM_PLAYERS];
 Ball pong_ball;
 
 

@@ -74,6 +74,7 @@ void timerHandler(void) {
 
     if (time_count == 0) {
         updateBall();
+        updatePlayers();
         handleCollisions();
     }
 }
