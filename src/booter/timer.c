@@ -61,7 +61,15 @@ void init_timer(void) {
     install_interrupt_handler(TIMER_INTERRUPT, timer_handler);
 }
 
+/**
+ * Moves ball and handles all collisions with paddles and walls. 
+ * Uses API exposed by game.h. 
+ */
 void timerHandler(void) {
+    /**
+     * Scale timer based on 100 Hz for easier math. 
+     * and adjustable velocity.
+     */
     time_count = (time_count + 1) % 5;
 
     if (time_count == 0) {
