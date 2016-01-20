@@ -62,12 +62,12 @@ void init_timer(void) {
 }
 
 /**
- * Moves ball and handles all collisions with paddles and walls. 
- * Uses API exposed by game.h. 
+ * Moves ball and handles all collisions with paddles and walls.
+ * Uses API exposed by game.h.
  */
 void timerHandler(void) {
     /**
-     * Scale timer based on 100 Hz for easier math. 
+     * Scale timer based on 100 Hz for easier math.
      * and adjustable velocity.
      */
     time_count = (time_count + 1) % 5;

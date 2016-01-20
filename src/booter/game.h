@@ -1,4 +1,4 @@
-/** 
+/**
  * game.h: Game data structures and global variables.
  */
 #define TRUE  1
@@ -15,7 +15,7 @@ typedef struct Player {
 } Player;
 
 typedef struct {
-    int x; 
+    int x;
     int y;
     int v_x;
     int v_y;
@@ -28,9 +28,11 @@ Ball pong_ball;
 
 
 /* Mutator functions. */
-void initBall(int player_num); 
+void initBall(int player_num);
 void updateBall();
-void movePaddle(int x, int y, Player *p); 
+void movePaddle(int x, int y, Player *p);
+void updateGame(void);
+void getKey(void);
 
 /* Check and handle all collisions. */
 void handleCollisions();

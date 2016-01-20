@@ -84,7 +84,7 @@ int isFull(volatile Queue * q)
     return q->full;
 }
 
-void enqueue(volatile Queue * q, char scan_code)
+void enqueue_q(volatile Queue * q, char scan_code)
 {
     while (isFull(q))
     {
@@ -98,27 +98,34 @@ void enqueue(volatile Queue * q, char scan_code)
     {
         q->full = 1;
     }
+    q->empty = 0;
 }
 
-char dequeue(volatile Queue * q)
+char dequeue_q(volatile Queue * q)
 {
     while (isEmpty(q))
     {
 
     }
-
+    disable_interrupts();
     char scan_code = q->values[q->headIndex++];
     q->headIndex %= QUEUE_SIZE;
     if (q->headIndex == q->tailIndex)
     {
         q->empty = 1;
     }
-
+    q->full = 0;
+    enable_interrupts();
     return scan_code;
+}
+
+char dequeue()
+{
+    return dequeue_q(&q);
 }
 
 void keyboardHandler(void)
 {
     unsigned char scan_code = inb(KEYBOARD_PORT);
-    enqueue(&q, scan_code);
+    enqueue_q(&q, scan_code);
 }
