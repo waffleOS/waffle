@@ -101,14 +101,14 @@ void enqueue_q(volatile Queue * q, char scan_code)
     q->empty = 0;
 }
 
-char dequeue_q(volatile Queue * q)
+int dequeue_q(volatile Queue * q, char * scan_code)
 {
-    while (isEmpty(q))
+    if (isEmpty(q))
     {
-
+        return 0;
     }
     disable_interrupts();
-    char scan_code = q->values[q->headIndex++];
+    *scan_code = q->values[q->headIndex++];
     q->headIndex %= QUEUE_SIZE;
     if (q->headIndex == q->tailIndex)
     {
@@ -116,12 +116,12 @@ char dequeue_q(volatile Queue * q)
     }
     q->full = 0;
     enable_interrupts();
-    return scan_code;
+    return 1;
 }
 
-char dequeue()
+int dequeue(char * scan_code)
 {
-    return dequeue_q(&q);
+    return dequeue_q(&q, scan_code);
 }
 
 void keyboardHandler(void)

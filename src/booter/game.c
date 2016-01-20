@@ -153,9 +153,12 @@ void updateGame(void)
 
 void getKey(void)
 {
-    char scan_code = dequeue();
-    //char scan_code = 'H';
-    setPixel(40,10,BLACK,scan_code);
+    char scan_code;
+    int keyPressed = dequeue(&scan_code);
+    if (keyPressed)
+    {
+        setPixel(40,10,BLACK,scan_code);
+    }
 }
 
 /* This is the entry-point for the game! */
