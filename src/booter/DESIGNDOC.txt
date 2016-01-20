@@ -69,6 +69,8 @@ and then calls the c_start() entry point to get the game started.
 
 >> A2: In 25-30 words or less, how does the user interact with the program?
 >> What are the controls?  What should the user try to do?
+The game is Pong. 2 players control vertical paddles that bounce a ball
+back and forth like in ping-pong.
 
 ---- DATA STRUCTURES ----
 
@@ -76,6 +78,12 @@ and then calls the c_start() entry point to get the game started.
 >> perform its operations.  Don't focus on state managed within interrupt
 >> handlers; we will look at that later.  Rather, focus on state that is
 >> part of the game implementation itself.
+The game.h file contains the global variables for the game. The interrupt
+handlers interface with these variables using the mutator functions
+defined. The Player struct tracks the score and paddle position 
+for each player, and the Ball struct tracks the ball's x/y position and 
+x/y velocity. Game.c initializes these global variables and keeps
+printing the score in an infinite loop (so the ball doesn't erase it).
 
 ---- SYNCHRONIZATION ----
 
@@ -88,6 +96,9 @@ and then calls the c_start() entry point to get the game started.
 
 >> A5: Would you say your program relies on polling or busy-waiting anywhere
 >> to accomplish its tasks?  If so, what tasks?
+The program polls to print the score, so it is not erased when the ball
+passes through. Ultimately, there must be a game loop that is just jumping
+and waiting for interrupts, so we simply add a task to do during this time.
 
 ---- RATIONALE ----
 
