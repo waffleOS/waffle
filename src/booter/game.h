@@ -1,6 +1,9 @@
 /**
  * game.h: Game data structures and global variables.
  */
+#ifndef GAME_H
+#define GAME_H 
+
 #define TRUE  1
 #define FALSE 0
 
@@ -37,3 +40,5 @@ void getKey(void);
 
 /* Check and handle all collisions. */
 void handleCollisions();
+
+#endif /* GAME_H */

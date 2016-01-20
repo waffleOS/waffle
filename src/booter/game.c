@@ -19,6 +19,8 @@
  * start on (0 for left and 1 for right player).
  */
 void initBall(int player_num) {
+    clearPixel(pong_ball.x, pong_ball.y);
+
     switch (player_num) {
         case 0:
             pong_ball.x = 30;
@@ -231,6 +233,10 @@ void c_start(void) {
 
     /* Add players and balls. */
     initPlayers();
+    pong_ball.x = 30; 
+    pong_ball.y = 20;
+    pong_ball.v_x = 0;
+    pong_ball.v_y = 0;
 
     /* Set up and enable interrupts. */
     init_interrupts();
