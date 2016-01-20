@@ -100,7 +100,7 @@ void enqueue(volatile Queue * q, char scan_code)
     }
 }
 
-char dequeue(Queue * q)
+char dequeue(volatile Queue * q)
 {
     while (isEmpty(q))
     {
