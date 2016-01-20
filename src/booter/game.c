@@ -15,7 +15,7 @@ void initBall(int player_num) {
             pong_ball.x = 30;
             pong_ball.y = 20;
             pong_ball.v_x = -1;
-            pong_ball.v_y = 0;
+            pong_ball.v_y = 1;
             break;
         case 1:
         default:
@@ -32,7 +32,23 @@ void initBall(int player_num) {
 void updateBall() { 
     clearPixel(pong_ball.x, pong_ball.y);
     pong_ball.x += pong_ball.v_x;
+    if (pong_ball.x < 0) {
+        pong_ball.x = 0;
+        pong_ball.v_x *= -1;
+    }
+    else if (pong_ball.x >= SCREEN_WIDTH) {
+        pong_ball.x = SCREEN_WIDTH - 1;
+        pong_ball.v_x *= -1;
+    }
     pong_ball.y += pong_ball.v_y;
+    if (pong_ball.y < 0) { 
+        pong_ball.y = 0;
+        pong_ball.v_y *= -1;
+    }
+    else if (pong_ball.y >= SCREEN_HEIGHT) {
+        pong_ball.y = SCREEN_HEIGHT - 1;
+        pong_ball.v_y *= -1;
+    }
     setPixel(pong_ball.x, pong_ball.y, WHITE, (char) BALL_CHAR);
 }
 
@@ -67,7 +83,9 @@ void handleCollisions() {
         if (pong_ball.x == players[i].paddle_x && 
             pong_ball.y >= players[i].paddle_y &&
             pong_ball.y < players[i].paddle_y + PADDLE_LENGTH) {
-            pong_ball.v_x = -pong_ball.v_x;
+            setPixel(pong_ball.x, pong_ball.y, GREEN, (char) PADDLE_CHAR);
+            pong_ball.v_x *= -1;
+            pong_ball.x += pong_ball.v_x;
         }
     }
     

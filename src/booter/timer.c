@@ -76,10 +76,11 @@ void init_timer(void) {
 
 void timerHandler(void)
 {
-    time_count = (time_count + 1) % 10;
+    time_count = (time_count + 1) % 5;
 
     if (time_count == 0) {
         updateBall();
+        handleCollisions();
     }
 
 
