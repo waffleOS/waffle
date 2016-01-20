@@ -48,8 +48,6 @@
  *        compiler knows they can be changed by exceptional control flow.
  */
 int time_count = 0;
-int x = 0;
-int y = 0;
 
 void init_timer(void) {
 
