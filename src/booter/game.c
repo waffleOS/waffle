@@ -153,11 +153,21 @@ void updateGame(void)
 
 void getKey(void)
 {
-    char scan_code;
+    unsigned char scan_code;
     int keyPressed = dequeue(&scan_code);
     if (keyPressed)
     {
-        setPixel(40,10,BLACK,scan_code);
+        unsigned int scanCodeValue = (unsigned int) scan_code;
+        int i;
+        unsigned int divisor = 100;
+        for (i = 0; i < 3; i++)
+        {
+            unsigned int digit = scanCodeValue / divisor;
+            scanCodeValue %= divisor;
+            divisor /= 10;
+            setPixel(40 + i, 10, BLACK, '0' + digit);
+        }
+        //setPixel(40,10,BLACK,scan_code);
     }
 }
 
