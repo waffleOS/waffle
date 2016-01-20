@@ -1,15 +1,13 @@
 #include "interrupts.h"
 #include "video.h"
+#include "game.h"
 
-typedef struct Player {
-    int paddle_x;
-    int paddle_y;
-    int score;
-} Player;
 
 #define PADDLE_LENGTH 3
+#define WELCOME_X 25
+#define WELCOME_Y 12
 
-movePaddle(int x, int y, Player *p) {
+void movePaddle(int x, int y, Player *p) {
     int i;
 
     // Remove previous paddle position
@@ -26,8 +24,11 @@ movePaddle(int x, int y, Player *p) {
     p->paddle_y = y;
 }
 
-void welcome_screen() {
-    printString(20, 10, "Welcome to Pong!");
+void show_welcome_screen() {
+    printString(WELCOME_X, WELCOME_Y, "Welcome to Pong!");
+    printString(WELCOME_X, WELCOME_Y + 1, "Player 1 press E and D to move."); 
+    printString(WELCOME_X, WELCOME_Y + 2, "Player 2 press I and K to move."); 
+    printString(WELCOME_X, WELCOME_Y + 3, "Press space to start playing!");
 
 }
 
@@ -39,28 +40,29 @@ void c_start(void) {
      *        enable_interrupts() to start interrupt handling, and go on to
      *        do whatever else you decide to do!
      */
-     init_video();
-     setBackground(BLACK);
-     int i;
-     for (i = 0; i < SCREEN_HEIGHT; i++)
-     {
-         setPixel(0,i,GREEN,'0' + i % 10);
-     }
-     for (i = 0; i < SCREEN_WIDTH; i++)
-     {
-         setPixel(i,0,GREEN,'0' + i % 10);
-     }
+    init_video();
+    setBackground(BLACK);
+    int i;
+    for (i = 0; i < SCREEN_HEIGHT; i++)
+    {
+        setPixel(0,i,GREEN,'0' + i % 10);
+    }
+    for (i = 0; i < SCREEN_WIDTH; i++)
+    {
+        setPixel(i,0,GREEN,'0' + i % 10);
+    }
 
-     setBackground(RED);
-     welcome_screen();
+    setBackground(RED);
+    show_welcome_screen();
 
-     init_interrupts();
-     init_timer();
-     init_keyboard();
-     enable_interrupts();
+    init_interrupts();
+    init_timer();
+    init_keyboard();
+    enable_interrupts();
      
-     Player p1;
-     movePaddle(10, 20, &p1);
+    movePaddle(1, 20, &player1);
+    movePaddle(78, 20, &player2);
+
     /* Loop forever, so that we don't fall back into the bootloader code. */
     while (1) {}
 }
