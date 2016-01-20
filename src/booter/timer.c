@@ -47,6 +47,7 @@
  *        You should probably declare variables "volatile" so that the
  *        compiler knows they can be changed by exceptional control flow.
  */
+int time_count = 0;
 int x = 0;
 int y = 0;
 
@@ -75,22 +76,13 @@ void init_timer(void) {
 
 void timerHandler(void)
 {
+    time_count = (time_count + 1) % 5;
 
-    if (x < 20)
-    {
-        x++;
+    if (time_count == 0) {
+        updateBall();
+        handleCollisions();
     }
-    else
-    {
-        x = 0;
-    }
-    if (y < 20)
-    {
-        y++;
-    }
-    else {
-        y = 0;
-    }
-    setPixel(x, y, 1, "X");
+
+
 
 }

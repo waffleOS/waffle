@@ -8,17 +8,18 @@
 
 >> Fill in the names and email addresses of your group members.
 
-FirstName LastName <email@domain.example>
-FirstName LastName <email@domain.example>
-FirstName LastName <email@domain.example>
+Rahul Bachal <rbachal@caltech.edu>
+Robert Eng <reng@caltech.edu>
+David Qu <dqu@caltech.edu>
 
->> Specify how many late tokens you are using on this assignment:  
+>> Specify how many late tokens you are using on this assignment: 0. 
 
 >> What is the Git repository and commit hash for your submission?
    (You only need to include the commit-hash in the file you submit
    on Moodle.)
 
-   Repository URL:  
+   Repository URL: /cs/courses/cs124/teams/waffle.git
+                   https://github.com/waffleOS/waffle
    commit ...
 
 ---- PRELIMINARIES ----
@@ -41,9 +42,17 @@ which parts.
 
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
+   
+   Rahul:
+   Robert:
+   David:
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
+
+Rahul: 
+Robert:
+David: Bootloader, debugging interrupts, 
 
 Note that this design document is a bit long.  Most of the questions can be
 answered pretty briefly.  Don't feel a need to write a long answer if it is
@@ -55,6 +64,8 @@ not required by the question.
 ---- ALGORITHMS ----
 
 >> A1: In 25-30 words or less, what does your PC booter do?
+It steps up the stack, loads the C program, enters protected mode, 
+and then calls the c_start() entry point to get the game started.
 
 >> A2: In 25-30 words or less, how does the user interact with the program?
 >> What are the controls?  What should the user try to do?
@@ -101,18 +112,24 @@ not required by the question.
 >> B1: How did you decide to store the Disk Address Packet?  Does the
 >> memory occupied by the DAP get reclaimed after it is used?  If not,
 >> why not?
+The DAP was stored on the stack. The memory was not reclaimed because
+it was only 16 bytes and the stack has plenty of space (there's no
+heap to run into).
 
 >> B2: Does your bootloader pass any information to the main program?
 >> (If not, just say no.)  If so, what information is passed, and how
 >> is it passed?
+No.
 
 ---- ALGORITHMS ----
 
 >> B3: Briefly describe how your bootloader brings your program into
 >> memory.  Does it perform one large load, or multiple smaller loads?
+It uses the extended read sector system call to read 512 byte sectors.
 
 >> B4: Did you add any BIOS calls to your bootloader to prepare for your
 >> main program?  (i.e. things that aren't available in protected mode)
+No.
 
 			  VIDEO SUBSYSTEM
 			  ===============

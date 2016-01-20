@@ -75,3 +75,15 @@ void setBackground(char bcolor) {
 void clearPixel(int x, int y) {
 	*((char *)VIDEO_BUFFER + MAP_XY_TO_INDEX(x, y)) = ' ';
 }
+
+/* 
+ * Given an x y coordinate, writes a string to the coordinate.
+ * (Doesn't check for out of bounds). 
+ */
+void printString(int x, int y, char *string) {
+    int i = 0;
+    while (string[i] != '\0') { 
+        setPixel(x + i, y, WHITE, string[i]);
+        i++;
+    }
+}
