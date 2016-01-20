@@ -41,13 +41,8 @@
 #define PIT_CHAN2_DATA 0x42
 #define PIT_MODE_CMD   0x43
 
-
-/* TODO:  You can create static variables here to hold timer state.
- *
- *        You should probably declare variables "volatile" so that the
- *        compiler knows they can be changed by exceptional control flow.
- */
-int time_count = 0;
+/* Timer module shared (non-global) variables. */
+static volatile int time_count = 0;
 
 void init_timer(void) {
 
@@ -63,24 +58,14 @@ void init_timer(void) {
     outb(PIT_CHAN0_DATA, 0x9c);
     outb(PIT_CHAN0_DATA, 0x2e);
 
-    /* TODO:  Initialize other timer state here. */
-
-    /* TODO:  You might want to install your timer interrupt handler
-     *        here as well.
-     */
-
-     install_interrupt_handler(TIMER_INTERRUPT, timer_handler);
+    install_interrupt_handler(TIMER_INTERRUPT, timer_handler);
 }
 
-void timerHandler(void)
-{
+void timerHandler(void) {
     time_count = (time_count + 1) % 5;
 
     if (time_count == 0) {
         updateBall();
         handleCollisions();
     }
-
-
-
 }

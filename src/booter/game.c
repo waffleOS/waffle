@@ -13,6 +13,11 @@
 #define SCORE_Y 9
 #define MAX_SCORE 10
 
+/**
+ * Initials the ball.
+ * player_num indicates, which side / direction it should
+ * start on (0 for left and 1 for right player).
+ */
 void initBall(int player_num) { 
     switch (player_num) {
         case 0: 
@@ -32,6 +37,7 @@ void initBall(int player_num) {
 
 }
 
+/* Initializes the paddles and scores. */
 void initPlayers() { 
     int i;
     for (i = 0; i < NUM_PLAYERS; i++) {
@@ -42,6 +48,10 @@ void initPlayers() {
 
 }
 
+/**
+ * Clears the welcome_screen area, which is used for
+ * messages to the user (starts at WELCOME_X, WELCOME_Y). 
+ */
 void clear_welcome_screen() { 
     int i, j;
     for (i = 0; i < WELCOME_WIDTH; i++) { 
@@ -51,6 +61,10 @@ void clear_welcome_screen() {
     }
 }
 
+/**
+ * Updates the ball's position and accounts for walls
+ * and scoring.
+ */
 void updateBall() { 
     clearPixel(pong_ball.x, pong_ball.y);
     pong_ball.x += pong_ball.v_x;
@@ -84,6 +98,7 @@ void updateBall() {
     setPixel(pong_ball.x, pong_ball.y, WHITE, (char) BALL_CHAR);
 }
 
+/* Moves the paddle of a given player. */
 void movePaddle(int x, int y, Player *p) {
     int i;
 
@@ -101,6 +116,7 @@ void movePaddle(int x, int y, Player *p) {
     p->paddle_y = y;
 }
 
+/* Prints welcome screen with instructions to the player. */
 void show_welcome_screen() {
     printString(WELCOME_X, WELCOME_Y, "Welcome to Pong!");
     printString(WELCOME_X, WELCOME_Y + 1, "Player 0 press E and D to move."); 
@@ -109,8 +125,7 @@ void show_welcome_screen() {
 
 }
 
-
-
+/* Handles collisions between the ball and the paddles. */
 void handleCollisions() { 
     int i;
     for (i = 0; i < NUM_PLAYERS; i++) { 
@@ -125,6 +140,7 @@ void handleCollisions() {
     
 }
 
+/* Prints the scores of the players. */
 void printScores() { 
     setPixel(30, SCORE_Y, WHITE, '0' + players[0].score);
     setPixel(50, SCORE_Y, WHITE, '0' + players[1].score);
@@ -132,40 +148,24 @@ void printScores() {
 
 /* This is the entry-point for the game! */
 void c_start(void) {
-    /* TODO:  You will need to initialize various subsystems here.  This
-     *        would include the interrupt handling mechanism, and the various
-     *        systems that use interrupts.  Once this is done, you can call
-     *        enable_interrupts() to start interrupt handling, and go on to
-     *        do whatever else you decide to do!
-     */
+    /* Set up video module. */
     init_video();
-    setBackground(BLACK);
-    int i;
-    for (i = 0; i < SCREEN_HEIGHT; i++)
-    {
-        setPixel(0,i,GREEN,'0' + i % 10);
-    }
-    for (i = 0; i < SCREEN_WIDTH; i++)
-    {
-        setPixel(i,0,GREEN,'0' + i % 10);
-    }
-
     setBackground(RED);
     show_welcome_screen();
     
+    /* Add players and balls. */
     initPlayers();
     initBall(0);
 
+    /* Set up and enable interrupts. */
     init_interrupts();
     init_timer();
     init_keyboard();
     enable_interrupts();
      
-    
-    /* Loop forever, so that we don't fall back into the bootloader code. */
+    /* Game loop. */
     while (1) {
         printScores();
     }
 }
-
 
