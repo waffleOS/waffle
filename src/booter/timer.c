@@ -76,23 +76,12 @@ void init_timer(void) {
 
 void timerHandler(void)
 {
-    time_count = (time_count + 1) & 255;
+    time_count = (time_count + 1) % 10;
 
-    if (x < 20)
-    {
-        x++;
+    if (time_count == 0) {
+        updateBall();
     }
-    else
-    {
-        x = 0;
-    }
-    if (y < 20)
-    {
-        y++;
-    }
-    else {
-        y = 0;
-    }
-    setPixel(x, y, 1, time_count);
+
+
 
 }

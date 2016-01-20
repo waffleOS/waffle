@@ -4,8 +4,37 @@
 
 
 #define PADDLE_LENGTH 3
+#define PADDLE_CHAR 186
+#define BALL_CHAR 254
 #define WELCOME_X 25
 #define WELCOME_Y 12
+
+void initBall(int player_num) { 
+    switch (player_num) {
+        case 0: 
+            pong_ball.x = 30;
+            pong_ball.y = 20;
+            pong_ball.v_x = -1;
+            pong_ball.v_y = 0;
+            break;
+        case 1:
+        default:
+            pong_ball.x = 50;
+            pong_ball.y = 20;
+            pong_ball.v_x = 1;
+            pong_ball.v_y = 0; 
+            break;
+    }
+    setPixel(pong_ball.x, pong_ball.y, WHITE, (char) BALL_CHAR);
+
+}
+
+void updateBall() { 
+    clearPixel(pong_ball.x, pong_ball.y);
+    pong_ball.x += pong_ball.v_x;
+    pong_ball.y += pong_ball.v_y;
+    setPixel(pong_ball.x, pong_ball.y, WHITE, (char) BALL_CHAR);
+}
 
 void movePaddle(int x, int y, Player *p) {
     int i;
@@ -17,7 +46,7 @@ void movePaddle(int x, int y, Player *p) {
 
     // Draw new paddle
     for(i = 0; i < PADDLE_LENGTH; i++) {
-        setPixel(x, y + i, GREEN, (char) 186);
+        setPixel(x, y + i, GREEN, (char) PADDLE_CHAR);
     }
 
     p->paddle_x = x;
@@ -30,6 +59,18 @@ void show_welcome_screen() {
     printString(WELCOME_X, WELCOME_Y + 2, "Player 2 press I and K to move."); 
     printString(WELCOME_X, WELCOME_Y + 3, "Press space to start playing!");
 
+}
+
+void handleCollisions() { 
+    int i;
+    for (i = 0; i < NUM_PLAYERS; i++) { 
+        if (pong_ball.x == players[i].paddle_x && 
+            pong_ball.y >= players[i].paddle_y &&
+            pong_ball.y < players[i].paddle_y + PADDLE_LENGTH) {
+            pong_ball.v_x = -pong_ball.v_x;
+        }
+    }
+    
 }
 
 /* This is the entry-point for the game! */
@@ -54,15 +95,17 @@ void c_start(void) {
 
     setBackground(RED);
     show_welcome_screen();
+    
+    movePaddle(1, 20, players);
+    movePaddle(78, 20, players + 1);
+    initBall(0);
 
     init_interrupts();
     init_timer();
     init_keyboard();
     enable_interrupts();
      
-    movePaddle(1, 20, &player1);
-    movePaddle(78, 20, &player2);
-
+    
     /* Loop forever, so that we don't fall back into the bootloader code. */
     while (1) {}
 }
