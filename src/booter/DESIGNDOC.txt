@@ -45,14 +45,14 @@ which parts.
    
    Rahul:
    Robert:
-   David:
+   David: 10 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
 
 Rahul: 
 Robert:
-David: Bootloader, debugging interrupts, 
+David: Bootloader, debugging interrupts, basic collision physics/ball movement. 
 
 Note that this design document is a bit long.  Most of the questions can be
 answered pretty briefly.  Don't feel a need to write a long answer if it is
@@ -70,7 +70,8 @@ and then calls the c_start() entry point to get the game started.
 >> A2: In 25-30 words or less, how does the user interact with the program?
 >> What are the controls?  What should the user try to do?
 The game is Pong. 2 players control vertical paddles that bounce a ball
-back and forth like in ping-pong.
+back and forth like in ping-pong. Player 0 can move the left paddle up and
+down with E and D while Player 1 can move the right paddle with I and K.
 
 ---- DATA STRUCTURES ----
 
@@ -93,6 +94,10 @@ printing the score in an infinite loop (so the ball doesn't erase it).
 >> of operations or updates that is performed within your program?
 >> Similarly, when a keyboard interrupt occurs, what does your program do
 >> in response?
+When a timer interrupt occurs, the game advances one time step, and then
+updates the player states, the ball state, and handles any collisions.
+When a keyboard interrupt happens, a keycode is buffered into a queue, 
+which is processed in the game loop.
 
 >> A5: Would you say your program relies on polling or busy-waiting anywhere
 >> to accomplish its tasks?  If so, what tasks?
@@ -103,17 +108,21 @@ and waiting for interrupts, so we simply add a task to do during this time.
 ---- RATIONALE ----
 
 >> A6: Why did you choose the project you did?
+It was a fun, but relatively simple multiplayer game to implement.
 
 >> A7: Did your choice of project affect any of the specific implementation
 >> details of the various subsystems that you needed to use?  (For example,
 >> if you implemented a scrolling game, did you implement specialized high-
 >> performance video code to scroll the screen?)
+The physics of the game encouraged us to use the timer to update time steps
+in the game.
 
 >> A8: Did you run into any technical or resource limitations in the
 >> implementation of your program?  (For example, bootloader didn't fit,
 >> or a really useful standard library wasn't available, or you couldn't
 >> achieve the desired performance level, etc.)  If so, what steps did you
 >> take to try to overcome those limitations?
+No.
 
 			     BOOT SECTOR
 			     ===========
@@ -174,14 +183,20 @@ No.
 
 >> D1: What state does your timer subsystem manage?  Describe the variables
 >> or data structures that it maintains, and how they are used.
+It simply calls stepGame(), which updates the state of the Players and the
+Ball after one step. This is part of the game.h API.
 
 ---- ALGORITHMS ----
 
 >> D2: What abstraction does your timer code present to your main program?
 >> Briefly describe the higher-level operations you decided to implement.
+It provides the init_timer() function to set up the handler and set the
+clock defaults. The timer uses the game.h API to interface with the game.
 
 >> D3: Did you change the timer frequency from 100Hz?  If so, what did you
 >> change it to, and why?
+The interrupt rate was left at 100Hz, but a clock counter was used to scale
+speeds as needed, so the ball could move at different velocities.
 
 ---- SYNCHRONIZATION ----
 
@@ -189,6 +204,10 @@ No.
 >> for timer interrupts to generate race conditions in updating your
 >> program's global state?  If so, what steps did you take to ensure that
 >> such situations cannot occur?
+There is the potential for the timer update to happen before a keycode can
+be processed. In this case, the user will not move in time to block the 
+ball. Since this merely increases the difficulty of the game, it is left
+as a feature. There is no game breaking critical code in the timer.
 
 			KEYBOARD SUBSYSTEM
 			==================
