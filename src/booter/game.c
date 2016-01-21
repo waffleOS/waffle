@@ -45,6 +45,7 @@ void initBall(int player_num) {
             pong_ball.ball_speed = BALL_SPEED_START;
             pong_ball.exists = 1;
             break;
+        pong_ball.color = time_count % NUM_COLORS;
     }
 
 }
@@ -109,7 +110,7 @@ void updateBall() {
         pong_ball.y = SCREEN_HEIGHT - 1;
         pong_ball.v_y *= -1;
     }
-    setPixel(pong_ball.x, pong_ball.y, WHITE, (char) BALL_CHAR);
+    setPixel(pong_ball.x, pong_ball.y, pong_ball.color, (char) BALL_CHAR);
 }
 
 void updatePlayers(void)
@@ -163,6 +164,7 @@ void handleCollisions() {
             setPixel(pong_ball.x, pong_ball.y, GREEN, (char) PADDLE_CHAR);
             pong_ball.v_x *= -1;
             pong_ball.x += pong_ball.v_x;
+            pong_ball.color = time_count % NUM_COLORS;
         }
     }
 
