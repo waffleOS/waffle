@@ -69,9 +69,11 @@ not required by the question.
 
 >> A2: In 25-30 words or less, how does the user interact with the program?
 >> What are the controls?  What should the user try to do?
-    The game is Pong. 2 players control vertical paddles that bounce a ball
-    back and forth like in ping-pong. Player 0 can move the left paddle up and
-    down with E and D while Player 1 can move the right paddle with I and K.
+    The game is Pong with a twist. 2 players control vertical paddles that bounce
+    a ball back and forth like in ping-pong. Player 0 can move the left paddle up and
+    down with E and D while Player 1 can move the right paddle with I and K. There
+    is a center column of bricks that must be broken before the players can play
+    Pong with each other.
 
 ---- DATA STRUCTURES ----
 
@@ -108,7 +110,8 @@ not required by the question.
 ---- RATIONALE ----
 
 >> A6: Why did you choose the project you did?
-    It was a fun, but relatively simple multiplayer game to implement.
+    It was a fun, but relatively simple multiplayer game to implement. It also
+    has the twist of Brickbreaker.
 
 >> A7: Did your choice of project affect any of the specific implementation
 >> details of the various subsystems that you needed to use?  (For example,
