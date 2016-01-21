@@ -5,7 +5,7 @@
 
 #define PADDLE_LENGTH 3
 #define PADDLE_CHAR 186
-#define BALL_CHAR 254
+#define BALL_CHAR 79
 #define WELCOME_X 25
 #define WELCOME_Y 12
 #define WELCOME_WIDTH 35
@@ -109,6 +109,10 @@ void updateBall() {
     else if (pong_ball.y >= SCREEN_HEIGHT) {
         pong_ball.y = SCREEN_HEIGHT - 1;
         pong_ball.v_y *= -1;
+    }
+    if (pong_ball.color == getBackground())
+    {
+        setBackground((time_count + 1) % NUM_COLORS);
     }
     setPixel(pong_ball.x, pong_ball.y, pong_ball.color, (char) BALL_CHAR);
 }
