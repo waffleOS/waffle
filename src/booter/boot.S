@@ -21,7 +21,7 @@
 	# We choose 0x00020000 (2000:0000 or equivalent), just because.  This
 	# would give us hundreds of KB of memory to use, but we won't use
 	# even a fraction of that space.
-	# 
+	#
 	# At this point, %dl will be the drive number of the boot device
 	# (i.e. the disk that the bootloader # was loaded off of).
 	# This allows us to load additional data from the boot disk.
@@ -54,11 +54,11 @@ boot_start:
     # Push one 16-bit word at a time, backwards, most significant word
     # at a time.
     push $0
-    push $0 
+    push $0
     push $0
     push $1      # Least significant word of sector index
     push $0x2000 # Buffer address.
-    push $0     
+    push $0
     push $10     # Number of 512-byte sectors to read.
     push $0x10   # Size of packet, 16 bytes.
 
@@ -184,4 +184,3 @@ gdtdesc:
 	# that this is a boot sector.
 	.org BOOT_SIG_ADDR - BOOT_BASE_ADDR
 	.word 0xaa55
-

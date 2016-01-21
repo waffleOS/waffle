@@ -24,6 +24,7 @@
 
 #define SCREEN_HEIGHT 25
 #define SCREEN_WIDTH 80
+#define NUM_COLORS 16
 
 
 void init_video(void);

@@ -26,6 +26,7 @@ typedef struct {
     int v_y;
     int ball_speed;
     int exists;
+    int color;
 } Ball;
 
 /* Global variables. */
