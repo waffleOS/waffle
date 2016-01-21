@@ -52,7 +52,8 @@ void initPlayers() {
     int i;
     for (i = 0; i < NUM_PLAYERS; i++) {
         players[i].score = 0;
-        playerSpeeds[i] = 0;
+        players[i].paddle_vy_up = 0;
+        players[i].paddle_vy_down = 0;
     }
     movePaddle(1, 20, players);
     movePaddle(78, 20, players + 1);
@@ -114,7 +115,7 @@ void updatePlayers(void)
     int i;
     for (i = 0; i < NUM_PLAYERS; i++)
     {
-        movePaddle(players[i].paddle_x, players[i].paddle_y + playerSpeeds[i], &(players[i]));
+        movePaddle(players[i].paddle_x, players[i].paddle_y - players[i].paddle_vy_up + players[i].paddle_vy_down, &(players[i]));
     }
 }
 
@@ -186,28 +187,28 @@ void getKey(void)
         switch (scanCodeValue)
         {
             case E_DOWN:
-                playerSpeeds[0] = -1;
+                players[0].paddle_vy_up = 1;
                 break;
             case E_UP:
-                playerSpeeds[0] = 0;
+                players[0].paddle_vy_up = 0;
                 break;
             case D_DOWN:
-                playerSpeeds[0] = 1;
+                players[0].paddle_vy_down = 1;
                 break;
             case D_UP:
-                playerSpeeds[0] = 0;
+                players[0].paddle_vy_down = 0;
                 break;
             case I_DOWN:
-                playerSpeeds[1] = -1;
+                players[1].paddle_vy_up = 1;
                 break;
             case I_UP:
-                playerSpeeds[1] = 0;
+                players[1].paddle_vy_up = 0;
                 break;
             case K_DOWN:
-                playerSpeeds[1] = 1;
+                players[1].paddle_vy_down = 1;
                 break;
             case K_UP:
-                playerSpeeds[1] = 0;
+                players[1].paddle_vy_down = 0;
                 break;
             case SPACE_DOWN:
                 clear_welcome_screen();
@@ -241,7 +242,7 @@ void stepGame() {
         updateBall();
         handleCollisions();
     }
-    if(pong_ball.exists && pong_ball.ball_speed > 0 && 
+    if(pong_ball.exists && pong_ball.ball_speed > 0 &&
                                 time_count % BALL_SPEED_UP_INTERVAL == 0) {
         pong_ball.ball_speed--;
     }
@@ -257,7 +258,7 @@ void c_start(void) {
 
     /* Add players and balls. */
     initPlayers();
-    pong_ball.x = 30; 
+    pong_ball.x = 30;
     pong_ball.y = 20;
     pong_ball.v_x = 0;
     pong_ball.v_y = 0;

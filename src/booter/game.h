@@ -2,7 +2,7 @@
  * game.h: Game data structures and global variables.
  */
 #ifndef GAME_H
-#define GAME_H 
+#define GAME_H
 
 #define TRUE  1
 #define FALSE 0
@@ -14,6 +14,8 @@ typedef enum {WELCOME, PLAY, END} game_state;
 typedef struct Player {
     int paddle_x;
     int paddle_y;
+    int paddle_vy_up;
+    int paddle_vy_down;
     int score;
 } Player;
 
@@ -29,7 +31,6 @@ typedef struct {
 /* Global variables. */
 game_state pong_state = WELCOME;
 Player players[NUM_PLAYERS];
-int playerSpeeds[NUM_PLAYERS];
 Ball pong_ball;
 
 
