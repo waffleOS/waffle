@@ -9,7 +9,7 @@
 
 #define NUM_PLAYERS 2
 
-typedef enum {WELCOME, PLAY, END} game_state;
+typedef enum {WELCOME, PLAY, END, PAUSE} game_state;
 
 typedef struct Player {
     int paddle_x;
