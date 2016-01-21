@@ -20,7 +20,7 @@ David Qu <dqu@caltech.edu>
 
    Repository URL: /cs/courses/cs124/teams/waffle.git
                    https://github.com/waffleOS/waffle
-   commit ...
+   commit   40bff2177a4a4b4b225a39e3c74ee083c65180ec
 
 ---- PRELIMINARIES ----
 
