@@ -8,6 +8,7 @@
 #define FALSE 0
 
 #define NUM_PLAYERS 2
+#define MAX_BLOCKS 16
 
 typedef enum {WELCOME, PLAY, END, PAUSE} game_state;
 
@@ -29,11 +30,17 @@ typedef struct {
     int color;
 } Ball;
 
+typedef struct Block {
+    int x;
+    int y;
+    int hit;
+} Block;
+
 /* Global variables. */
 game_state pong_state = WELCOME;
 Player players[NUM_PLAYERS];
 Ball pong_ball;
-
+Block blocks[MAX_BLOCKS];
 
 /* Mutator functions. */
 void initBall(int player_num);

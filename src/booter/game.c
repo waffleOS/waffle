@@ -149,6 +149,37 @@ void movePaddle(int x, int y, Player *p) {
     p->paddle_y = y;
 }
 
+void drawBlock(int x, int y) {
+    setPixel(x, y, GREEN, (char) 201);
+    setPixel(x, y + 1, GREEN, (char) 204);
+    setPixel(x, y + 2, GREEN, (char) 200);
+    setPixel(x + 1, y, GREEN, (char) 187);
+    setPixel(x + 1, y + 1, GREEN, (char) 185);
+    setPixel(x + 1, y + 2, GREEN, (char) 188);
+}
+
+void removeBlock(int x, int y) {
+    clearPixel(x, y);
+    clearPixel(x, y + 1);    
+    clearPixel(x, y + 2);    
+    clearPixel(x + 1, y);
+    clearPixel(x + 1, y + 1);
+    clearPixel(x + 1, y + 2);
+}
+
+void setupBlocks() {
+    int x, y, i = 0;
+    for(x = SCREEN_WIDTH / 2 - 2; x < SCREEN_WIDTH / 2 + 2; x += 2) {
+        for(y = 0; y < SCREEN_HEIGHT - 2; y += 3) {
+            drawBlock(x, y);
+            blocks[i].x = x;
+            blocks[i].y = y;
+            blocks[i].hit = 0;
+            i++;
+        }
+    }
+}
+
 /* Prints welcome screen with instructions to the player. */
 void show_welcome_screen() {
     printString(WELCOME_X, WELCOME_Y, "Welcome to Pong!");
@@ -173,6 +204,25 @@ void handleCollisions() {
         }
     }
 
+    for(i = 0; i < MAX_BLOCKS; i++) {
+/*        if(pong_ball.x >= blocks[i].x && pong_ball.x <= blocks[i].x + 1 &&
+           pong_ball.y >= blocks[i].y && pong_ball.y <= blocks[i].y + 2 &&
+           blocks[i].hit == 0) {
+            removeBlock(blocks[i].x, blocks[i].y);
+            blocks[i].hit = 1;
+            pong_ball.v_x *= -1;
+            pong_ball.x += pong_ball.v_x;
+        }*/
+        if(pong_ball.x >= blocks[i].x && pong_ball.x <= blocks[i].x + 1
+           && pong_ball.y >= blocks[i].y && pong_ball.y <= blocks[i].y + 2 &&
+           blocks[i].hit == 0) {
+            removeBlock(blocks[i].x, blocks[i].y);
+            blocks[i].hit = 1;
+            pong_ball.v_x *= -1;
+            // pong_ball.x += pong_ball.v_x;
+        }
+
+    }
 }
 
 /* Prints the scores of the players. */
@@ -224,7 +274,10 @@ void getKey(void)
                 {
                     case WELCOME:
                         clear_welcome_screen();
+                        setupBlocks();
                         pong_state = PLAY;
+                        initBall(0);
+                        break;
                     case END:
                         initBall(0);
                         break;
@@ -234,6 +287,11 @@ void getKey(void)
                     case PAUSE:
                         pong_state = PLAY;
                         break;
+                    default:
+                        clear_welcome_screen();
+                        setupBlocks();
+                        initBall(0);
+                        pong_state = PLAY;
                 }
                 break;
         }

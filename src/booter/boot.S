@@ -59,7 +59,7 @@ boot_start:
     push $1      # Least significant word of sector index
     push $0x2000 # Buffer address.
     push $0
-    push $10     # Number of 512-byte sectors to read.
+    push $0x20   # Number of 512-byte sectors to read.
     push $0x10   # Size of packet, 16 bytes.
 
     # Set %si to point to the Disk Address Packet on the stack.
