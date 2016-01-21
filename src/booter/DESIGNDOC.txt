@@ -44,14 +44,14 @@ which parts.
    Make sure that each member's total time is listed.
 
    Rahul: 10 hours
-   Robert:
+   Robert: 10 hours
    David: 10 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
 
 Rahul: Video, keyboard, interrupt handlers, game keys
-Robert:
+Robert: Video, game logic and features
 David: Bootloader, debugging interrupts, basic collision physics/ball movement.
 
 Note that this design document is a bit long.  Most of the questions can be
