@@ -14,6 +14,8 @@
 #define MAX_SCORE 10
 /* Speed up interval in deciseconds */
 #define BALL_SPEED_UP_INTERVAL 500
+/* Speed value is inverse of actual speed. ie low values mean high speed */
+#define BALL_SPEED_START 10;
 
 unsigned int time_count;
 
@@ -31,7 +33,7 @@ void initBall(int player_num) {
             pong_ball.y = time_count % 15 + 5;
             pong_ball.v_x = -1;
             pong_ball.v_y = 1;
-            pong_ball.ball_speed = 10;
+            pong_ball.ball_speed = BALL_SPEED_START;
             pong_ball.exists = 1;
             break;
         case 1:
@@ -40,7 +42,7 @@ void initBall(int player_num) {
             pong_ball.y = time_count % 15 + 5;
             pong_ball.v_x = 1;
             pong_ball.v_y = -1;
-            pong_ball.ball_speed = 10;
+            pong_ball.ball_speed = BALL_SPEED_START;
             pong_ball.exists = 1;
             break;
     }
@@ -211,11 +213,22 @@ void getKey(void)
                 players[1].paddle_vy_down = 0;
                 break;
             case SPACE_DOWN:
-                clear_welcome_screen();
-                initBall(0);
+                switch(pong_state)
+                {
+                    case WELCOME:
+                        clear_welcome_screen();
+                        pong_state = PLAY;
+                    case END:
+                        initBall(0);
+                        break;
+                    case PLAY:
+                        pong_state = PAUSE;
+                        break;
+                    case PAUSE:
+                        pong_state = PLAY;
+                        break;
+                }
                 break;
-
-
 
         }
         /*
@@ -238,11 +251,13 @@ void stepGame() {
     if(time_count % 5 == 0) {
         updatePlayers();
     }
-    if (pong_ball.ball_speed > 0 && time_count % pong_ball.ball_speed == 0) {
+    if (pong_ball.ball_speed > 0 && time_count % pong_ball.ball_speed == 0 &&
+                                        pong_state != PAUSE) {
         updateBall();
         handleCollisions();
     }
-    if(pong_ball.exists && pong_ball.ball_speed > 0 &&
+
+    if(pong_ball.exists && pong_state != PAUSE && pong_ball.ball_speed > 0 &&
                                 time_count % BALL_SPEED_UP_INTERVAL == 0) {
         pong_ball.ball_speed--;
     }
