@@ -19,6 +19,8 @@ typedef struct {
     int y;
     int v_x;
     int v_y;
+    int ball_speed;
+    int exists;
 } Ball;
 
 /* Global variables. */
@@ -34,6 +36,7 @@ void updateBall();
 void movePaddle(int x, int y, Player *p);
 void updateGame(void);
 void getKey(void);
+void stepGame();
 
 /* Check and handle all collisions. */
 void handleCollisions();

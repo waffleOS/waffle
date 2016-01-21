@@ -42,8 +42,8 @@
 #define PIT_MODE_CMD   0x43
 
 /* Timer module shared (non-global) variables. */
-static volatile int time_count = 0;
-
+/*static volatile int time_count = 0;
+*/
 void init_timer(void) {
 
     /* Turn on timer channel 0 for generating interrupts. */
@@ -70,11 +70,7 @@ void timerHandler(void) {
      * Scale timer based on 100 Hz for easier math.
      * and adjustable velocity.
      */
-    time_count = (time_count + 1) % 5;
-
-    if (time_count == 0) {
-        updateBall();
-        updatePlayers();
-        handleCollisions();
-    }
+/*    time_count = (time_count + 1);
+*/
+    stepGame();
 }

@@ -12,6 +12,10 @@
 #define WELCOME_HEIGHT 5
 #define SCORE_Y 9
 #define MAX_SCORE 10
+/* Speed up interval in deciseconds */
+#define BALL_SPEED_UP_INTERVAL 500
+
+unsigned int time_count;
 
 /**
  * Initials the ball.
@@ -22,16 +26,20 @@ void initBall(int player_num) {
     switch (player_num) {
         case 0:
             pong_ball.x = 30;
-            pong_ball.y = 20;
+            pong_ball.y = time_count % 15 + 5;
             pong_ball.v_x = -1;
             pong_ball.v_y = 1;
+            pong_ball.ball_speed = 10;
+            pong_ball.exists = 1;
             break;
         case 1:
         default:
             pong_ball.x = 50;
-            pong_ball.y = 20;
+            pong_ball.y = time_count % 15 + 5;
             pong_ball.v_x = 1;
             pong_ball.v_y = -1;
+            pong_ball.ball_speed = 10;
+            pong_ball.exists = 1;
             break;
     }
 
@@ -222,6 +230,22 @@ void getKey(void)
     }
 }
 
+void stepGame() {
+    time_count++;
+    if(time_count % 5 == 0) {
+        updatePlayers();
+    }
+    if (pong_ball.ball_speed > 0 && time_count % pong_ball.ball_speed == 0) {
+        updateBall();
+        handleCollisions();
+    }
+    if(pong_ball.exists && pong_ball.ball_speed > 0 && 
+                                time_count % BALL_SPEED_UP_INTERVAL == 0) {
+        pong_ball.ball_speed--;
+    }
+}
+
+
 /* This is the entry-point for the game! */
 void c_start(void) {
     /* Set up video module. */
@@ -237,6 +261,9 @@ void c_start(void) {
     init_timer();
     init_keyboard();
     enable_interrupts();
+
+    time_count = 0;
+    pong_ball.exists = 0;
 
     /* Game loop. */
     while (1) {
