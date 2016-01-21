@@ -22,8 +22,16 @@
 #define YELLOW        14
 #define WHITE         15
 
+#define SCREEN_HEIGHT 25
+#define SCREEN_WIDTH 80
+#define NUM_COLORS 16
+
 
 void init_video(void);
+void setPixel(int x, int y, char color, char value);
+void clearForeground(void);
+void setBackground(char color);
+void clearPixel(int x, int y);
 
 
 #endif /* VIDEO_H */

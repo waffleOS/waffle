@@ -19,17 +19,76 @@
  * the VGA links in the "Video" section.
  */
 #define VIDEO_BUFFER ((void *) 0xB8000)
-
+#define MAP_XY_TO_INDEX(x, y) (2 * (SCREEN_WIDTH * (y) + (x)))
 
 /* TODO:  You can create static variables here to hold video display state,
  *        such as the current foreground and background color, a cursor
  *        position, or any other details you might want to keep track of!
  */
 
+char background_color;
 
 void init_video(void) {
     /* TODO:  Do any video display initialization you might want to do, such
      *        as clearing the screen, initializing static variable state, etc.
      */
+     background_color = BLACK;
+     setBackground(background_color);
+     clearForeground();
 }
 
+/* Given an x y coordinate, a foreground color, and a value, sets that
+ * coordinate in the video buffer.
+ */
+void setPixel(int x, int y, char color, char value) {
+	int index = MAP_XY_TO_INDEX(x, y);
+    *((char *) VIDEO_BUFFER + index) = value;
+    *((char *) VIDEO_BUFFER + index + 1) = (background_color << 4) | color;
+}
+
+/* Clears all the foreground values in the video buffer leaving a blank screen
+ * of just the background color
+ */
+void clearForeground(void) {
+	int i;
+	for(i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH * 2; i += 2) {
+		*((char *)VIDEO_BUFFER + i) = ' ';
+	}
+}
+
+char getBackground(void)
+{
+    return background_color;
+}
+
+/* Sets the background color of everything in the video buffer and redraws
+ * all coordinates with this new background.
+ */
+void setBackground(char bcolor) {
+    background_color = bcolor;
+    int i;
+    for (i = 0; i < SCREEN_HEIGHT * SCREEN_WIDTH * 2; i += 2)
+    {
+        char color = *((char *) VIDEO_BUFFER + i + 1);
+        *((char *) VIDEO_BUFFER + i + 1) = ((color << 4) >> 4) | (bcolor << 4);
+    }
+
+}
+
+/* Given an x y coordinate, clears the value at the specified coordinate.
+ */
+void clearPixel(int x, int y) {
+	*((char *)VIDEO_BUFFER + MAP_XY_TO_INDEX(x, y)) = ' ';
+}
+
+/*
+ * Given an x y coordinate, writes a string to the coordinate.
+ * (Doesn't check for out of bounds).
+ */
+void printString(int x, int y, char *string) {
+    int i = 0;
+    while (string[i] != '\0') {
+        setPixel(x + i, y, WHITE, string[i]);
+        i++;
+    }
+}

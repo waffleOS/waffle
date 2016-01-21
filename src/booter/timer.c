@@ -1,5 +1,7 @@
 #include "timer.h"
 #include "ports.h"
+#include "handlers.h"
+#include "interrupts.h"
 
 /*============================================================================
  * PROGRAMMABLE INTERVAL TIMER
@@ -39,14 +41,9 @@
 #define PIT_CHAN2_DATA 0x42
 #define PIT_MODE_CMD   0x43
 
-
-/* TODO:  You can create static variables here to hold timer state.
- *
- *        You should probably declare variables "volatile" so that the
- *        compiler knows they can be changed by exceptional control flow.
- */
-
-
+/* Timer module shared (non-global) variables. */
+/*static volatile int time_count = 0;
+*/
 void init_timer(void) {
 
     /* Turn on timer channel 0 for generating interrupts. */
@@ -61,9 +58,13 @@ void init_timer(void) {
     outb(PIT_CHAN0_DATA, 0x9c);
     outb(PIT_CHAN0_DATA, 0x2e);
 
-    /* TODO:  Initialize other timer state here. */
+    install_interrupt_handler(TIMER_INTERRUPT, timer_handler);
+}
 
-    /* TODO:  You might want to install your timer interrupt handler
-     *        here as well.
-     */
+/**
+ * Moves ball and handles all collisions with paddles and walls.
+ * Uses API exposed by game.h.
+ */
+void timerHandler(void) {
+    stepGame();
 }

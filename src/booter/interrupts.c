@@ -44,7 +44,7 @@ static inline void lidt(void* base, uint16_t size) {
         uint16_t length;
         void*    base;
     } __attribute__((packed)) IDTR = { size, base };
- 
+
     // let the compiler choose an addressing mode
     asm ( "lidt %0" : : "m"(IDTR) );
 }
@@ -81,13 +81,13 @@ static inline void lidt(void* base, uint16_t size) {
 #define ICW1_INTERVAL4  0x04        /* Call address interval 4 (8) */
 #define ICW1_LEVEL      0x08        /* Level triggered (edge) mode */
 #define ICW1_INIT       0x10        /* Initialization - required! */
- 
+
 #define ICW4_8086       0x01        /* 8086/88 (MCS-80/85) mode */
 #define ICW4_AUTO       0x02        /* Auto (normal) EOI */
 #define ICW4_BUF_SLAVE  0x08        /* Buffered mode/slave */
 #define ICW4_BUF_MASTER 0x0C        /* Buffered mode/master */
 #define ICW4_SFNM       0x10        /* Special fully nested (not) */
- 
+
 /* Remap the interrupts that the PIC generates.  The default interrupt
  * mapping conflicts with the IA32 protected-mode interrupts for indicating
  * hardware/software exceptions, so we need to map them elsewhere.
@@ -99,10 +99,10 @@ static inline void lidt(void* base, uint16_t size) {
  */
 void PIC_remap(int offset1, int offset2) {
     unsigned char a1, a2;
- 
+
     a1 = inb(PIC1_DATA);                        // save masks
     a2 = inb(PIC2_DATA);
- 
+
     // starts the initialization sequence (in cascade mode)
     outb(PIC1_COMMAND, ICW1_INIT+ICW1_ICW4);
     io_wait();
@@ -131,7 +131,7 @@ void PIC_remap(int offset1, int offset2) {
 void IRQ_set_mask(unsigned char IRQline) {
     uint16_t port;
     uint8_t value;
- 
+
     if(IRQline < 8) {
         port = PIC1_DATA;
     }
@@ -140,7 +140,7 @@ void IRQ_set_mask(unsigned char IRQline) {
         IRQline -= 8;
     }
     value = inb(port) | (1 << IRQline);
-    outb(port, value);        
+    outb(port, value);
 }
 
 
@@ -168,15 +168,31 @@ void IRQ_clear_mask(unsigned char IRQline) {
 
 /* Initialize interrupts */
 void init_interrupts(void) {
-    /* TODO:  INITIALIZE AND LOAD THE INTERRUPT DESCRIPTOR TABLE.
-     *
-     *        The entire Interrupt Descriptor Table should be zeroed out.
-     *        (Unfortunately you have to do this yourself since you don't
-     *        have the C Standard Library to use...)
-     *
-     *        Once the entire IDT has been cleared, use the lidt() function
-     *        defined above to install our IDT.
-     */
+     /* Zero out Interrupt Descriptor Table. */
+     int i;
+     for (i = 0; i < NUM_INTERRUPTS; i++)
+     {
+         interrupt_descriptor_table[i].offset_15_0 = 0;
+         interrupt_descriptor_table[i].selector = 0;
+         interrupt_descriptor_table[i].zero = 0;
+         interrupt_descriptor_table[i].type_attr = 0;
+         interrupt_descriptor_table[i].offset_31_16 = 0;
+     }
+
+     /* Install IDT. */
+     lidt(interrupt_descriptor_table, NUM_INTERRUPTS * sizeof(IDT_Descriptor));
+
+     /* Mask unused interrupts. */
+     for (i = 0; i < NUM_INTERRUPTS; i++)
+     {
+         IRQ_set_mask(i);
+     }
+
+     /* Unmask used interrupts. */
+     /* 0 is the IRQ number for the timer. */
+     IRQ_clear_mask(0); 
+     /* 1 is the IRQ number for the keyboard. */
+     IRQ_clear_mask(1);
 
     /* Remap the Programmable Interrupt Controller to deliver its interrupts
      * to 0x20-0x33 (32-45), so that they don't conflict with the IA32 built-
@@ -194,25 +210,20 @@ void init_interrupts(void) {
  * not a C function, although the handler might call a C function.
  */
 void install_interrupt_handler(int num, void *handler) {
-    /* TODO:  IMPLEMENT.  See IA32 Manual, Volume 3A, Section 5.11 for an
-     *        overview of the contents of IDT Descriptors.  These are
-     *        Interrupt Gates.
-     *
-     *        The handler address must be split into two halves, so that it
-     *        can be stored into the IDT descriptor.
-     *
-     *        The segment selector should be the code-segment selector
-     *        that was set up in the bootloader.  (See boot.h for the
-     *        appropriate definition.)
-     *
-     *        The DPL component of the "type_attr" field specifies the
-     *        required privilege level to invoke the interrupt.  You can
-     *        set this to 0 (which allows anything to invoke the interrupt),
-     *        but its value isn't really relevant to us.
-     *
-     *        REMOVE THIS COMMENT WHEN YOU WRITE THE CODE.  (FEEL FREE TO
-     *        INCORPORATE THE ABOVE COMMENTS IF YOU WISH.)
-     */
+     /* Bottom 16 bits of handler address. */
+     interrupt_descriptor_table[num].offset_15_0 = ((unsigned int) handler << 16) >> 16;
+     /* Top 16 bits of handler address. */
+     interrupt_descriptor_table[num].offset_31_16 = (unsigned int) handler >> 16;
+     /* Code segment selector set in bootloader. */
+     interrupt_descriptor_table[num].selector = SEL_CODESEG;
+
+     /*
+      * Set the type_attr to indicate an interrupt gate.
+      * 1------- Segment present flag.
+      * -00----- Descriptor Privilege Level (0 allows anything to invoke)
+      * ---01110 Interrupt Gate signature.
+      *
+      * See IA32 Manual, Volume 3A, Section 5.11 
+      */
+     interrupt_descriptor_table[num].type_attr = 0x8E;
 }
-
-
