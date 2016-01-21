@@ -12,7 +12,7 @@ Rahul Bachal <rbachal@caltech.edu>
 Robert Eng <reng@caltech.edu>
 David Qu <dqu@caltech.edu>
 
->> Specify how many late tokens you are using on this assignment: 0. 
+>> Specify how many late tokens you are using on this assignment: 0.
 
 >> What is the Git repository and commit hash for your submission?
    (You only need to include the commit-hash in the file you submit
@@ -42,7 +42,7 @@ which parts.
 
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
-   
+
    Rahul:
    Robert:
    David: 10 hours
@@ -50,9 +50,9 @@ which parts.
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
 
-Rahul: 
+Rahul: Video, keyboard, interrupt handlers, game keys
 Robert:
-David: Bootloader, debugging interrupts, basic collision physics/ball movement. 
+David: Bootloader, debugging interrupts, basic collision physics/ball movement.
 
 Note that this design document is a bit long.  Most of the questions can be
 answered pretty briefly.  Don't feel a need to write a long answer if it is
@@ -64,7 +64,7 @@ not required by the question.
 ---- ALGORITHMS ----
 
 >> A1: In 25-30 words or less, what does your PC booter do?
-It steps up the stack, loads the C program, enters protected mode, 
+It steps up the stack, loads the C program, enters protected mode,
 and then calls the c_start() entry point to get the game started.
 
 >> A2: In 25-30 words or less, how does the user interact with the program?
@@ -81,8 +81,8 @@ down with E and D while Player 1 can move the right paddle with I and K.
 >> part of the game implementation itself.
 The game.h file contains the global variables for the game. The interrupt
 handlers interface with these variables using the mutator functions
-defined. The Player struct tracks the score and paddle position 
-for each player, and the Ball struct tracks the ball's x/y position and 
+defined. The Player struct tracks the score and paddle position
+for each player, and the Ball struct tracks the ball's x/y position and
 x/y velocity. Game.c initializes these global variables and keeps
 printing the score in an infinite loop (so the ball doesn't erase it).
 
@@ -96,7 +96,7 @@ printing the score in an infinite loop (so the ball doesn't erase it).
 >> in response?
 When a timer interrupt occurs, the game advances one time step, and then
 updates the player states, the ball state, and handles any collisions.
-When a keyboard interrupt happens, a keycode is buffered into a queue, 
+When a keyboard interrupt happens, a keycode is buffered into a queue,
 which is processed in the game loop.
 
 >> A5: Would you say your program relies on polling or busy-waiting anywhere
@@ -161,20 +161,37 @@ No.
 >> represented in this mode?  (Please be brief; we don't need complete
 >> documentation on the video system.)
 
+We use
+
 >> C2: Does your video code maintain any variables or data structures to
 >> facilitate video output?  Briefly describe these values and their
 >> purposes here.
+
+Our video code maintains the background color so that when we set a pixel, we
+can set the background color. The video data is stored in a buffer.
 
 ---- ALGORITHMS ----
 
 >> C3: What abstraction does your video code present to your main program?
 >> Briefly describe the higher-level operations you decided to implement.
 
+We have the following APIs:
+    init_video - initializes all data structures and video
+    setPixel - Sets a pixel at a given location with a foreground color and a
+               char value.
+    clearForeground  - Clears the foreground of the screen.
+    getBackground - Gets the background color.
+    setBackground - Sets the background color and draws the screen.
+    clearPixel - Clears the foreground of a pixel at a location.
+    printString - Prints a string at a given location.
+
 ---- RATIONALE ----
 
 >> C4: Did you take any specific steps to improve the appearance of your
 >> program's display output?  For example, using Extended ASCII Codes, or
 >> choosing specific colors to represent different things?
+
+The ball in pong is represented by a different color than the paddles.
 
 			  TIMER SUBSYSTEM
 			  ===============
@@ -205,7 +222,7 @@ speeds as needed, so the ball could move at different velocities.
 >> program's global state?  If so, what steps did you take to ensure that
 >> such situations cannot occur?
 There is the potential for the timer update to happen before a keycode can
-be processed. In this case, the user will not move in time to block the 
+be processed. In this case, the user will not move in time to block the
 ball. Since this merely increases the difficulty of the game, it is left
 as a feature. There is no game breaking critical code in the timer.
 
@@ -217,17 +234,33 @@ as a feature. There is no game breaking critical code in the timer.
 >> E1: What state does your keyboard subsystem manage?  Describe the variables
 >> or data structures that it maintains, and how they are used.
 
+The keyboard subsystem maintains a circular queue with a defined queue size. The
+queue contains an array of char values, indices for the head and tail of the
+queue, and booleans representing if the queue is full or empty. When the
+keyboard interrupt handler runs, it receives the scan-code from the keyboard
+port and enqueues the scan-code in the queue.
+
 >> E2: How do your data structures handle keys with multi-byte scan-codes?
+The keyboard subsystem does not distinguish between keys with multi-byte scan-codes.
+All of the bytes are enqueued separately.
 
 ---- ALGORITHMS ----
 
 >> E3: What abstraction does your keyboard code present to your main program?
 >> Briefly describe the higher-level operations you decided to implement.
 
+The keyboard code presents a dequeue function that returns the first scan-code
+in the keyboard queue. This allows key-codes to be buffered if the program does
+not read the keyboard quickly.
+
 >> E4: Does your keyboard subsystem expose scan-codes directly to your main
 >> program, or does it preprocess them and expose other information to your
 >> main program?  If scan-code data is preprocessed, briefly describe what
 >> information is actually exposed, and how it is derived from scan-codes.
+
+The keyboard subsystem exposes scan-codes directly to the main program. We
+define some scan-codes that are needed for game control and use those to
+change the game.
 
 ---- SYNCHRONIZATION ----
 
@@ -274,4 +307,3 @@ penalized.  We can't fix things until we know about them.  :-)
 >> projects?
 
 >> Any other comments?
-

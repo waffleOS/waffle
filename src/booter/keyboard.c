@@ -68,9 +68,9 @@ int isFull(volatile Queue * q)
 
 void enqueue_q(volatile Queue * q, char scan_code)
 {
-    while (isFull(q))
+    if (isFull(q))
     {
-
+        return;
     }
 
 
