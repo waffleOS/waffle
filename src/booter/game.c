@@ -11,7 +11,7 @@
 #define WELCOME_WIDTH 35
 #define WELCOME_HEIGHT 5
 #define SCORE_Y 9
-#define MAX_SCORE 10
+#define MAX_SCORE 1
 /* Speed up interval in deciseconds */
 #define BALL_SPEED_UP_INTERVAL 500
 /* Speed value is inverse of actual speed. ie low values mean high speed */
@@ -280,6 +280,8 @@ void getKey(void)
                         break;
                     case END:
                         initBall(0);
+                        pong_state = PLAY;
+                        setupBlocks();
                         break;
                     case PLAY:
                         pong_state = PAUSE;

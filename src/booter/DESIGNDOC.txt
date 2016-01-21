@@ -112,6 +112,10 @@ not required by the question.
 >> A6: Why did you choose the project you did?
     It was a fun, but relatively simple multiplayer game to implement. It also
     has the twist of Brickbreaker.
+    As a young child I've always wanted to use the extended ASCII characters
+    to build one of those fancy full double line boxes ever since I knew there
+    were characters beyond the ones on a standard QWERTY keyboard. Today, I have
+    fulfilled that dream.
 
 >> A7: Did your choice of project affect any of the specific implementation
 >> details of the various subsystems that you needed to use?  (For example,
