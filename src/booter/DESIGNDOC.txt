@@ -306,19 +306,27 @@ penalized.  We can't fix things until we know about them.  :-)
 
 >> In your opinion, was this assignment, or any of the parts of it, too
 >> easy or too hard?  Did it take too long or too little time?
+    The assignment was reasonable in terms of difficultly. Figuring out interrupts
+    was the more complicated component.
 
 >> Did you find that working on a particular part of the assignment gave
 >> you greater insight into some aspect of OS design?
+    All of the assignment gave an insight into OS design since we had to think
+    about interrupts and hardware in designing the game.
 
 >> Were there any parts of the assignment that you felt were unnecessarily
 >> tedious or pointless?
+    No.
 
 >> Is there some particular fact or hint we should give students in
 >> future quarters to help them solve the problems?  Conversely, did you
 >> find any of our guidance to be misleading?
+    It might be useful to give some hints on the IRQ, especially masks.
 
 >> Do you have any suggestions for the instructor and/or TAs to more
 >> effectively assist students, either for future quarters or the remaining
 >> projects?
+    No.
 
 >> Any other comments?
+    No.
