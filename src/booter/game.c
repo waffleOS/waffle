@@ -213,25 +213,11 @@ void getKey(void)
                 clear_welcome_screen();
                 initBall(0);
                 break;
-
-
-
         }
-        /*
-        unsigned int scanCodeValue = (unsigned int) scan_code;
-        int i;
-        unsigned int divisor = 100;
-        for (i = 0; i < 3; i++)
-        {
-            unsigned int digit = scanCodeValue / divisor;
-            scanCodeValue %= divisor;
-            divisor /= 10;
-            setPixel(40 + i, 10, BLACK, '0' + digit);
-        }
-        */
     }
 }
 
+/* Steps the game forward one time step. */
 void stepGame() {
     time_count++;
     if(time_count % 5 == 0) {
