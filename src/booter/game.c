@@ -14,6 +14,8 @@
 #define MAX_SCORE 10
 /* Speed up interval in deciseconds */
 #define BALL_SPEED_UP_INTERVAL 500
+/* Speed value is inverse of actual speed. ie low values mean high speed */
+#define BALL_SPEED_START 10;
 
 unsigned int time_count;
 
@@ -31,7 +33,7 @@ void initBall(int player_num) {
             pong_ball.y = time_count % 15 + 5;
             pong_ball.v_x = -1;
             pong_ball.v_y = 1;
-            pong_ball.ball_speed = 10;
+            pong_ball.ball_speed = BALL_SPEED_START;
             pong_ball.exists = 1;
             break;
         case 1:
@@ -40,7 +42,7 @@ void initBall(int player_num) {
             pong_ball.y = time_count % 15 + 5;
             pong_ball.v_x = 1;
             pong_ball.v_y = -1;
-            pong_ball.ball_speed = 10;
+            pong_ball.ball_speed = BALL_SPEED_START;
             pong_ball.exists = 1;
             break;
     }
@@ -52,7 +54,8 @@ void initPlayers() {
     int i;
     for (i = 0; i < NUM_PLAYERS; i++) {
         players[i].score = 0;
-        playerSpeeds[i] = 0;
+        players[i].paddle_vy_up = 0;
+        players[i].paddle_vy_down = 0;
     }
     movePaddle(1, 20, players);
     movePaddle(78, 20, players + 1);
@@ -114,7 +117,7 @@ void updatePlayers(void)
     int i;
     for (i = 0; i < NUM_PLAYERS; i++)
     {
-        movePaddle(players[i].paddle_x, players[i].paddle_y + playerSpeeds[i], &(players[i]));
+        movePaddle(players[i].paddle_x, players[i].paddle_y - players[i].paddle_vy_up + players[i].paddle_vy_down, &(players[i]));
     }
 }
 
@@ -186,32 +189,45 @@ void getKey(void)
         switch (scanCodeValue)
         {
             case E_DOWN:
-                playerSpeeds[0] = -1;
+                players[0].paddle_vy_up = 1;
                 break;
             case E_UP:
-                playerSpeeds[0] = 0;
+                players[0].paddle_vy_up = 0;
                 break;
             case D_DOWN:
-                playerSpeeds[0] = 1;
+                players[0].paddle_vy_down = 1;
                 break;
             case D_UP:
-                playerSpeeds[0] = 0;
+                players[0].paddle_vy_down = 0;
                 break;
             case I_DOWN:
-                playerSpeeds[1] = -1;
+                players[1].paddle_vy_up = 1;
                 break;
             case I_UP:
-                playerSpeeds[1] = 0;
+                players[1].paddle_vy_up = 0;
                 break;
             case K_DOWN:
-                playerSpeeds[1] = 1;
+                players[1].paddle_vy_down = 1;
                 break;
             case K_UP:
-                playerSpeeds[1] = 0;
+                players[1].paddle_vy_down = 0;
                 break;
             case SPACE_DOWN:
-                clear_welcome_screen();
-                initBall(0);
+                switch(pong_state)
+                {
+                    case WELCOME:
+                        clear_welcome_screen();
+                        pong_state = PLAY;
+                    case END:
+                        initBall(0);
+                        break;
+                    case PLAY:
+                        pong_state = PAUSE;
+                        break;
+                    case PAUSE:
+                        pong_state = PLAY;
+                        break;
+                }
                 break;
         }
     }
@@ -223,11 +239,13 @@ void stepGame() {
     if(time_count % 5 == 0) {
         updatePlayers();
     }
-    if (pong_ball.ball_speed > 0 && time_count % pong_ball.ball_speed == 0) {
+    if (pong_ball.ball_speed > 0 && time_count % pong_ball.ball_speed == 0 &&
+                                        pong_state != PAUSE) {
         updateBall();
         handleCollisions();
     }
-    if(pong_ball.exists && pong_ball.ball_speed > 0 && 
+
+    if(pong_ball.exists && pong_state != PAUSE && pong_ball.ball_speed > 0 &&
                                 time_count % BALL_SPEED_UP_INTERVAL == 0) {
         pong_ball.ball_speed--;
     }
@@ -238,12 +256,12 @@ void stepGame() {
 void c_start(void) {
     /* Set up video module. */
     init_video();
-    setBackground(RED);
+    setBackground(BROWN);
     show_welcome_screen();
 
     /* Add players and balls. */
     initPlayers();
-    pong_ball.x = 30; 
+    pong_ball.x = 30;
     pong_ball.y = 20;
     pong_ball.v_x = 0;
     pong_ball.v_y = 0;
