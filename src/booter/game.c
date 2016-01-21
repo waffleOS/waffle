@@ -266,7 +266,7 @@ void stepGame() {
 void c_start(void) {
     /* Set up video module. */
     init_video();
-    setBackground(RED);
+    setBackground(BROWN);
     show_welcome_screen();
 
     /* Add players and balls. */
