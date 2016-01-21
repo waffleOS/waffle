@@ -90,13 +90,6 @@ int dequeue_q(volatile Queue * q, char * scan_code)
         return 0;
     }
 
-    /*
-     *        Also, don't forget that interrupts can interrupt *any* code,
-     *        including code that fetches key data!  If you are manipulating a
-     *        shared data structure that is also manipulated from an interrupt
-     *        handler, you might want to disable interrupts while you access it,
-     *        so that nothing gets mangled... */
-
     disable_interrupts();
     *scan_code = q->values[q->headIndex++];
     q->headIndex %= QUEUE_SIZE;
