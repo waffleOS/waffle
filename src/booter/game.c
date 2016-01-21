@@ -5,7 +5,7 @@
 
 #define PADDLE_LENGTH 3
 #define PADDLE_CHAR 186
-#define BALL_CHAR 79
+#define BALL_CHAR 254
 #define WELCOME_X 25
 #define WELCOME_Y 12
 #define WELCOME_WIDTH 35
