@@ -70,6 +70,9 @@ static void schedule(void);
 void thread_schedule_tail(struct thread *prev);
 static tid_t allocate_tid(void);
 
+bool priority_less(const struct list_elem *a, 
+                   const struct list_elem *b, void * aux);
+
 /*! Initializes the threading system by transforming the code
     that's currently running into a thread.  This can't work in
     general and it is possible in this case only because loader.S
@@ -420,15 +423,38 @@ static void * alloc_frame(struct thread *t, size_t size) {
     return t->stack;
 }
 
+/* Comparison function for priority scheduler. */
+bool priority_less(const struct list_elem *a, 
+                             const struct list_elem *b, void * aux) { 
+    struct thread *x = list_entry(a, struct thread, elem); 
+    struct thread *y = list_entry(b, struct thread, elem);
+    return (x->priority - y->priority < 0);
+} 
+
 /*! Chooses and returns the next thread to be scheduled.  Should return a
     thread from the run queue, unless the run queue is empty.  (If the running
     thread can continue running, then it will be in the run queue.)  If the
     run queue is empty, return idle_thread. */
 static struct thread * next_thread_to_run(void) {
     if (list_empty(&ready_list))
-      return idle_thread;
-    else
-      return list_entry(list_pop_front(&ready_list), struct thread, elem);
+        return idle_thread;
+    /* 
+     * Priority scheduler. 
+     * David's TODO: Implement. 
+     */
+    else if (!thread_mlfqs) {
+        struct list_elem *e = list_max(&ready_list, &priority_less, NULL);
+        list_remove(e);
+        struct thread *t = list_entry(e, struct thread, elem);
+        return t;
+    }
+    /* 
+     * Advanced scheduler. 
+     * David's TODO: Implement.*/
+    else {
+        /* Old implementation */
+        return list_entry(list_pop_front(&ready_list), struct thread, elem);
+    }
 }
 
 /*! Completes a thread switch by activating the new thread's page tables, and,
