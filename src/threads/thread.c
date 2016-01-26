@@ -309,21 +309,27 @@ void thread_foreach(thread_action_func *func, void *aux) {
 
 /*! Sets the current thread's priority to NEW_PRIORITY. */
 void thread_set_priority(int new_priority) {
-    int old_priority = thread_current()->priority;
     thread_current()->priority = new_priority;
 
-    /* 
-     * If the priority went down, yield in case
-     * a new thread has priority now.
-     */
-    if (new_priority < old_priority) {
+    struct list_elem *e = list_max(&ready_list, &priority_less, NULL);
+    struct thread *t = list_entry(e, struct thread, elem);
+    
+    /* Yield if the ready list has a thread with higher priority. */
+    if (new_priority < t->priority) {
         thread_yield();
     }
 }
 
 /*! Returns the current thread's priority. */
 int thread_get_priority(void) {
-    return thread_current()->priority;
+    int priority = thread_current()->priority;
+    if (thread_mlfqs) { 
+        return priority;
+    }
+    else { 
+        /* David's TODO: account for priority donation. */
+        return priority;
+    }
 }
 
 /*! Sets the current thread's nice value to NICE. */
