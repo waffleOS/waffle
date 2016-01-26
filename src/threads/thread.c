@@ -187,8 +187,14 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
     sf->eip = switch_entry;
     sf->ebp = 0;
 
-    /* Add to run queue. */
-    thread_unblock(t);
+    /* 
+     * If new thread's priority is greater than
+     * the current, yield to schedule the new one. 
+     */
+    if (!thread_is_top_priority(priority)) {
+        /* Otherwise add to run queue. */
+        thread_unblock(t);
+    }
 
     return tid;
 }
@@ -303,7 +309,16 @@ void thread_foreach(thread_action_func *func, void *aux) {
 
 /*! Sets the current thread's priority to NEW_PRIORITY. */
 void thread_set_priority(int new_priority) {
+    int old_priority = thread_current()->priority;
     thread_current()->priority = new_priority;
+
+    /* 
+     * If the priority went down, yield in case
+     * a new thread has priority now.
+     */
+    if (new_priority < old_priority) {
+        thread_yield();
+    }
 }
 
 /*! Returns the current thread's priority. */
@@ -534,3 +549,15 @@ static tid_t allocate_tid(void) {
     Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof(struct thread, stack);
 
+/* TODO: Student added. */
+bool thread_is_top_priority(int priority) { 
+    /* Compare to current thread's priority */
+    int cur_priority = thread_get_priority();
+
+    /* Yield current thread if new one is more important. */
+    if (priority > cur_priority) {
+        thread_yield();
+        return true;
+    }
+    return false;
+}
