@@ -191,11 +191,8 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
      * If new thread's priority is greater than
      * the current, yield to schedule the new one. 
      */
-    if (!thread_is_top_priority(priority)) {
-        /* Otherwise add to run queue. */
-        thread_unblock(t);
-    }
-
+    thread_unblock(t);
+    thread_is_top_priority(priority);
     return tid;
 }
 
@@ -311,12 +308,15 @@ void thread_foreach(thread_action_func *func, void *aux) {
 void thread_set_priority(int new_priority) {
     thread_current()->priority = new_priority;
 
-    struct list_elem *e = list_max(&ready_list, &priority_less, NULL);
-    struct thread *t = list_entry(e, struct thread, elem);
-    
-    /* Yield if the ready list has a thread with higher priority. */
-    if (new_priority < t->priority) {
-        thread_yield();
+    if(!list_empty(&ready_list)) {
+
+        struct list_elem *e = list_max(&ready_list, &priority_less, NULL);
+        struct thread *t = list_entry(e, struct thread, elem);
+        
+        /* Yield if the ready list has a thread with higher priority. */
+        if (new_priority < t->priority) {
+            thread_yield();
+        }
     }
 }
 
@@ -557,6 +557,7 @@ uint32_t thread_stack_ofs = offsetof(struct thread, stack);
 
 /* TODO: Student added. */
 bool thread_is_top_priority(int priority) { 
+    
     /* Compare to current thread's priority */
     int cur_priority = thread_get_priority();
 
