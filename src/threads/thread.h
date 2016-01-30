@@ -104,6 +104,13 @@ struct thread {
     struct list_elem elem;              /*!< List element. */
     /**@}*/
 
+    /**@}*/
+
+    /*! Shared between thread.c and devices/timer.c. */
+    /**@{*/
+    int wake_time;              /*!< Time to wake up. */
+    /**@}*/
+
 #ifdef USERPROG
     /*! Owned by userprog/process.c. */
     /**@{*/
@@ -140,6 +147,7 @@ const char *thread_name(void);
 
 void thread_exit(void) NO_RETURN;
 void thread_yield(void);
+void thread_sleep(void);
 
 /*! Performs some operation on thread t, given auxiliary data AUX. */
 typedef void thread_action_func(struct thread *t, void *aux);
