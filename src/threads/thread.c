@@ -24,10 +24,6 @@
     that are ready to run but not actually running. */
 static struct list ready_list;
 
-/*! List of processes in THREAD_BLOCKED state, processes that 
-    are waiting on a lock, choose to block, or sleep. */
-static struct list blocked_list;
-
 /*! List of all processes.  Processes are added to this list
     when they are first scheduled and removed when they exit. */
 static struct list all_list;
@@ -93,7 +89,6 @@ void thread_init(void) {
 
     lock_init(&tid_lock);
     list_init(&ready_list);
-    list_init(&blocked_list);
     list_init(&all_list);
 
     /* Set up a thread structure for the running thread. */
@@ -210,10 +205,7 @@ void thread_block(void) {
     ASSERT(!intr_context());
     ASSERT(intr_get_level() == INTR_OFF);
 
-    struct thread *t = thread_current();
-    t->status = THREAD_BLOCKED;
-    list_push_back(&blocked_list, &t->blockelem);
-
+    thread_current()->status = THREAD_BLOCKED;
     schedule();
 }
 
@@ -233,7 +225,6 @@ void thread_unblock(struct thread *t) {
     ASSERT(t->status == THREAD_BLOCKED);
     list_push_back(&ready_list, &t->elem);
     t->status = THREAD_READY;
-    list_remove(&t->blockelem);
     intr_set_level(old_level);
 }
 
@@ -439,7 +430,6 @@ static void init_thread(struct thread *t, const char *name, int priority) {
 
     old_level = intr_disable();
     list_push_back(&all_list, &t->allelem);
-    list_push_back(&blocked_list, &t->blockelem);
     intr_set_level(old_level);
 }
 
