@@ -86,7 +86,7 @@ void timer_sleep(int64_t ticks) {
     ASSERT(intr_get_level() == INTR_ON);
     //TODO: Block threads
     while (timer_elapsed(start) < ticks) 
-        thread_yield();
+        thread_block();
 }
 
 /*! Sleeps for approximately MS milliseconds.  Interrupts must be turned on. */
