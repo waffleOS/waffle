@@ -101,7 +101,8 @@ struct thread {
 
     /*! Shared between thread.c and synch.c. */
     /**@{*/
-    struct list_elem elem;              /*!< List element. */
+    struct list_elem elem;              /*!< List element for ready list. */
+    struct list_elem blockelem;         /*!< List element for blocked list. */
     /**@}*/
 
 #ifdef USERPROG
