@@ -108,6 +108,7 @@ struct thread {
 
     /*! Shared between thread.c and devices/timer.c. */
     /**@{*/
+    struct list_elem sleepelem; /*!< List element for sleep list. */
     int wake_time;              /*!< Time to wake up. */
     /**@}*/
 

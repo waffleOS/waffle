@@ -94,7 +94,7 @@ void timer_sleep(int64_t ticks) {
     /* TODO: add to sleeping list. */
     struct thread *t = thread_current();
     t->wake_time = start + ticks;
-    list_push_back(&sleep_list, &t->elem);
+    list_push_back(&sleep_list, &t->sleepelem);
     thread_sleep();
 }
 
@@ -154,7 +154,7 @@ static void timer_interrupt(struct intr_frame *args UNUSED) {
     if (!list_empty(&sleep_list)) {
         struct list_elem *cur = list_begin(&sleep_list); 
         while (cur != list_end(&sleep_list)) {
-            struct thread *t = list_entry(cur, struct thread, elem);
+            struct thread *t = list_entry(cur, struct thread, sleepelem);
 
             if (ticks > t->wake_time) { 
                 thread_unblock(t);
