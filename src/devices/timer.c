@@ -91,10 +91,20 @@ void timer_sleep(int64_t ticks) {
     int64_t start = timer_ticks();
 
     ASSERT(intr_get_level() == INTR_ON);
-    /* TODO: add to sleeping list. */
+
+    /* Determine wake up time. */
     struct thread *t = thread_current();
     t->wake_time = start + ticks;
+
+    /** 
+     * Add thread to sleep list.
+     * Note: Modifying sleep_list is critical code. 
+     */
+    enum intr_level old_level = intr_disable();
     list_push_back(&sleep_list, &t->sleepelem);
+    intr_set_level(old_level);
+    
+    /* Sleep thread by context switching. */
     thread_sleep();
 }
 
@@ -150,13 +160,18 @@ void timer_print_stats(void) {
 /*! Timer interrupt handler. */
 static void timer_interrupt(struct intr_frame *args UNUSED) {
     ticks++;
-    //TODO: Wake threads up
+
+    /* Wake threads up if it is time to. */
     if (!list_empty(&sleep_list)) {
         struct list_elem *cur = list_begin(&sleep_list); 
         while (cur != list_end(&sleep_list)) {
             struct thread *t = list_entry(cur, struct thread, sleepelem);
 
-            if (ticks > t->wake_time) { 
+            /* 
+             * If wake_time has passed, unblock the thread, and remove
+             * from the sleep list.
+             */
+            if (ticks >= t->wake_time) { 
                 thread_unblock(t);
                 cur = list_remove(cur);
             }
