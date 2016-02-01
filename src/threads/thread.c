@@ -15,6 +15,8 @@
 #include "userprog/process.h"
 #endif
 
+#include "macros.h"
+
 /*! Random value for struct thread's `magic' member.
     Used to detect stack overflow.  See the big comment at the top
     of thread.h for details. */
@@ -69,9 +71,6 @@ static void *alloc_frame(struct thread *, size_t size);
 static void schedule(void);
 void thread_schedule_tail(struct thread *prev);
 static tid_t allocate_tid(void);
-
-bool priority_less(const struct list_elem *a, 
-                   const struct list_elem *b, void * aux);
 
 /*! Initializes the threading system by transforming the code
     that's currently running into a thread.  This can't work in
@@ -336,13 +335,21 @@ void thread_set_priority(int new_priority) {
 
 /*! Returns the current thread's priority. */
 int thread_get_priority(void) {
-    int priority = thread_current()->priority;
+    struct thread *cur = thread_current();
+    int priority = cur->priority;
     if (thread_mlfqs) { 
         return priority;
     }
-    else { 
+    else {
+        int donated_priority = PRI_MIN;
+        if (!list_empty(&cur->donor_list)) {
+            /*
+            struct list_elem *e = list_max(&cur->donor_list, &priority_less, NULL);
+            struct thread *t = list_entry(e, struct thread, elem);
+            donated_priority = t->priority; */
+        }
         /* David's TODO: account for priority donation. */
-        return priority;
+        return MAX(priority, donated_priority);
     }
 }
 
@@ -440,6 +447,9 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     strlcpy(t->name, name, sizeof t->name);
     t->stack = (uint8_t *) t + PGSIZE;
     t->priority = priority;
+
+    list_init(&t->donor_list);
+
     t->magic = THREAD_MAGIC;
 
     old_level = intr_disable();
