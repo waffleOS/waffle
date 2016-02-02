@@ -109,11 +109,12 @@ void sema_up(struct semaphore *sema) {
     ASSERT(sema != NULL);
 
     old_level = intr_disable();
+    sema->value++;
     if (!list_empty(&sema->waiters)) {
         thread_unblock(list_entry(list_pop_front(&sema->waiters),
                                   struct thread, elem));
+
     }
-    sema->value++;
     intr_set_level(old_level);
 }
 
@@ -187,7 +188,7 @@ void lock_acquire(struct lock *lock) {
     struct thread *cur = thread_current();
     
     if (cur->priority > lock->donated_priority) { 
-        lock->donated_priority = cur->priority;
+        lock->donated_priority = compute_priority(cur);
     }
     sema_down(&lock->semaphore);
     lock->holder = cur;
