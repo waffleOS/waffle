@@ -70,9 +70,6 @@ static void schedule(void);
 void thread_schedule_tail(struct thread *prev);
 static tid_t allocate_tid(void);
 
-bool priority_less(const struct list_elem *a, 
-                   const struct list_elem *b, void * aux);
-
 /*! Initializes the threading system by transforming the code
     that's currently running into a thread.  This can't work in
     general and it is possible in this case only because loader.S
@@ -336,14 +333,7 @@ void thread_set_priority(int new_priority) {
 
 /*! Returns the current thread's priority. */
 int thread_get_priority(void) {
-    int priority = thread_current()->priority;
-    if (thread_mlfqs) { 
-        return priority;
-    }
-    else { 
-        /* David's TODO: account for priority donation. */
-        return priority;
-    }
+    return compute_priority(thread_current());
 }
 
 /*! Sets the current thread's nice value to NICE. */
@@ -440,6 +430,7 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     strlcpy(t->name, name, sizeof t->name);
     t->stack = (uint8_t *) t + PGSIZE;
     t->priority = priority;
+    list_init(&t->lock_list);
     t->magic = THREAD_MAGIC;
 
     old_level = intr_disable();
@@ -458,12 +449,12 @@ static void * alloc_frame(struct thread *t, size_t size) {
     return t->stack;
 }
 
-/* Comparison function for priority scheduler. */
+/* Comparison function for priority (uses general compute_priority). */
 bool priority_less(const struct list_elem *a, 
                              const struct list_elem *b, void * aux) { 
     struct thread *x = list_entry(a, struct thread, elem); 
     struct thread *y = list_entry(b, struct thread, elem);
-    return (x->priority - y->priority < 0);
+    return (compute_priority(x) - compute_priority(y) < 0);
 } 
 
 /*! Chooses and returns the next thread to be scheduled.  Should return a
@@ -569,7 +560,30 @@ static tid_t allocate_tid(void) {
     Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof(struct thread, stack);
 
-/* TODO: Student added. */
+
+
+/* TODO: Student added functions. */
+int compute_priority(struct thread *t) { 
+    /* Advanced BSD scheduler. */
+    if (thread_mlfqs) { 
+        return t->priority;
+    }
+    /* Priority scheduler. */
+    else { 
+        int max_priority = t->priority;
+        struct list_elem *cur;
+        for (cur = list_begin(&t->lock_list); cur != list_end(&t->lock_list); 
+             cur = list_next(cur)) { 
+            struct lock *donor = list_entry(cur, struct lock, elem);
+            if (donor->donated_priority > max_priority) { 
+                max_priority = donor->donated_priority;
+            }
+        }
+        return max_priority;
+    }
+
+}
+
 bool thread_is_top_priority(int priority) { 
     
     /* Compare to current thread's priority */
