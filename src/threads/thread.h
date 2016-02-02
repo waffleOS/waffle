@@ -10,6 +10,8 @@
 #include <list.h>
 #include <stdint.h>
 
+#include "threads/fixed-point.h"
+
 /*! States in a thread's life cycle. */
 enum thread_status {
     THREAD_RUNNING,     /*!< Running thread. */
@@ -96,6 +98,8 @@ struct thread {
     char name[16];                      /*!< Name (for debugging purposes). */
     uint8_t *stack;                     /*!< Saved stack pointer. */
     int priority;                       /*!< Priority. */
+    int nice;                           /*!< Niceness for BSD scheduler. */
+    fixed_F recent_cpu;                 /*!< Needed for BSD scheduler. */
     struct list_elem allelem;           /*!< List element for all threads list. */
     /**@}*/
 
@@ -170,6 +174,9 @@ bool priority_less(const struct list_elem *a,
 
 
 int compute_priority(struct thread *t);
+void update_bsd_priorities(void);
+void update_recent_cpus(void);
+void update_load_avg(void);
 /* 
  * Checks if updated/new thread priority is the highest priority.
  * If it is, yields the current thread, so the updated thread
