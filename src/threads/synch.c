@@ -227,6 +227,7 @@ void lock_release(struct lock *lock) {
     lock->donated_priority = PRI_MIN;
     list_remove(&lock->elem);
     sema_up(&lock->semaphore);
+    thread_yield();
 }
 
 /*! Returns true if the current thread holds LOCK, false
