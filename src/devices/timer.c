@@ -161,6 +161,16 @@ void timer_print_stats(void) {
 static void timer_interrupt(struct intr_frame *args UNUSED) {
     ticks++;
 
+    /* Compute advanced scheduler values. */
+    thread_current()->recent_cpu += fixed_point(1);
+    if (ticks % TIMER_FREQ == 0) {
+        update_load_avg();
+        update_recent_cpus();
+    }
+    if (ticks % 4 == 0) { 
+        update_bsd_priorities();
+    }
+
     /* Wake threads up if it is time to. */
     if (!list_empty(&sleep_list)) {
         struct list_elem *cur = list_begin(&sleep_list); 

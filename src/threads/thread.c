@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "threads/fixed-point.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -58,6 +59,9 @@ static unsigned thread_ticks;   /*!< # of timer ticks since last yield. */
     Controlled by kernel command-line option "-o mlfqs". */
 bool thread_mlfqs;
 
+/*! Average load for BSD scheduler. */
+static fixed_F load_avg;
+
 static void kernel_thread(thread_func *, void *aux);
 
 static void idle(void *aux UNUSED);
@@ -87,6 +91,8 @@ void thread_init(void) {
     lock_init(&tid_lock);
     list_init(&ready_list);
     list_init(&all_list);
+
+    load_avg = fixed_point(0);
 
     /* Set up a thread structure for the running thread. */
     initial_thread = running_thread();
@@ -339,24 +345,24 @@ int thread_get_priority(void) {
 /*! Sets the current thread's nice value to NICE. */
 void thread_set_nice(int nice UNUSED) {
     /* Not yet implemented. */
+    thread_current()->nice = nice;
 }
 
 /*! Returns the current thread's nice value. */
 int thread_get_nice(void) {
     /* Not yet implemented. */
-    return 0;
+    return thread_current()->nice;
 }
 
 /*! Returns 100 times the system load average. */
 int thread_get_load_avg(void) {
-    /* Not yet implemented. */
-    return 0;
+    return fixed_to_int(fixed_mult(fixed_point(100), load_avg));
 }
 
 /*! Returns 100 times the current thread's recent_cpu value. */
 int thread_get_recent_cpu(void) {
-    /* Not yet implemented. */
-    return 0;
+    return fixed_to_int(fixed_mult(fixed_point(100), 
+                                   thread_current()->recent_cpu));
 }
 
 /*! Idle thread.  Executes when no other thread is ready to run.
@@ -468,18 +474,11 @@ static struct thread * next_thread_to_run(void) {
      * Priority scheduler. 
      * David's TODO: Implement. 
      */
-    else if (!thread_mlfqs) {
+    else {
         struct list_elem *e = list_max(&ready_list, &priority_less, NULL);
         list_remove(e);
         struct thread *t = list_entry(e, struct thread, elem);
         return t;
-    }
-    /* 
-     * Advanced scheduler. 
-     * David's TODO: Implement.*/
-    else {
-        /* Old implementation */
-        return list_entry(list_pop_front(&ready_list), struct thread, elem);
     }
 }
 
@@ -582,6 +581,43 @@ int compute_priority(struct thread *t) {
         return max_priority;
     }
 
+}
+
+void update_bsd_priorities(void) {
+    if (thread_mlfqs) {
+        struct list_elem *cur;
+        for (cur = list_begin(&all_list); cur != list_end(&all_list); 
+             cur = list_next(cur)) { 
+            struct thread *t = list_entry(cur, struct thread, allelem);
+            fixed_F temp = fixed_div(t->recent_cpu, fixed_point(4));
+            t->priority = PRI_MAX - fixed_to_int(temp) - 2 * t->nice;
+        }
+    }
+}
+
+void update_recent_cpus(void) {
+    if (thread_mlfqs) {
+        struct list_elem *cur;
+        for (cur = list_begin(&all_list); cur != list_end(&all_list); 
+             cur = list_next(cur)) { 
+            struct thread *t = list_entry(cur, struct thread, allelem);
+            fixed_F temp = fixed_mult(fixed_point(2), load_avg);
+            temp = fixed_div(temp, temp + fixed_point(1));
+            temp = fixed_mult(temp, t->recent_cpu); 
+            t->recent_cpu = temp + fixed_point(t->nice);
+        }
+    }
+}
+
+void update_load_avg(void) {
+    if (thread_mlfqs) {
+        int num_ready = list_size(&ready_list);
+        if (thread_current() != idle_thread) {
+            num_ready++;
+        }
+        load_avg = (fixed_mult(fixed_frac(59, 60), load_avg) + 
+                    fixed_mult(fixed_frac(1, 60), fixed_point(num_ready)));
+    }
 }
 
 bool thread_is_top_priority(int priority) { 
