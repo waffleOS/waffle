@@ -162,7 +162,7 @@ static void timer_interrupt(struct intr_frame *args UNUSED) {
     ticks++;
 
     /* Compute advanced scheduler values. */
-    thread_current()->recent_cpu++;
+    thread_current()->recent_cpu += fixed_point(1);
     if (ticks % TIMER_FREQ == 0) {
         update_load_avg();
         update_recent_cpus();
