@@ -107,6 +107,8 @@ struct thread {
     /**@{*/
     struct list_elem elem;              /*!< List element. */
     struct list lock_list; /*!< List of locks owned. */
+    struct list all_locks_list; /*!< List of locks. */
+    struct lock * lock_waiting;
     /**@}*/
 
     /**@}*/
