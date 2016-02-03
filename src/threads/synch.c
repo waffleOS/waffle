@@ -204,10 +204,13 @@ void lock_acquire(struct lock *lock) {
 
     struct thread *cur = thread_current();
     
-    if (cur->priority > lock->donated_priority) { 
-        lock->donated_priority = compute_priority(cur);
+
+    if (compute_priority(cur) > lock->donated_priority) { 
+        lock_donate_priority(lock, compute_priority(cur));
     }
+    cur->lock_waiting = lock;
     sema_down(&lock->semaphore);
+    cur->lock_waiting = NULL;
     lock->holder = cur;
     /* TODO: recompute lock donation priority */
     list_push_back(&cur->lock_list, &lock->elem);
@@ -256,7 +259,14 @@ bool lock_held_by_current_thread(const struct lock *lock) {
 
     return lock->holder == thread_current();
 }
-
+
+void lock_donate_priority(struct lock *l, int priority) {
+    l->donated_priority = priority;
+    struct thread *holder = l->holder;
+    if (holder != NULL && holder->lock_waiting != NULL && holder->lock_waiting->donated_priority < priority) {
+        lock_donate_priority(holder->lock_waiting, priority);
+    }
+}
 /*! One semaphore in a list. */
 struct semaphore_elem {
     struct list_elem elem;              /*!< List element. */
