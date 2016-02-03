@@ -24,6 +24,8 @@
 
 /*! List of sleeping threads. */
 static struct list sleep_list;
+/*! Controls access to the sleep_list to avoid race conditions. */
+static struct lock sleep_lock;
 
 /*! Number of timer ticks since OS booted. */
 static int64_t ticks;
@@ -40,8 +42,11 @@ static void real_time_delay(int64_t num, int32_t denom);
 /*! Sets up the timer to interrupt TIMER_FREQ times per second,
     and registers the corresponding interrupt. */
 void timer_init(void) {
-    /* Set up sleep list. */
+    /* Set up sleep list and lock. */
     list_init(&sleep_list); 
+    lock_init(&sleep_lock);
+
+    /* Configure interrupt. */
     pit_configure_channel(0, 2, TIMER_FREQ);
     intr_register_ext(0x20, timer_interrupt, "8254 Timer");
 }
@@ -100,9 +105,13 @@ void timer_sleep(int64_t ticks) {
      * Add thread to sleep list.
      * Note: Modifying sleep_list is critical code. 
      */
+    if (sleep_lock.holder != thread_current()) {
+        lock_acquire(&sleep_lock);
+    }
     enum intr_level old_level = intr_disable();
     list_push_back(&sleep_list, &t->sleepelem);
     intr_set_level(old_level);
+    lock_release(&sleep_lock);
     
     /* Sleep thread by context switching. */
     thread_sleep();
