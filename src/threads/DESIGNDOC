@@ -41,7 +41,7 @@ which parts.
 
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
-   Rahul: 12 hours
+   Rahul: 9 hours
    Robert: 12 hours
    David: 12 hours
 
@@ -111,7 +111,12 @@ which parts.
 
 >> B4: Describe the sequence of events when a call to lock_acquire()
 >> causes a priority donation.  How is nested donation handled?
-
+    When lock_acquire cases a priority donation, a recursive function
+    lock_donate_priority is called that donates a given priority to the lock
+    and then recursively calls itself to donate priority if the lock's owner is
+    waiting on another lock. This handles nested donations by donating priority
+    to all threads that are waiting on locks in order to run the thread holding
+    the first lock.
 >> B5: Describe the sequence of events when lock_release() is called
 >> on a lock that a higher-priority thread is waiting for.
 
