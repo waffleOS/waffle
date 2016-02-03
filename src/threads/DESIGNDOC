@@ -8,9 +8,9 @@
 
 >> Fill in the names and email addresses of your group members.
 
-FirstName LastName <email@domain.example>
-FirstName LastName <email@domain.example>
-FirstName LastName <email@domain.example>
+Rahul Bachal <rbachal@caltech.edu>
+Robert Eng <reng@caltech.edu>
+David Qu <dqu@caltech.edu>
 
 >> Specify how many late tokens you are using on this assignment:  
 
@@ -41,6 +41,9 @@ which parts.
 
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
+   Rahul: 12 hours
+   Robert: 12 hours
+   David: 12 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
@@ -58,7 +61,14 @@ which parts.
 
 >> A2: Briefly describe what happens in a call to timer_sleep(),
 >> including the effects of the timer interrupt handler.
-
+    First, the wake time for the thread is determined in units of ticks. Next,
+    interrupts are disabled to prevent other threads from preempting the
+    current thread while it is trying to sleep. The thread is put in a sleep
+    list that contains all threads that are sleeping, and interrupts are
+    disabled. Finally, the thread is actually yielded by context switching in
+    thread_sleep(), which blocks the thread and schedules a new thread to be
+    run.
+    
 >> A3: What steps are taken to minimize the amount of time spent in
 >> the timer interrupt handler?
 
