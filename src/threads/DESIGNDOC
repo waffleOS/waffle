@@ -76,14 +76,20 @@ which parts.
 
 >> A4: How are race conditions avoided when multiple threads call
 >> timer_sleep() simultaneously?
-
+    Race conditions are prevented since timer_sleep disables interrupts when
+    putting the current thread to sleep. Other threads cannot preempt a thread
+    that is trying to sleep.
 >> A5: How are race conditions avoided when a timer interrupt occurs
 >> during a call to timer_sleep()?
-
+    This does not occur as we turn off timer interrupts in timer_sleep.
 ---- RATIONALE ----
 
 >> A6: Why did you choose this design?  In what ways is it superior to
 >> another design you considered?
+    This design guarantees that the critical code in timer_sleep is not
+    preempted, thereby avoiding race conditions. While this does slow the rate
+    of timer interrupts, the amount of code run during timer_sleep is small
+    enough to prevent the system from feeling sluggish.
 
 			 PRIORITY SCHEDULING
 			 ===================
