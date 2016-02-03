@@ -10,6 +10,8 @@
 #include <list.h>
 #include <stdint.h>
 
+#include "threads/fixed-point.h"
+
 /*! States in a thread's life cycle. */
 enum thread_status {
     THREAD_RUNNING,     /*!< Running thread. */
@@ -96,12 +98,23 @@ struct thread {
     char name[16];                      /*!< Name (for debugging purposes). */
     uint8_t *stack;                     /*!< Saved stack pointer. */
     int priority;                       /*!< Priority. */
+    int nice;                           /*!< Niceness for BSD scheduler. */
+    fixed_F recent_cpu;                 /*!< Needed for BSD scheduler. */
     struct list_elem allelem;           /*!< List element for all threads list. */
     /**@}*/
 
     /*! Shared between thread.c and synch.c. */
     /**@{*/
     struct list_elem elem;              /*!< List element. */
+    struct list lock_list; /*!< List of locks owned. */
+    /**@}*/
+
+    /**@}*/
+
+    /*! Shared between thread.c and devices/timer.c. */
+    /**@{*/
+    struct list_elem sleepelem; /*!< List element for sleep list. */
+    int wake_time;              /*!< Time to wake up. */
     /**@}*/
 
 #ifdef USERPROG
@@ -140,6 +153,7 @@ const char *thread_name(void);
 
 void thread_exit(void) NO_RETURN;
 void thread_yield(void);
+void thread_sleep(void);
 
 /*! Performs some operation on thread t, given auxiliary data AUX. */
 typedef void thread_action_func(struct thread *t, void *aux);
@@ -155,6 +169,14 @@ int thread_get_recent_cpu(void);
 int thread_get_load_avg(void);
 
 /* Student added. */
+bool priority_less(const struct list_elem *a, 
+                   const struct list_elem *b, void * aux);
+
+
+int compute_priority(struct thread *t);
+void update_bsd_priorities(void);
+void update_recent_cpus(void);
+void update_load_avg(void);
 /* 
  * Checks if updated/new thread priority is the highest priority.
  * If it is, yields the current thread, so the updated thread
