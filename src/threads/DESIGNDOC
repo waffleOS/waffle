@@ -12,7 +12,7 @@ Rahul Bachal <rbachal@caltech.edu>
 Robert Eng <reng@caltech.edu>
 David Qu <dqu@caltech.edu>
 
->> Specify how many late tokens you are using on this assignment:  
+>> Specify how many late tokens you are using on this assignment: 0.  
 
 >> What is the Git repository and commit hash for your submission?
    (You only need to include the commit-hash in the file you submit
@@ -43,11 +43,16 @@ which parts.
    Make sure that each member's total time is listed.
    Rahul: 9 hours
    Robert: 12 hours
-   David: 12 hours
+   David: 28 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
 
+   Rahul:
+   Robert:
+   David: Implemented alarm, basic priority scheduler, and advanced 
+          scheduler. Debugged various list API errors.
+   
 			     ALARM CLOCK
 			     ===========
 
@@ -56,6 +61,13 @@ which parts.
 >> A1: Copy here the declaration of each new or changed `struct' or
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
+
+Added static struct list sleep_list (timer.c)
+    To track which threads are sleeping and need to be woken up. 
+
+Modified struct thread (thread.h)
+    Added struct list_elem sleepelem to put threads in the sleep_list.
+    Added int wait_time to track when the thread needed to be woken up.
 
 ---- ALGORITHMS ----
 
@@ -71,6 +83,9 @@ which parts.
     
 >> A3: What steps are taken to minimize the amount of time spent in
 >> the timer interrupt handler?
+    Only the necessary computations are done. This includes determining
+    the thread(s) to wake, and updating the advanced scheduler if the 
+    mlfqs flag is set.
 
 ---- SYNCHRONIZATION ----
 
@@ -79,9 +94,11 @@ which parts.
     Race conditions are prevented since timer_sleep disables interrupts when
     putting the current thread to sleep. Other threads cannot preempt a thread
     that is trying to sleep.
+
 >> A5: How are race conditions avoided when a timer interrupt occurs
 >> during a call to timer_sleep()?
     This does not occur as we turn off timer interrupts in timer_sleep.
+
 ---- RATIONALE ----
 
 >> A6: Why did you choose this design?  In what ways is it superior to
@@ -140,6 +157,17 @@ which parts.
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+Added typedef int fixed_F 
+    To represent Q(31 - F).F fixed point arithmetic.
+    This is part of the fixed point API defined in fixed-point.h/.c
+
+Added static fixed_F load_avg
+    To keep track of the load_avg for the system.
+
+Modified struct thread (thread.h)
+    Added int nice to track the niceness of each thread.
+    Added fixed_F recent_cpu to track the recent CPU of each thread.
+
 ---- ALGORITHMS ----
 
 >> C2: Suppose threads A, B, and C have nice values 0, 1, and 2.  Each
@@ -167,6 +195,8 @@ ticks   A   B   C   A   B   C   to run
 
 >> C4: How is the way you divided the cost of scheduling between code
 >> inside and outside interrupt context likely to affect performance?
+    Most of the updates are time-sensitive, and are implemented in the
+    interrupt context. 
 
 ---- RATIONALE ----
 
@@ -174,6 +204,7 @@ ticks   A   B   C   A   B   C   to run
 >> disadvantages in your design choices.  If you were to have extra
 >> time to work on this part of the project, how might you choose to
 >> refine or improve your design?
+    
 
 >> C6: The assignment explains arithmetic for fixed-point math in
 >> detail, but it leaves it open to you to implement it.  Why did you
