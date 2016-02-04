@@ -42,13 +42,13 @@ which parts.
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
    Rahul: 9 hours
-   Robert: 12 hours
+   Robert: hours
    David: 28 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
 
-   Rahul:
+   Rahul: Implemented advanced priority donation.
    Robert:
    David: Implemented alarm, basic priority scheduler, and advanced 
           scheduler. Debugged various list API errors.
@@ -125,6 +125,9 @@ Modified struct thread (thread.h)
 
 >> B3: How do you ensure that the highest priority thread waiting for
 >> a lock, semaphore, or condition variable wakes up first?
+    The scheduler always schedules the thread with the highest priority. When
+    a thread with donated priority releases a lock, then the thread with the
+    highest priority is able to acquire the lock since it is scheduled next.
 
 >> B4: Describe the sequence of events when a call to lock_acquire()
 >> causes a priority donation.  How is nested donation handled?
@@ -136,6 +139,11 @@ Modified struct thread (thread.h)
     the first lock.
 >> B5: Describe the sequence of events when lock_release() is called
 >> on a lock that a higher-priority thread is waiting for.
+    When lock_release is called on a lock that a higher-priority thread is
+    waiting for, the lock's priority is set to the minimum priority. This
+    resets the thread's priority back to its original priority before it was
+    donated a higher priority. Then the highest priority thread is run and
+    acquires the lock.
 
 ---- SYNCHRONIZATION ----
 
