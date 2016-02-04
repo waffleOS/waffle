@@ -12,6 +12,8 @@
 #include "threads/interrupt.h"
 #include "threads/synch.h"
 #include "threads/thread.h"
+
+#include <list.h>
   
 #if TIMER_FREQ < 19
 #error 8254 timer requires TIMER_FREQ >= 19
@@ -19,6 +21,9 @@
 #if TIMER_FREQ > 1000
 #error TIMER_FREQ <= 1000 recommended
 #endif
+
+/*! List of sleeping threads. */
+static struct list sleep_list;
 
 /*! Number of timer ticks since OS booted. */
 static int64_t ticks;
@@ -35,6 +40,8 @@ static void real_time_delay(int64_t num, int32_t denom);
 /*! Sets up the timer to interrupt TIMER_FREQ times per second,
     and registers the corresponding interrupt. */
 void timer_init(void) {
+    /* Set up sleep list. */
+    list_init(&sleep_list); 
     pit_configure_channel(0, 2, TIMER_FREQ);
     intr_register_ext(0x20, timer_interrupt, "8254 Timer");
 }
@@ -84,8 +91,21 @@ void timer_sleep(int64_t ticks) {
     int64_t start = timer_ticks();
 
     ASSERT(intr_get_level() == INTR_ON);
-    while (timer_elapsed(start) < ticks) 
-        thread_yield();
+
+    /* Determine wake up time. */
+    struct thread *t = thread_current();
+    t->wake_time = start + ticks;
+
+    /** 
+     * Add thread to sleep list.
+     * Note: Modifying sleep_list is critical code. 
+     */
+    enum intr_level old_level = intr_disable();
+    list_push_back(&sleep_list, &t->sleepelem);
+    intr_set_level(old_level);
+    
+    /* Sleep thread by context switching. */
+    thread_sleep();
 }
 
 /*! Sleeps for approximately MS milliseconds.  Interrupts must be turned on. */
@@ -140,6 +160,36 @@ void timer_print_stats(void) {
 /*! Timer interrupt handler. */
 static void timer_interrupt(struct intr_frame *args UNUSED) {
     ticks++;
+
+    /* Compute advanced scheduler values. */
+    thread_current()->recent_cpu += fixed_point(1);
+    if (ticks % TIMER_FREQ == 0) {
+        update_load_avg();
+        update_recent_cpus();
+    }
+    if (ticks % 4 == 0) { 
+        update_bsd_priorities();
+    }
+
+    /* Wake threads up if it is time to. */
+    if (!list_empty(&sleep_list)) {
+        struct list_elem *cur = list_begin(&sleep_list); 
+        while (cur != list_end(&sleep_list)) {
+            struct thread *t = list_entry(cur, struct thread, sleepelem);
+
+            /* 
+             * If wake_time has passed, unblock the thread, and remove
+             * from the sleep list.
+             */
+            if (ticks >= t->wake_time) { 
+                thread_unblock(t);
+                cur = list_remove(cur);
+            }
+            else {
+                cur = list_next(cur);
+            }
+        }
+    }
     thread_tick();
 }
 
