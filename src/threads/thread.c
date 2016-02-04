@@ -101,6 +101,8 @@ void thread_init(void) {
     initial_thread->tid = allocate_tid();
 }
 
+
+
 /*! Starts preemptive thread scheduling by enabling interrupts.
     Also creates the idle thread. */
 void thread_start(void) {
