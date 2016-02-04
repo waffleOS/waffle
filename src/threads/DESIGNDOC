@@ -117,6 +117,21 @@ Modified struct thread (thread.h)
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+In thread.h:
+struct thread {
+    struct list lock_list; /*!< List of locks owned by this thread. */
+    struct list all_locks_list; /*!< List of locks. */
+    struct lock * lock_waiting; /* The lock this current thread is waiting on */
+};
+
+In synch.h:
+struct lock {
+    int donated_priority;   /* The priority which was donated to this lock.
+                            Will be the priority of the highest thread which
+                            wants this lock. */
+    struct list_elem elem;  /* Need this to put the struct lock into lists. */
+};
+
 >> B2: Explain the data structure used to track priority donation.
 >> Use ASCII art to diagram a nested donation.  (Alternately, submit a
 >> .png file.)
