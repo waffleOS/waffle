@@ -42,14 +42,14 @@ which parts.
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
    Rahul: 10 hours
-   Robert: hours
+   Robert: 7 hours
    David: 28 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
 
    Rahul: Implemented advanced priority donation.
-   Robert:
+   Robert: Attempted to implement priority donation but failed at it.
    David: Implemented alarm, basic priority scheduler, and advanced 
           scheduler. Debugged various list API errors.
    
