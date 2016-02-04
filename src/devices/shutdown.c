@@ -92,6 +92,9 @@ void shutdown_power_off(void) {
     for (p = s; *p != '\0'; p++)
         outb(0x8900, *p);
 
+    /* QEMU ACPI shutdown Bochs style 0x8900 debug port issue */
+    outw(0xB004, 0x2000);
+
     /* This will power off a VMware VM if "gui.exitOnCLIHLT = TRUE"
        is set in its configuration file.  (The "pintos" script does
        that automatically.)  */
