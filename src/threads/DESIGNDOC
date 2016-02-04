@@ -175,28 +175,36 @@ Modified struct thread (thread.h)
 >> scheduling decision and the priority and recent_cpu values for each
 >> thread after each given number of timer ticks:
 
+    Starting with load_avg of 0:
+
 timer  recent_cpu    priority   thread
-ticks   A   B   C   A   B   C   to run
------  --  --  --  --  --  --   ------
- 0
- 4
- 8
-12
-16
-20
-24
-28
-32
-36
+ticks    A    B    C   A   B   C   to run
+-----   --   --   --  --  --  --   ------
+ 0       0    0    0  63  61  59     A
+ 4     0.4    1    2  63  61  59     A
+ 8     0.7  1.2  3.2  63  61  58     A
+12     1.1  1.3  4.2  63  61  58     A
+16     1.4  1.4  5.1  63  61  58     A
+20     1.8  1.4  6.0  63  61  58     A
+24     2.1  1.5  6.8  62  61  57     A
+28     2.4  1.6  7.7  62  61  57     A
+32     2.8  1.7  8.5  62  61  57     A
+36     3.1  1.8  9.3  62  61  57     A                       
 
 >> C3: Did any ambiguities in the scheduler specification make values
 >> in the table uncertain?  If so, what rule did you use to resolve
 >> them?  Does this match the behavior of your scheduler?
+    The above calculations were done starting with load_avg = 0. Ambiguities
+    include the order of computations. The computations above, and in the
+    scheduler implementation first update the current thread's recent cpu,
+    then update the load_avg, recent_cpu for all threads, and finally
+    update the priorities.
 
 >> C4: How is the way you divided the cost of scheduling between code
 >> inside and outside interrupt context likely to affect performance?
     Most of the updates are time-sensitive, and are implemented in the
-    interrupt context. 
+    interrupt context. This will reduce the responsiveness of interrupts
+    because a lot of computation is being done with every timer interrupt.
 
 ---- RATIONALE ----
 
@@ -204,7 +212,12 @@ ticks   A   B   C   A   B   C   to run
 >> disadvantages in your design choices.  If you were to have extra
 >> time to work on this part of the project, how might you choose to
 >> refine or improve your design?
-    
+    Advantages include simple implementation to understand, and a
+    good fixed point abstraction layer to allow for easy changes.
+    Disadvantages include slower computations due to the overhead
+    of calling functions. From an efficiency standpoint, work could
+    be done to optimize the fixed point arithmetic, so the time
+    spent in interrupt handlers is minimized.
 
 >> C6: The assignment explains arithmetic for fixed-point math in
 >> detail, but it leaves it open to you to implement it.  Why did you
@@ -212,6 +225,14 @@ ticks   A   B   C   A   B   C   to run
 >> abstraction layer for fixed-point math, that is, an abstract data
 >> type and/or a set of functions or macros to manipulate fixed-point
 >> numbers, why did you do so?  If not, why not?
+    We defined a fixed_F type, which is an integer that represents
+    a Q(31 - F).F fixed point value. The API implemented includes 
+    functions to construct fixed_F values from integer and rational
+    representations, as well as for performing multiplication and
+    division between fixed_F values, and converting back into 
+    an integer (rounding to the nearest integer). This gives a
+    layer of abstraction, and allows parameters such as F, the
+    number of binary fractional digits, to be adjusted easily.
 
 			  SURVEY QUESTIONS
 			  ================
@@ -224,12 +245,15 @@ penalized.  We can't fix things until we know about them.  :-)
 
 >> In your opinion, was this assignment, or any of the parts of it, too
 >> easy or too hard?  Did it take too long or too little time?
+    About right.
 
 >> Did you find that working on a particular part of the assignment gave
 >> you greater insight into some aspect of OS design?
+    Working with scheduling, interrupts, and resource (lock) management.
 
 >> Were there any parts of the assignment that you felt were unnecessarily
 >> tedious or pointless?
+    Nope.
 
 >> Is there some particular fact or hint we should give students in
 >> future quarters to help them solve the problems?  Conversely, did you
