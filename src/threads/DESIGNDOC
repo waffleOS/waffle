@@ -118,19 +118,25 @@ Modified struct thread (thread.h)
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
 In thread.h:
-struct thread {
+Modified struct thread 
+  Added:
     struct list lock_list; /*!< List of locks owned by this thread. */
-    struct list all_locks_list; /*!< List of locks. */
+        To propagate priority donation for all locks held.
     struct lock * lock_waiting; /* The lock this current thread is waiting on */
-};
+        To handle nested donation by passing to the lock a thread is waiting on.
 
 In synch.h:
-struct lock {
+Modified struct lock
+  Added:
     int donated_priority;   /* The priority which was donated to this lock.
                             Will be the priority of the highest thread which
                             wants this lock. */
     struct list_elem elem;  /* Need this to put the struct lock into lists. */
-};
+
+In synch.c: 
+  Modified struct semaphore_elem
+    Added struct thread *thread to track which thread is waiting on
+    the semaphore for priority donation.
 
 >> B2: Explain the data structure used to track priority donation.
 >> Use ASCII art to diagram a nested donation.  (Alternately, submit a
@@ -165,11 +171,22 @@ struct lock {
 >> B6: Describe a potential race in thread_set_priority() and explain
 >> how your implementation avoids it.  Can you use a lock to avoid
 >> this race?
+    The race would be accessing the ready_list when a thread changes
+    the ready list. The implementation avoids this making sure the 
+    order of changes to the ready list is correct, so the read won't
+    get corrupted. A lock cannot be used to avoid the race, because
+    the scheduler is thing modifying it, and cannot aquire the lock.
+
 
 ---- RATIONALE ----
 
 >> B7: Why did you choose this design?  In what ways is it superior to
 >> another design you considered?
+    This design allows us to implement priority donation easily by considering
+    the priorities of locks rather than the priorities of threads. When we
+    donate priority, we donate it to the lock rather than the thread. The
+    thread's priority is set to the maximum of all the priorities of the locks.
+    This also allows us to handle releasing locks.
 
 			  ADVANCED SCHEDULER
 			  ==================
@@ -204,24 +221,22 @@ timer  recent_cpu    priority   thread
 ticks    A    B    C   A   B   C   to run
 -----   --   --   --  --  --  --   ------
  0       0    0    0  63  61  59     A
- 4     0.4    1    2  63  61  59     A
- 8     0.7  1.2  3.2  63  61  58     A
-12     1.1  1.3  4.2  63  61  58     A
-16     1.4  1.4  5.1  63  61  58     A
-20     1.8  1.4  6.0  63  61  58     A
-24     2.1  1.5  6.8  62  61  57     A
-28     2.4  1.6  7.7  62  61  57     A
-32     2.8  1.7  8.5  62  61  57     A
-36     3.1  1.8  9.3  62  61  57     A                       
+ 4       4    0    0  62  61  59     A
+ 8       8    0    0  61  61  59     B
+12       8    4    0  61  60  59     A
+16      12    4    0  60  60  59     B
+20      12    8    0  60  59  59     A
+24      16    8    0  59  59  59     C
+28      16    8    4  59  59  58     B
+32      16   12    4  59  58  58     A
+36      20   12    4  58  58  58     C                       
 
 >> C3: Did any ambiguities in the scheduler specification make values
 >> in the table uncertain?  If so, what rule did you use to resolve
 >> them?  Does this match the behavior of your scheduler?
-    The above calculations were done starting with load_avg = 0. Ambiguities
-    include the order of computations. The computations above, and in the
-    scheduler implementation first update the current thread's recent cpu,
-    then update the load_avg, recent_cpu for all threads, and finally
-    update the priorities.
+    The above calculations were done starting with load_avg = 0. 
+    Ties were resolved by picking the earliest thread in the queue, 
+    which is what the scheduler implementation does.
 
 >> C4: How is the way you divided the cost of scheduling between code
 >> inside and outside interrupt context likely to affect performance?
