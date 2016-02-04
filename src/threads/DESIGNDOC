@@ -155,6 +155,11 @@ Modified struct thread (thread.h)
 
 >> B7: Why did you choose this design?  In what ways is it superior to
 >> another design you considered?
+    This design allows us to implement priority donation easily by considering
+    the priorities of locks rather than the priorities of threads. When we
+    donate priority, we donate it to the lock rather than the thread. The
+    thread's priority is set to the maximum of all the priorities of the locks.
+    This also allows us to handle releasing locks.
 
 			  ADVANCED SCHEDULER
 			  ==================
