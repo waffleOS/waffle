@@ -8,11 +8,11 @@
 
 >> Fill in the names and email addresses of your group members.
 
-FirstName LastName <email@domain.example>
-FirstName LastName <email@domain.example>
-FirstName LastName <email@domain.example>
+Rahul Bachal <rbachal@caltech.edu>
+Robert Eng <reng@caltech.edu>
+David Qu <dqu@caltech.edu>
 
->> Specify how many late tokens you are using on this assignment:  
+>> Specify how many late tokens you are using on this assignment: 0.  
 
 >> What is the Git repository and commit hash for your submission?
    (You only need to include the commit-hash in the file you submit
@@ -41,10 +41,18 @@ which parts.
 
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
+   Rahul: 10 hours
+   Robert: hours
+   David: 28 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
 
+   Rahul: Implemented advanced priority donation.
+   Robert:
+   David: Implemented alarm, basic priority scheduler, and advanced 
+          scheduler. Debugged various list API errors.
+   
 			     ALARM CLOCK
 			     ===========
 
@@ -54,26 +62,51 @@ which parts.
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+Added static struct list sleep_list (timer.c)
+    To track which threads are sleeping and need to be woken up. 
+
+Modified struct thread (thread.h)
+    Added struct list_elem sleepelem to put threads in the sleep_list.
+    Added int wait_time to track when the thread needed to be woken up.
+
 ---- ALGORITHMS ----
 
 >> A2: Briefly describe what happens in a call to timer_sleep(),
 >> including the effects of the timer interrupt handler.
-
+    First, the wake time for the thread is determined in units of ticks. Next,
+    interrupts are disabled to prevent other threads from preempting the
+    current thread while it is trying to sleep. The thread is put in a sleep
+    list that contains all threads that are sleeping, and interrupts are
+    disabled. Finally, the thread is actually yielded by context switching in
+    thread_sleep(), which blocks the thread and schedules a new thread to be
+    run.
+    
 >> A3: What steps are taken to minimize the amount of time spent in
 >> the timer interrupt handler?
+    Only the necessary computations are done. This includes determining
+    the thread(s) to wake, and updating the advanced scheduler if the 
+    mlfqs flag is set.
 
 ---- SYNCHRONIZATION ----
 
 >> A4: How are race conditions avoided when multiple threads call
 >> timer_sleep() simultaneously?
+    Race conditions are prevented since timer_sleep disables interrupts when
+    putting the current thread to sleep. Other threads cannot preempt a thread
+    that is trying to sleep.
 
 >> A5: How are race conditions avoided when a timer interrupt occurs
 >> during a call to timer_sleep()?
+    This does not occur as we turn off timer interrupts in timer_sleep.
 
 ---- RATIONALE ----
 
 >> A6: Why did you choose this design?  In what ways is it superior to
 >> another design you considered?
+    This design guarantees that the critical code in timer_sleep is not
+    preempted, thereby avoiding race conditions. While this does slow the rate
+    of timer interrupts, the amount of code run during timer_sleep is small
+    enough to prevent the system from feeling sluggish.
 
 			 PRIORITY SCHEDULING
 			 ===================
@@ -92,12 +125,25 @@ which parts.
 
 >> B3: How do you ensure that the highest priority thread waiting for
 >> a lock, semaphore, or condition variable wakes up first?
+    The scheduler always schedules the thread with the highest priority. When
+    a thread with donated priority releases a lock, then the thread with the
+    highest priority is able to acquire the lock since it is scheduled next.
 
 >> B4: Describe the sequence of events when a call to lock_acquire()
 >> causes a priority donation.  How is nested donation handled?
-
+    When lock_acquire cases a priority donation, a recursive function
+    lock_donate_priority is called that donates a given priority to the lock
+    and then recursively calls itself to donate priority if the lock's owner is
+    waiting on another lock. This handles nested donations by donating priority
+    to all threads that are waiting on locks in order to run the thread holding
+    the first lock.
 >> B5: Describe the sequence of events when lock_release() is called
 >> on a lock that a higher-priority thread is waiting for.
+    When lock_release is called on a lock that a higher-priority thread is
+    waiting for, the lock's priority is set to the minimum priority. This
+    resets the thread's priority back to its original priority before it was
+    donated a higher priority. Then the highest priority thread is run and
+    acquires the lock.
 
 ---- SYNCHRONIZATION ----
 
@@ -119,6 +165,17 @@ which parts.
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+Added typedef int fixed_F 
+    To represent Q(31 - F).F fixed point arithmetic.
+    This is part of the fixed point API defined in fixed-point.h/.c
+
+Added static fixed_F load_avg
+    To keep track of the load_avg for the system.
+
+Modified struct thread (thread.h)
+    Added int nice to track the niceness of each thread.
+    Added fixed_F recent_cpu to track the recent CPU of each thread.
+
 ---- ALGORITHMS ----
 
 >> C2: Suppose threads A, B, and C have nice values 0, 1, and 2.  Each
@@ -126,26 +183,36 @@ which parts.
 >> scheduling decision and the priority and recent_cpu values for each
 >> thread after each given number of timer ticks:
 
+    Starting with load_avg of 0:
+
 timer  recent_cpu    priority   thread
-ticks   A   B   C   A   B   C   to run
------  --  --  --  --  --  --   ------
- 0
- 4
- 8
-12
-16
-20
-24
-28
-32
-36
+ticks    A    B    C   A   B   C   to run
+-----   --   --   --  --  --  --   ------
+ 0       0    0    0  63  61  59     A
+ 4     0.4    1    2  63  61  59     A
+ 8     0.7  1.2  3.2  63  61  58     A
+12     1.1  1.3  4.2  63  61  58     A
+16     1.4  1.4  5.1  63  61  58     A
+20     1.8  1.4  6.0  63  61  58     A
+24     2.1  1.5  6.8  62  61  57     A
+28     2.4  1.6  7.7  62  61  57     A
+32     2.8  1.7  8.5  62  61  57     A
+36     3.1  1.8  9.3  62  61  57     A                       
 
 >> C3: Did any ambiguities in the scheduler specification make values
 >> in the table uncertain?  If so, what rule did you use to resolve
 >> them?  Does this match the behavior of your scheduler?
+    The above calculations were done starting with load_avg = 0. Ambiguities
+    include the order of computations. The computations above, and in the
+    scheduler implementation first update the current thread's recent cpu,
+    then update the load_avg, recent_cpu for all threads, and finally
+    update the priorities.
 
 >> C4: How is the way you divided the cost of scheduling between code
 >> inside and outside interrupt context likely to affect performance?
+    Most of the updates are time-sensitive, and are implemented in the
+    interrupt context. This will reduce the responsiveness of interrupts
+    because a lot of computation is being done with every timer interrupt.
 
 ---- RATIONALE ----
 
@@ -153,6 +220,12 @@ ticks   A   B   C   A   B   C   to run
 >> disadvantages in your design choices.  If you were to have extra
 >> time to work on this part of the project, how might you choose to
 >> refine or improve your design?
+    Advantages include simple implementation to understand, and a
+    good fixed point abstraction layer to allow for easy changes.
+    Disadvantages include slower computations due to the overhead
+    of calling functions. From an efficiency standpoint, work could
+    be done to optimize the fixed point arithmetic, so the time
+    spent in interrupt handlers is minimized.
 
 >> C6: The assignment explains arithmetic for fixed-point math in
 >> detail, but it leaves it open to you to implement it.  Why did you
@@ -160,6 +233,14 @@ ticks   A   B   C   A   B   C   to run
 >> abstraction layer for fixed-point math, that is, an abstract data
 >> type and/or a set of functions or macros to manipulate fixed-point
 >> numbers, why did you do so?  If not, why not?
+    We defined a fixed_F type, which is an integer that represents
+    a Q(31 - F).F fixed point value. The API implemented includes 
+    functions to construct fixed_F values from integer and rational
+    representations, as well as for performing multiplication and
+    division between fixed_F values, and converting back into 
+    an integer (rounding to the nearest integer). This gives a
+    layer of abstraction, and allows parameters such as F, the
+    number of binary fractional digits, to be adjusted easily.
 
 			  SURVEY QUESTIONS
 			  ================
@@ -172,12 +253,15 @@ penalized.  We can't fix things until we know about them.  :-)
 
 >> In your opinion, was this assignment, or any of the parts of it, too
 >> easy or too hard?  Did it take too long or too little time?
+    About right.
 
 >> Did you find that working on a particular part of the assignment gave
 >> you greater insight into some aspect of OS design?
+    Working with scheduling, interrupts, and resource (lock) management.
 
 >> Were there any parts of the assignment that you felt were unnecessarily
 >> tedious or pointless?
+    Nope.
 
 >> Is there some particular fact or hint we should give students in
 >> future quarters to help them solve the problems?  Conversely, did you

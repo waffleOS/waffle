@@ -111,8 +111,25 @@ void sema_up(struct semaphore *sema) {
     old_level = intr_disable();
     sema->value++;
     if (!list_empty(&sema->waiters)) {
-        thread_unblock(list_entry(list_pop_front(&sema->waiters),
-                                  struct thread, elem));
+        struct list_elem *e = list_begin(&sema->waiters);
+        struct thread *wake_thread = list_entry(e, struct thread, elem);
+        int max_priority = compute_priority(wake_thread);
+
+        for (e = list_next(e); e != list_end(&sema->waiters); 
+             e = list_next(e)) { 
+            struct thread *t = list_entry(e, struct thread, elem);
+            int priority = compute_priority(t);
+            if (priority > max_priority) { 
+                max_priority = priority;
+                wake_thread = t;
+            }
+        }
+
+        list_remove(&wake_thread->elem);
+        thread_unblock(wake_thread);
+        if (max_priority >= thread_get_priority()) {
+            thread_yield();
+        } 
 
     }
     intr_set_level(old_level);
@@ -187,11 +204,15 @@ void lock_acquire(struct lock *lock) {
 
     struct thread *cur = thread_current();
     
-    if (cur->priority > lock->donated_priority) { 
-        lock->donated_priority = compute_priority(cur);
+
+    if (compute_priority(cur) > lock->donated_priority) { 
+        lock_donate_priority(lock, compute_priority(cur));
     }
+    cur->lock_waiting = lock;
     sema_down(&lock->semaphore);
+    cur->lock_waiting = NULL;
     lock->holder = cur;
+    /* TODO: recompute lock donation priority */
     list_push_back(&cur->lock_list, &lock->elem);
 }
 
@@ -238,11 +259,19 @@ bool lock_held_by_current_thread(const struct lock *lock) {
 
     return lock->holder == thread_current();
 }
-
+
+void lock_donate_priority(struct lock *l, int priority) {
+    l->donated_priority = priority;
+    struct thread *holder = l->holder;
+    if (holder != NULL && holder->lock_waiting != NULL && holder->lock_waiting->donated_priority < priority) {
+        lock_donate_priority(holder->lock_waiting, priority);
+    }
+}
 /*! One semaphore in a list. */
 struct semaphore_elem {
     struct list_elem elem;              /*!< List element. */
     struct semaphore semaphore;         /*!< This semaphore. */
+    struct thread *thread;              /*!< Associated thread. */
 };
 
 /*! Initializes condition variable COND.  A condition variable
@@ -282,6 +311,7 @@ void cond_wait(struct condition *cond, struct lock *lock) {
     ASSERT(!intr_context());
     ASSERT(lock_held_by_current_thread(lock));
   
+    waiter.thread = thread_current();
     sema_init(&waiter.semaphore, 0);
     list_push_back(&cond->waiters, &waiter.elem);
     lock_release(lock);
@@ -302,9 +332,33 @@ void cond_signal(struct condition *cond, struct lock *lock UNUSED) {
     ASSERT(!intr_context ());
     ASSERT(lock_held_by_current_thread (lock));
 
-    if (!list_empty(&cond->waiters)) 
+    /* if (!list_empty(&cond->waiters)) 
         sema_up(&list_entry(list_pop_front(&cond->waiters),
-                            struct semaphore_elem, elem)->semaphore);
+                            struct semaphore_elem, elem)->semaphore); */
+    
+    if (!list_empty(&cond->waiters)) {
+        struct list_elem *e = list_begin(&cond->waiters);
+        struct semaphore_elem *sema_elem = list_entry(e, 
+                                           struct semaphore_elem, elem);
+        int max_priority = compute_priority(sema_elem->thread);
+
+        for (e = list_next(e); e != list_end(&cond->waiters); 
+             e = list_next(e)) { 
+            struct semaphore_elem *cur = list_entry(e, 
+                                         struct semaphore_elem, elem);
+            struct thread *t = cur->thread;
+            int priority = compute_priority(t);
+            if (priority > max_priority) { 
+                max_priority = priority;
+                sema_elem = cur;
+            }
+        }
+
+        list_remove(&sema_elem->elem);
+        sema_up(&sema_elem->semaphore);
+
+    }
+
 }
 
 /*! Wakes up all threads, if any, waiting on COND (protected by
