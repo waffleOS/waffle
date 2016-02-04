@@ -333,7 +333,7 @@ void thread_set_priority(int new_priority) {
         struct thread *t = list_entry(e, struct thread, elem);
         
         /* Yield if the ready list has a thread with higher priority. */
-        if (new_priority < t->priority) {
+        if (new_priority < compute_priority(t)) {
             thread_yield();
         }
     }
