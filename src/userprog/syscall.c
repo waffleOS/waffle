@@ -23,31 +23,31 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             exit(status);
             break;
         case SYS_EXEC:
-            exec();
+           pid_t pid = exec();
             break;
         case SYS_WAIT:
-            wait();
+            int status = wait();
             break;
         case SYS_CREATE:
-            create();
+            bool success = create();
             break;
         case SYS_REMOVE:
-            remove();
+            bool success = remove();
             break;
         case SYS_FILESIZE:
-            filesize();
+            int size = filesize();
             break;
         case SYS_READ:
-            read();
+            int num_bytes = read();
             break;
         case SYS_WRITE:
-            write();
+            int num_bytes =  write();
             break;
         case SYS_SEEK:
             seek();
             break;
         case SYS_TELL:
-            tell();
+            int position = tell();
             break;
         case SYS_CLOSE:
             close();
