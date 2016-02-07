@@ -20,45 +20,62 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             halt();
             break;
         case SYS_EXIT:
+            int status = *(f->esp + 4);
             exit(status);
             break;
         case SYS_EXEC:
-           pid_t pid = exec();
+            const char * cmd_line = *(f->esp + 4);
+            pid_t pid = exec(cmd_line);
             *f->eax = pid;
            break;
         case SYS_WAIT:
+            pid_t pid = *(f->esp + 4);
             int status = wait();
             *f->eax = status;
             break;
         case SYS_CREATE:
-            bool success = create();
+            const char * file = *(f->esp + 4);
+            unsigned int initial_size = *(f->esp + 8);
+            bool success = create(file, initial_size);
             *f->eax = success;
             break;
         case SYS_REMOVE:
-            bool success = remove();
+            const char * file = *(f->esp + 4);
+            bool success = remove(file);
             *f->eax = success;
             break;
         case SYS_FILESIZE:
-            int size = filesize();
+            int fd = *(f->esp + 4);
+            int size = filesize(fd);
             *f->eax = size;
             break;
         case SYS_READ:
-            int num_bytes = read();
+            int fd = *(f->esp + 4);
+            void * buffer = *(f->esp + 8);
+            unsigned int size = *(f->esp + 12);
+            int num_bytes = read(fd, buffer, size);
             *f->eax = num_bytes;
             break;
         case SYS_WRITE:
-            int num_bytes =  write();
+            int fd = *(f->esp + 4);
+            void * buffer = *(f->esp + 8);
+            unsigned int size = *(f->esp + 12);
+            int num_bytes = write(fd, buffer, size);
             *f->eax = num_bytes;
             break;
         case SYS_SEEK:
-            seek();
+            int fd = *(f->esp + 4);
+            unsigned int position = *(f->esp + 8);
+            seek(fd, position);
             break;
         case SYS_TELL:
-            int position = tell();
+            int fd = *(f->esp + 4);
+            int position = tell(fd);
             *f->eax = position;
             break;
         case SYS_CLOSE:
-            close();
+            int fd = *(f->esp + 4);
+            close(fd);
             break;
     }
 
