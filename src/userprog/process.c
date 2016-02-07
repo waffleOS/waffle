@@ -29,6 +29,24 @@ tid_t process_execute(const char *file_name) {
     char *fn_copy;
     tid_t tid;
 
+    char * str;
+    str = file_name;
+    char * saveptr;
+    char * token;
+    char * tokens[100];
+    token = strtok_r(str, " ", &saveptr);
+    int i;
+    i = 0;
+    while (token != NULL)
+    {
+        char tok[100];
+        tokens[i] = tok;
+        strlcpy(token, tokens[i], strlen(token));
+        token = strtok_r(NULL, " ", &saveptr);        
+    }
+
+    file_name = tokens[0];
+
     /* Make a copy of FILE_NAME.
        Otherwise there's a race between the caller and load(). */
     fn_copy = palloc_get_page(0);
@@ -80,6 +98,10 @@ static void start_process(void *file_name_) {
     This function will be implemented in problem 2-2.  For now, it does
     nothing. */
 int process_wait(tid_t child_tid UNUSED) {
+    while (true)
+    {
+        
+    }
     return -1;
 }
 
