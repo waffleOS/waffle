@@ -161,3 +161,10 @@ void close (int fd)
 {
 
 }
+
+bool validatePointer(void *ptr) {
+    if(ptr == NULL) return false;
+    if(!is_user_vaddr(ptr)) return false;
+    if(pagedir_get_page(pd, ptr) == NULL) return false;
+    return true;
+}
