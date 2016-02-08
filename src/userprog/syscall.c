@@ -4,6 +4,7 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "devices/shutdown.h"
+#include "lib/user/syscall.h"
 
 static void syscall_handler(struct intr_frame *);
 
@@ -13,68 +14,82 @@ void syscall_init(void) {
 
 static void syscall_handler(struct intr_frame *f UNUSED) {
     printf("system call!\n");
-    int syscall_num = *f->esp;
+    int syscall_num;
+    syscall_num = *((int *) f->esp);
+    
+    // Declarations of arguments
+    int status;
+    const char * cmd_line;
+    pid_t pid;
+    const char * file;
+    unsigned int initial_size;
+    void * buffer;
+    unsigned int position;
+    int num_bytes;
+    int size;
+    int fd;
+    bool success;
+
     switch (syscall_num)
     {
         case SYS_HALT:
             halt();
             break;
         case SYS_EXIT:
-            int status = *(f->esp + 4);
+            status = *((int *) f->esp + 4);
             exit(status);
             break;
         case SYS_EXEC:
-            const char * cmd_line = *(f->esp + 4);
-            pid_t pid = exec(cmd_line);
-            *f->eax = pid;
+            cmd_line = *((const char **) f->esp + 4);
+            pid = exec(cmd_line);
+            *((pid_t *) f->eax) = pid;
            break;
         case SYS_WAIT:
-            pid_t pid = *(f->esp + 4);
-            int status = wait();
-            *f->eax = status;
+            pid = *((pid_t *) f->esp + 4);
+            status = wait(pid);
+            *((int *) f->eax) = status;
             break;
         case SYS_CREATE:
-            const char * file = *(f->esp + 4);
-            unsigned int initial_size = *(f->esp + 8);
-            bool success = create(file, initial_size);
-            *f->eax = success;
+            file = *((const char **) f->esp + 4);
+            initial_size = *((int *) f->esp + 8);
+            success = create(file, initial_size);
+            *((bool *) f->eax) = success;
             break;
         case SYS_REMOVE:
-            const char * file = *(f->esp + 4);
-            bool success = remove(file);
-            *f->eax = success;
+            file = *((const char **) f->esp + 4);
+            *((bool *) f->eax) = success;
             break;
         case SYS_FILESIZE:
-            int fd = *(f->esp + 4);
-            int size = filesize(fd);
-            *f->eax = size;
+            fd = *((int *) f->esp + 4);
+            size = filesize(fd);
+            *((int *) f->eax) = size;
             break;
         case SYS_READ:
-            int fd = *(f->esp + 4);
-            void * buffer = *(f->esp + 8);
-            unsigned int size = *(f->esp + 12);
-            int num_bytes = read(fd, buffer, size);
-            *f->eax = num_bytes;
+            fd = *((int *) f->esp + 4);
+            buffer = *(f->esp + 8);
+            size = *((unsigned int *) f->esp + 12);
+            num_bytes = read(fd, buffer, size);
+            *((int *) f->eax) = num_bytes;
             break;
         case SYS_WRITE:
-            int fd = *(f->esp + 4);
-            void * buffer = *(f->esp + 8);
-            unsigned int size = *(f->esp + 12);
-            int num_bytes = write(fd, buffer, size);
-            *f->eax = num_bytes;
+            fd = *((int *) f->esp + 4);
+            buffer = *(f->esp + 8);
+            size = *((unsigned int *) f->esp + 12);
+            num_bytes = write(fd, buffer, size);
+            *((int *) f->eax) = num_bytes;
             break;
         case SYS_SEEK:
-            int fd = *(f->esp + 4);
-            unsigned int position = *(f->esp + 8);
+            fd = *((int *) f->esp + 4);
+            position = *((unsigned int *) f->esp + 8);
             seek(fd, position);
             break;
         case SYS_TELL:
-            int fd = *(f->esp + 4);
-            int position = tell(fd);
-            *f->eax = position;
+            fd = *((int *) f->esp + 4);
+            position = tell(fd);
+            *((unsigned int *) f->eax) = position;
             break;
         case SYS_CLOSE:
-            int fd = *(f->esp + 4);
+            fd = *((int *) f->esp + 4);
             close(fd);
             break;
     }
@@ -83,7 +98,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
 }
 
 void halt(void)
-
+{
     shutdown_power_off();    
 }
 
