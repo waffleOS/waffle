@@ -39,7 +39,8 @@ tid_t process_execute(const char *file_name) {
     i = 0;
     while (token != NULL)
     {
-        char tok[100];
+        // Limiting tokens to fit in one page
+        char tok[4096];
         tokens[i] = tok;
         strlcpy(token, tokens[i], strlen(token));
         token = strtok_r(NULL, " ", &saveptr);        
