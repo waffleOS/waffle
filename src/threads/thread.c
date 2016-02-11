@@ -460,6 +460,7 @@ static void * alloc_frame(struct thread *t, size_t size) {
 /* Comparison function for priority (uses general compute_priority). */
 bool priority_less(const struct list_elem *a, 
                              const struct list_elem *b, void * aux) { 
+    aux = aux; /* Use aux to prevent compiler warning. */
     struct thread *x = list_entry(a, struct thread, elem); 
     struct thread *y = list_entry(b, struct thread, elem);
     return (compute_priority(x) - compute_priority(y) < 0);
@@ -472,10 +473,6 @@ bool priority_less(const struct list_elem *a,
 static struct thread * next_thread_to_run(void) {
     if (list_empty(&ready_list))
         return idle_thread;
-    /* 
-     * Priority scheduler. 
-     * David's TODO: Implement. 
-     */
     else {
         struct list_elem *e = list_max(&ready_list, &priority_less, NULL);
         list_remove(e);
@@ -563,7 +560,7 @@ uint32_t thread_stack_ofs = offsetof(struct thread, stack);
 
 
 
-/* TODO: Student added functions. */
+/* Student added functions. */
 int compute_priority(struct thread *t) { 
     /* Advanced BSD scheduler. */
     if (thread_mlfqs) { 
