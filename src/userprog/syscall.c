@@ -1,8 +1,10 @@
 #include "userprog/syscall.h"
+#include "userprog/pagedir.h"
 #include <stdio.h>
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
+#include "threads/vaddr.h"
 #include "devices/shutdown.h"
 #include "lib/user/syscall.h"
 
@@ -21,6 +23,7 @@ int do_write(int fd, const void * buffer, unsigned int size);
 void do_seek(int fd, unsigned int position);
 unsigned int do_tell(int fd);
 void do_close(int fd);
+bool validate_pointer(void *ptr);
 
 void syscall_init(void) {
     intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
@@ -177,9 +180,19 @@ void do_close (int fd)
 
 }
 
-bool validatePointer(void *ptr) {
-    if(ptr == NULL) return false;
-    if(!is_user_vaddr(ptr)) return false;
-    if(pagedir_get_page(pd, ptr) == NULL) return false;
+bool validate_pointer(void *ptr) {
+    /* Check if pointer is in correct space. */
+    if (ptr == NULL || !is_user_vaddr(ptr)) {
+        return false;
+    }
+    
+    /* Check page directory of the  */
+    struct thread *cur = thread_current();
+    uint32_t *pd = cur;
+
+    if (pagedir_get_page(pd, ptr) == NULL) {
+        return false;
+    }
+
     return true;
 }
