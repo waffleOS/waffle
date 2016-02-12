@@ -186,10 +186,10 @@ bool validate_pointer(void *ptr) {
         return false;
     }
     
-    /* Check page directory of the  */
     struct thread *cur = thread_current();
-    uint32_t *pd = cur;
+    uint32_t *pd = cur->pagedir;
 
+    /* Check if in page directory of the current thread. */
     if (pagedir_get_page(pd, ptr) == NULL) {
         return false;
     }
