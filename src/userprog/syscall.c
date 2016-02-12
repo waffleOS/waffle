@@ -115,17 +115,17 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
     thread_exit();
 }
 
-void halt(void)
+void do_halt(void)
 {
     shutdown_power_off();    
 }
 
-void exit(int status)
+void do_exit(int status)
 {
     thread_exit();
 }
 
-pid_t exec(const char * cmd_line)
+pid_t do_exec(const char * cmd_line)
 {
 
 }
