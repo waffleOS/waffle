@@ -27,6 +27,7 @@ bool validate_pointer(void *ptr);
 
 void syscall_init(void) {
     intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
+    last_fd_used = 2;
 }
 
 static void syscall_handler(struct intr_frame *f UNUSED) {
@@ -139,47 +140,65 @@ int do_wait(pid_t pid)
 
 bool do_create(const char * file, unsigned int initial_size)
 {
-
+    filesys_create(file, initial_size);
 }
 
 bool do_remove(const char * file)
 {
-
+    file_close(file);
 }
 
 int do_open(const char * file)
 {
-
+   struct file * = filesys_open(file); 
+   files[++last_fd_used] = file;
+   return last_fd_used;
 }
 
 int do_filesize(int fd)
 {
-
+    return file_length(files[fd]); 
 }
 
 int do_read(int fd, void * buffer, unsigned int size)
 {
+    if (fd == 0)
+    {
+        int i;
+        for (i = 0; i < size; i++)
+        {
+            *((char *) buffer + i) = input_getc();
+        }
+        return size;
+    }
 
+    return file_read(files[fd], buffer, size); 
 }
 
 int do_write(int fd, const void * buffer, unsigned int size)
 {
+    if (fd == 1)
+    {
+        putbuf((char *) buffer, size);
+        return size;
+    }
 
+    return file_write(files[fd], buffer, size);
 }
 
 void do_seek(int fd, unsigned int position)
 {
-
+    file_seek(files[fd], position);
 }
 
 unsigned int do_tell(int fd)
 {
-
+    return file_tell(files[fd]);
 }
 
 void do_close (int fd)
 {
-
+    file_close(files[fd]);
 }
 
 bool validate_pointer(void *ptr) {
