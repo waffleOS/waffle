@@ -7,6 +7,8 @@
 #include "threads/vaddr.h"
 #include "devices/shutdown.h"
 #include "lib/user/syscall.h"
+#include "filesys/file.h"
+#include "filesys/filesys.h"
 
 /* Module specific function prototypes. */
 static void syscall_handler(struct intr_frame *);
@@ -118,7 +120,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
 
 void do_halt(void)
 {
-    shutdown_power_off();    
+    shutdown_power_off();
 }
 
 void do_exit(int status)
@@ -145,13 +147,13 @@ bool do_create(const char * file, unsigned int initial_size)
 
 bool do_remove(const char * file)
 {
-    file_close(file);
+    filesys_remove(file);
 }
 
 int do_open(const char * file)
 {
-   struct file * = filesys_open(file); 
-   files[++last_fd_used] = file;
+   struct file * f= filesys_open(file); 
+   files[++last_fd_used] = f;
    return last_fd_used;
 }
 
