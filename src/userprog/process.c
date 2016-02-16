@@ -21,6 +21,27 @@
 static thread_func start_process NO_RETURN;
 static bool load(const char *cmdline, void (**eip)(void), void **esp);
 
+/* 
+ * Pushes the string on the stack, with the ASCII null terminator
+ * at the highest address. 
+ */
+uint8_t *push_string(uint8_t *stack, char *string) {
+    /* String length. */
+    int length = 0;
+    while (string[length] != '\0') {
+        length++;
+    }
+
+    /* Start with ASCII null and work backwards. */
+    int i = 0;
+    for (i = length; i >= 0; i--) { 
+        *stack = string[i];
+        stack--;
+    }
+    return stack;
+}
+
+
 /*! Starts a new thread running a user program loaded from FILENAME.  The new
     thread may be scheduled (and may even exit) before process_execute()
     returns.  Returns the new process's thread id, or TID_ERROR if the thread
@@ -29,25 +50,6 @@ tid_t process_execute(const char *file_name) {
     char *fn_copy;
     tid_t tid;
 
-    char * str;
-    str = file_name;
-    char * saveptr;
-    char * token;
-    char * tokens[100];
-    token = strtok_r(str, " ", &saveptr);
-    int i;
-    i = 0;
-    while (token != NULL)
-    {
-        // Limiting tokens to fit in one page
-        char tok[4096];
-        tokens[i] = tok;
-        strlcpy(token, tokens[i], strlen(token));
-        token = strtok_r(NULL, " ", &saveptr);        
-    }
-
-    file_name = tokens[0];
-
     /* Make a copy of FILE_NAME.
        Otherwise there's a race between the caller and load(). */
     fn_copy = palloc_get_page(0);
@@ -55,9 +57,52 @@ tid_t process_execute(const char *file_name) {
         return TID_ERROR;
     strlcpy(fn_copy, file_name, PGSIZE);
 
+    char * saveptr;
+    char * token;
+    char * tokens[100];
+    tokens[0] = strtok_r(fn_copy, " ", &saveptr);
+    int token_count = 1;
+    
+    while (token != NULL) {
+        token = strtok_r(NULL, " ", &saveptr);        
+        tokens[token_count] = token;
+        token_count++;
+    }
+
+    /* Start at PHYS_BASE - 1 byte*/
+    uint8_t *stack = PHYS_BASE - 1;
+    uint8_t *argv[100];
+
+    /* Push actual strings. */
+    int i;
+    for (i = token_count - 1; i >= 0; i--) {
+        stack = push_string(stack, tokens[i]);
+        argv[i] = (uint8_t *) (stack + 1);
+    }
+
+    /* 
+     * Word align stack.
+     */
+    while (((int) stack % 4) != 3) { 
+        *stack = 0;
+        stack--;
+    }
+    stack -= 3;
+    uint8_t **stack_argv = (uint8_t **) stack;
+
+    /* Push pointers to argument strings. */
+    for (i = token_count - 1; i >= 0; i--) {
+        *stack_argv = argv[i];
+        stack_argv--;
+    }
+
+    /* Add char **argv argument to stack */
+    *stack_argv = (uint8_t *) (stack_argv + 1);
+    stack_argv--;
+    *((int *) stack_argv) = token_count;
 
     /* Create a new thread to execute FILE_NAME. */
-    tid = thread_create(file_name, PRI_DEFAULT, start_process, fn_copy);
+    tid = thread_create(tokens[0], PRI_DEFAULT, start_process, tokens[0]);
     if (tid == TID_ERROR)
         palloc_free_page(fn_copy); 
     return tid;
