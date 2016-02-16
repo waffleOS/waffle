@@ -20,6 +20,7 @@
 
 static thread_func start_process NO_RETURN;
 static bool load(const char *cmdline, void (**eip)(void), void **esp);
+uint8_t *push_string(uint8_t *stack, char *string);
 
 /* 
  * Pushes the string on the stack, with the ASCII null terminator
@@ -59,61 +60,9 @@ tid_t process_execute(const char *file_name) {
         return TID_ERROR;
     strlcpy(fn_copy, file_name, PGSIZE);
 
-    char * saveptr;
-    char * token;
-    char * tokens[100];
-    token = strtok_r(fn_copy, " ", &saveptr);
-    int token_count = 0;
     
-    while (token != NULL) {
-        tokens[token_count] = token;
-        token_count++;
-        printf("%d tokens: %s\n", token_count, token);
-        token = strtok_r(NULL, " ", &saveptr);        
-    }
-
-    /* Start at PHYS_BASE - 1 byte*/
-    uint8_t *stack = (uint8_t *) PHYS_BASE - 1;
-    uint8_t *argv[100];
-
-    /* Push actual strings. */
-    int i;
-    for (i = token_count - 1; i >= 0; i--) {
-        stack = push_string(stack, tokens[i]);
-        argv[i] = (uint8_t *) (stack + 1);
-    }
-
-    printf("%d %s\n", (int) PHYS_BASE, tokens[0]); 
-    hex_dump(0, PHYS_BASE, 20, true);
-
-    /* 
-     * Word align stack.
-     */
-    while (((int) stack % 4) != 3) { 
-        *--stack = (uint8_t) 0;
-    }
-    stack -= 3;
-    uint8_t **stack_argv = (uint8_t **) stack;
-
-    /* Push pointers to argument strings. */
-    for (i = token_count - 1; i >= 0; i--) {
-        *stack_argv = argv[i];
-        stack_argv--;
-    }
-
-    /* Add char **argv argument to stack. */
-    *stack_argv = (uint8_t *) (stack_argv + 1);
-    stack_argv--;
-
-    /* Add int argc to stack. */
-    *((int *) stack_argv) = token_count;
-    stack_argv--;
-
-    /* Add unused return address. */
-    *((int *) stack_argv) = 0;
-
     /* Create a new thread to execute FILE_NAME. */
-    tid = thread_create(tokens[0], PRI_DEFAULT, start_process, tokens[0]);
+    tid = thread_create(fn_copy, PRI_DEFAULT, start_process, fn_copy);
     if (tid == TID_ERROR)
         palloc_free_page(fn_copy); 
     return tid;
@@ -124,6 +73,20 @@ static void start_process(void *file_name_) {
     char *file_name = file_name_;
     struct intr_frame if_;
     bool success;
+    
+    /* Parse file arguments. */
+    char * saveptr;
+    char * token;
+    char * tokens[100];
+    token = strtok_r(file_name, " ", &saveptr);
+    int token_count = 0;
+    
+    while (token != NULL) {
+        tokens[token_count] = token;
+        token_count++;
+        printf("%d tokens: %s\n", token_count, token);
+        token = strtok_r(NULL, " ", &saveptr);        
+    }
 
     /* Initialize interrupt frame and load executable. */
     memset(&if_, 0, sizeof(if_));
@@ -132,6 +95,58 @@ static void start_process(void *file_name_) {
     if_.eflags = FLAG_IF | FLAG_MBS;
     success = load(file_name, &if_.eip, &if_.esp);
 
+    
+  
+    /* Start at PHYS_BASE - 1 byte*/
+    uint8_t *stack = (uint8_t *) (if_.esp);
+    uint8_t *argv[100];
+
+    /* Push actual strings. */
+    int i;
+    for (i = token_count - 1; i >= 0; i--) {
+        stack = push_string(stack, tokens[i]);
+        argv[i] = (uint8_t *) (stack + 1);
+    }
+
+    hex_dump(0,(void *) 0xc0000000, 100, true);
+    printf("0x%8x %s\n", (uint32_t) stack, tokens[0]); 
+
+    /* 
+     * Word align stack.
+     */
+    while (((uint32_t) stack % 4) != 3) { 
+        *stack = (uint8_t) 0;
+        printf("About to stack--\n");
+        stack--;
+        printf("0x%8x %s\n", (uint32_t) stack, tokens[0]); 
+    }
+    stack -= 3;
+    uint8_t **stack_argv = (uint8_t **) stack;
+
+    printf("0x%8x %s\n", (uint32_t) stack, tokens[0]); 
+    /* Push pointers to argument strings. */
+    for (i = token_count - 1; i >= 0; i--) {
+        *stack_argv = argv[i];
+        stack_argv--;
+    }
+
+    /* Add char **argv argument to stack. */
+    *stack_argv = (uint8_t *) (stack_argv + 1);
+    stack_argv--;
+
+    printf("0x%8x %s\n", (uint32_t) stack_argv, tokens[0]); 
+    
+    /* Add int argc to stack. */
+    *((int *) stack_argv) = token_count;
+    stack_argv--;
+
+    printf("0x%8x %s\n", (uint32_t) stack_argv, tokens[0]); 
+    /* Add unused return address. */
+    *((int *) stack_argv) = 0;
+
+    /* esp should point to the unused return address. */
+    if_.esp = stack_argv;
+    
     /* If load failed, quit. */
     palloc_free_page(file_name);
     if (!success) 
