@@ -36,8 +36,10 @@ uint8_t *push_string(uint8_t *stack, char *string) {
     int i = 0;
     for (i = length; i >= 0; i--) { 
         *stack = string[i];
+        printf("%c", string[i]);
         stack--;
     }
+    printf("\n");
     return stack;
 }
 
@@ -60,17 +62,18 @@ tid_t process_execute(const char *file_name) {
     char * saveptr;
     char * token;
     char * tokens[100];
-    tokens[0] = strtok_r(fn_copy, " ", &saveptr);
-    int token_count = 1;
+    token = strtok_r(fn_copy, " ", &saveptr);
+    int token_count = 0;
     
     while (token != NULL) {
-        token = strtok_r(NULL, " ", &saveptr);        
         tokens[token_count] = token;
         token_count++;
+        printf("%d tokens: %s\n", token_count, token);
+        token = strtok_r(NULL, " ", &saveptr);        
     }
 
     /* Start at PHYS_BASE - 1 byte*/
-    uint8_t *stack = PHYS_BASE - 1;
+    uint8_t *stack = (uint8_t *) PHYS_BASE - 1;
     uint8_t *argv[100];
 
     /* Push actual strings. */
@@ -80,12 +83,14 @@ tid_t process_execute(const char *file_name) {
         argv[i] = (uint8_t *) (stack + 1);
     }
 
+    printf("%d %s\n", (int) PHYS_BASE, tokens[0]); 
+    hex_dump(0, PHYS_BASE, 20, true);
+
     /* 
      * Word align stack.
      */
     while (((int) stack % 4) != 3) { 
-        *stack = 0;
-        stack--;
+        *--stack = (uint8_t) 0;
     }
     stack -= 3;
     uint8_t **stack_argv = (uint8_t **) stack;
@@ -96,10 +101,16 @@ tid_t process_execute(const char *file_name) {
         stack_argv--;
     }
 
-    /* Add char **argv argument to stack */
+    /* Add char **argv argument to stack. */
     *stack_argv = (uint8_t *) (stack_argv + 1);
     stack_argv--;
+
+    /* Add int argc to stack. */
     *((int *) stack_argv) = token_count;
+    stack_argv--;
+
+    /* Add unused return address. */
+    *((int *) stack_argv) = 0;
 
     /* Create a new thread to execute FILE_NAME. */
     tid = thread_create(tokens[0], PRI_DEFAULT, start_process, tokens[0]);
