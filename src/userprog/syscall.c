@@ -33,9 +33,9 @@ void syscall_init(void) {
 }
 
 static void syscall_handler(struct intr_frame *f UNUSED) {
-    printf("system call!\n");
     int syscall_num;
     syscall_num = *((int *) f->esp);
+    printf("system call %d expected %d!\n", syscall_num, SYS_EXIT);
     
     // Declarations of arguments
     int status;
