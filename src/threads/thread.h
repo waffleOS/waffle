@@ -118,8 +118,8 @@ struct thread {
     /**@}*/
 
     /* If this thread is a parent waiting on a child */
-    struct list_elem parentElem;
-    int numChildren; /* Keep track of how many children the parent is
+    struct list_elem children;
+    struct list_elem waitingOnChildren; /* Keep track of how many children the parent is
                               waiting on */
 };
 

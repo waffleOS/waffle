@@ -31,7 +31,7 @@ static struct list all_list;
 
 /*! List of the processes which are waiting on children. 
     Keep a list of waiting parents */
-static struct list wait_list;
+/*static struct list wait_list;*/
 
 /*! Idle thread. */
 static struct thread *idle_thread;
@@ -92,7 +92,7 @@ void thread_init(void) {
     lock_init(&tid_lock);
     list_init(&ready_list);
     list_init(&all_list);
-    list_init(&wait_list);
+    /*list_init(&wait_list);*/
 
     /* Set up a thread structure for the running thread. */
     initial_thread = running_thread();
