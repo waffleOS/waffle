@@ -103,7 +103,7 @@ static void start_process(void *file_name_) {
 
     /* Push actual strings. */
     int i;
-    for (i = token_count - 1; i >= 0; i--) {
+    for (i = token_count - 1; i >= 1; i--) {
         stack = push_string(stack, tokens[i]);
         argv[i] = (uint8_t *) (stack + 1);
     }
