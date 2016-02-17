@@ -124,6 +124,7 @@ static void start_process(void *file_name_) {
     uint8_t **stack_argv = (uint8_t **) stack;
 
     printf("0x%8x %s\n", (uint32_t) stack, tokens[0]); 
+    *stack_argv-- = 0;
     /* Push pointers to argument strings. */
     for (i = token_count - 1; i >= 0; i--) {
         *stack_argv = argv[i];
