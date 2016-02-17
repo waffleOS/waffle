@@ -124,7 +124,6 @@ static void start_process(void *file_name_) {
     uint8_t **stack_argv = (uint8_t **) stack;
 
     printf("0x%8x %s\n", (uint32_t) stack, tokens[0]); 
-    *stack_argv-- = 0;
     /* Push pointers to argument strings. */
     for (i = token_count - 1; i >= 0; i--) {
         *stack_argv = argv[i];
@@ -179,10 +178,9 @@ int process_wait(tid_t child_tid UNUSED) {
     
     struct thread *child = NULL;
 
-    struct list_elem *elem;
-
     struct thread *cur = thread_current();
 
+    struct list_elem *elem;
     for(elem = list_begin(&cur->children); elem != list_end(&cur->children);
         elem = list_next(elem))
     {
@@ -198,6 +196,8 @@ int process_wait(tid_t child_tid UNUSED) {
     if(child == NULL) {
         return -1;
     }
+
+    // TODO Interrupts
 
     // Run until an interrupt of the child process (return -1) or let it
     // die on its own (return 0). 

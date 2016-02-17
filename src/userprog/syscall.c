@@ -89,16 +89,20 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
         case SYS_READ:
             fd = *((int *) (f->esp + 4));
             buffer = *((void **) (f->esp + 8));
-            size = *((unsigned int *) (f->esp + 12));
-            num_bytes = do_read(fd, buffer, size);
-            *((int *) f->eax) = num_bytes;
+            if(validate_pointer(buffer)) {
+                size = *((unsigned int *) (f->esp + 12));
+                num_bytes = do_read(fd, buffer, size);
+                *((int *) f->eax) = num_bytes;
+            }
             break;
         case SYS_WRITE:
             fd = *((int *) (f->esp + 4));
             buffer = *((void **) (f->esp + 8));
-            size = *((unsigned int *) (f->esp + 12));
-            num_bytes = do_write(fd, buffer, size);
-            *((int *) f->eax) = num_bytes;
+            if(validate_pointer(buffer)) {
+                size = *((unsigned int *) (f->esp + 12));
+                num_bytes = do_write(fd, buffer, size);
+                *((int *) f->eax) = num_bytes;
+            }
             break;
         case SYS_SEEK:
             fd = *((int *) (f->esp + 4));

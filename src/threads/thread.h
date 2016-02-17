@@ -117,12 +117,13 @@ struct thread {
     unsigned magic;                     /* Detects stack overflow. */
     /**@}*/
 
-    /* Keep a list of my children */
-    struct list children;
-    /* If this thread itself is a child of its parent */
-    struct list_elem childElem;
-
+    /* If this thread is a parent waiting on a child */
+    struct list_elem parentElem;
+    int numChildren; /* Keep track of how many children the parent is
+                              waiting on */
 };
+
+
 
 /*! If false (default), use round-robin scheduler.
     If true, use multi-level feedback queue scheduler.
