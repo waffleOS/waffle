@@ -171,11 +171,37 @@ static void start_process(void *file_name_) {
     This function will be implemented in problem 2-2.  For now, it does
     nothing. */
 int process_wait(tid_t child_tid UNUSED) {
-    while (true)
+    struct thread *child = NULL;
+
+    struct list_elem *elem;
+
+    struct thread *cur = thread_current();
+
+    for(elem = list_begin(&cur->children); elem != list_end(&cur->children);
+        elem = list_next(eelem))
     {
-        
+        struct thread *t = list_entry(elem, struct thread, elem);
+        if(t->thread_tid() == child_tid) {
+            child = t;
+            break;
+        } 
     }
-    return -1;
+
+    // If TID is invalid, return -1. Loop through existing threads looking
+    // child_tid. Return -1 if we can't find it.
+    if(child == NULL) {
+        return -1;
+    }
+
+    // Run until an interrupt of the child process (return -1) or let it
+    // die on its own (return 0). 
+    while(true) {
+        if(t->status == THREAD_DYING) {
+            break;
+        }
+    }
+   
+    return 0;
 }
 
 /*! Free the current process's resources. */
@@ -486,6 +512,7 @@ static bool load_segment(struct file *file, off_t ofs, uint8_t *upage,
         zero_bytes -= page_zero_bytes;
         upage += PGSIZE;
     }
+
     return true;
 }
 

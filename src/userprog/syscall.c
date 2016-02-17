@@ -133,12 +133,21 @@ void do_exit(int status)
 
 pid_t do_exec(const char * cmd_line)
 {
+    /* For ease, let's say process ids and thread ids line up in a one-to-one
+    mapping */
+    pid_t child = process_execute(cmd_line);
 
+    /* TODO: Implement synchronization */
+
+    if(child == TID_ERROR) {
+        return -1;
+    }
+    return child;
 }
 
 int do_wait(pid_t pid)
 {
-
+    process_wait(pid);
 }
 
 bool do_create(const char * file, unsigned int initial_size)
@@ -207,6 +216,7 @@ void do_close (int fd)
 bool validate_pointer(void *ptr) {
     /* Check if pointer is in correct space. */
     if (ptr == NULL || !is_user_vaddr(ptr)) {
+        process_exit();
         return false;
     }
     
@@ -215,6 +225,7 @@ bool validate_pointer(void *ptr) {
 
     /* Check if in page directory of the current thread. */
     if (pagedir_get_page(pd, ptr) == NULL) {
+        process_exit();
         return false;
     }
 
