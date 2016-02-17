@@ -98,7 +98,7 @@ static void start_process(void *file_name_) {
     
   
     /* Start at PHYS_BASE - 1 byte*/
-    uint8_t *stack = (uint8_t *) (if_.esp);
+    uint8_t *stack = (uint8_t *) (if_.esp) - 1;
     uint8_t *argv[100];
 
     /* Push actual strings. */
