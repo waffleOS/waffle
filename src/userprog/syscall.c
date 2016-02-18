@@ -134,7 +134,11 @@ void do_halt(void)
 void do_exit(int status)
 {
     struct thread *cur = thread_current();
-    printf("%s:exit(%d)\n", cur->name, status);
+    
+    char *saveptr;
+    char *name;
+    name = strtok_r(cur->name, " ", &saveptr);
+    printf("%s: exit(%d)\n", name, status);
     thread_exit();
 }
 

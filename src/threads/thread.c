@@ -211,8 +211,8 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
 
     /* Add current thread as parent to child. */
     t->parent = cur;
-    printf("\n Thread %s tid: %d spawned %s tid: %d\n", cur->name, cur->tid, 
-                                                        t->name, t->tid);
+    /* printf("\n Thread %s tid: %d spawned %s tid: %d\n", cur->name, cur->tid, 
+                                                        t->name, t->tid);*/
 
     /* Set default exit status to 0 */
     t->exit_status = 0;

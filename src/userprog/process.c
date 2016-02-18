@@ -39,7 +39,6 @@ uint8_t *push_string(uint8_t *stack, char *string) {
         *stack = string[i];
         stack--;
     }
-    printf("\n");
     return stack;
 }
 
@@ -213,9 +212,9 @@ int process_wait(tid_t child_tid UNUSED) {
         for (elem = list_begin(&cur->dead_list); elem != list_end(&cur->dead_list);
                 elem = list_next(elem))
         {
-            printf("%10x\n", elem);
+            //printf("%10x\n", elem);
             struct thread *t = list_entry(elem, struct thread, dead_elem);
-            printf("Child %s tid %d want %d\n", t->name, t->tid, child_tid);
+            //printf("Child %s tid %d want %d\n", t->name, t->tid, child_tid);
             if (t->tid == child_tid) {
                 child = t;
                 found_child = true;
