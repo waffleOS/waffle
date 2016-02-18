@@ -173,9 +173,11 @@ static void start_process(void *file_name_) {
     nothing. */
 int process_wait(tid_t child_tid UNUSED) {
 
+    /*
     while (true) {
 
     }
+    */
     
     struct thread *child = NULL;
 
@@ -190,12 +192,16 @@ int process_wait(tid_t child_tid UNUSED) {
             child = t;
             break;
         } 
+        printf("Child %s tid %d want %d\n", t->name, t->tid, child_tid);
     }
 
     // If TID is invalid, return -1. Loop through existing threads looking
     // child_tid. Return -1 if we can't find it.
-    if(child == NULL) {
+    if (child == NULL) {
         return -1;
+    }
+    else {
+        list_push_back(&cur->wait_for_list, &child->wait_elem);
     }
 
     // TODO Interrupts
@@ -203,9 +209,6 @@ int process_wait(tid_t child_tid UNUSED) {
     // Run until an interrupt of the child process (return -1) or let it
     // die on its own (return 0). 
     while(true) {
-        if(child->status == THREAD_DYING) {
-            break;
-        }
     }
    
     return 0;

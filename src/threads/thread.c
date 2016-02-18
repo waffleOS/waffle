@@ -299,6 +299,20 @@ void thread_yield(void) {
     intr_set_level(old_level);
 }
 
+/*! The current thread is put to sleep until woken up
+ * by something else. */
+void thread_sleep(void) { 
+    struct thread *cur = thread_current();
+    enum intr_level old_level;
+
+    ASSERT(!intr_context());
+
+    old_level = intr_disable();
+    cur->status = THREAD_BLOCKED;
+    schedule();
+    intr_set_level(old_level);
+}
+
 /*! Invoke function 'func' on all threads, passing along 'aux'.
     This function must be called with interrupts off. */
 void thread_foreach(thread_action_func *func, void *aux) {
