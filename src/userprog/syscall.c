@@ -26,6 +26,7 @@ void do_seek(int fd, unsigned int position);
 unsigned int do_tell(int fd);
 void do_close(int fd);
 bool validate_pointer(void *ptr);
+void * sanitize_buffer(void ** buffer);
 
 void syscall_init(void) {
     intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
@@ -117,7 +118,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             break;
         case SYS_READ:
             fd = *((int *) (f->esp + 4));
-            buffer = *((void **) (f->esp + 8));
+            buffer = sanitize_buffer((void **) (f->esp + 8));
             if (validate_pointer(buffer)) {
                 size = *((unsigned int *) (f->esp + 12));
                 num_bytes = do_read(fd, buffer, size);
@@ -345,4 +346,14 @@ bool validate_pointer(void *ptr) {
     }
 
     return true;
+}
+
+void * sanitize_buffer(void ** buffer)
+{
+    if (!validate_pointer(buffer))
+    {
+        do_exit(-1);
+    }
+
+    return *buffer;
 }
