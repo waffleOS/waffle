@@ -41,11 +41,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
         return;
     }
 
-    // Check stack pointer isn't too far up
-    if(!validate_pointer((void *)(f->esp - 4))) {
-        do_exit(-1);
-        return;
-    }
+
 
     syscall_num = *((int *) f->esp);
     /*printf("system call %d\n", syscall_num);*/
@@ -71,20 +67,43 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             do_halt();
             break;
         case SYS_EXIT:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
             status = *((int *) (f->esp + 4));
             do_exit(status);
             break;
         case SYS_EXEC:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
             cmd_line = *((const char **) (f->esp + 4));
             pid = do_exec(cmd_line);
+            if(pid == TID_ERROR) {
+                return;
+            }
             f->eax = pid;
            break;
         case SYS_WAIT:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
             pid = *((pid_t *) (f->esp + 4));
             status = do_wait(pid);
             f->eax = status;
             break;
         case SYS_CREATE:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 8))) {
+                do_exit(-1);
+                return;
+            }
             file = *((const char **) (f->esp + 4));
             initial_size = *((int *) (f->esp + 8));
             if (validate_pointer(file)) {
@@ -96,11 +115,21 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             }
             break;
         case SYS_REMOVE:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
             file = *((const char **) (f->esp + 4));
             success = do_remove(file);
             f->eax = success;
             break;
         case SYS_OPEN:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
             file = *((const char **) (f->esp + 4));
             if (validate_pointer(file)) {
                 fd = do_open(file);
@@ -111,11 +140,21 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             }
             break;
         case SYS_FILESIZE:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
             fd = *((int *) (f->esp + 4));
             size = do_filesize(fd);
             f->eax = size;
             break;
         case SYS_READ:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 12))) {
+                do_exit(-1);
+                return;
+            }
             fd = *((int *) (f->esp + 4));
             buffer = *((void **) (f->esp + 8));
             if (validate_pointer(buffer)) {
@@ -128,6 +167,11 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             }
             break;
         case SYS_WRITE:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 12))) {
+                do_exit(-1);
+                return;
+            }
             fd = *((int *) (f->esp + 4));
             buffer = *((void **) (f->esp + 8));
             if(validate_pointer(buffer)) {
@@ -140,16 +184,31 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             }
             break;
         case SYS_SEEK:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 8))) {
+                do_exit(-1);
+                return;
+            }
             fd = *((int *) (f->esp + 4));
             position = *((unsigned int *) (f->esp + 8));
             do_seek(fd, position);
             break;
         case SYS_TELL:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
             fd = *((int *) (f->esp + 4));
             position = do_tell(fd);
             f->eax = position;
             break;
         case SYS_CLOSE:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
             fd = *((int *) (f->esp + 4));
             do_close(fd);
             break;
@@ -182,7 +241,8 @@ pid_t do_exec(const char * cmd_line)
     /* TODO: Implement synchronization */
 
     if(child == TID_ERROR) {
-        return -1;
+        do_exit(-1);
+        return TID_ERROR;
     }
     return child;
 }
