@@ -27,6 +27,8 @@ typedef int tid_t;
 #define PRI_MIN 0                       /*!< Lowest priority. */
 #define PRI_DEFAULT 31                  /*!< Default priority. */
 #define PRI_MAX 63                      /*!< Highest priority. */
+#define NUM_FILES 128
+
 
 /*! A kernel thread or user process.
 
@@ -97,6 +99,7 @@ struct thread {
     uint8_t *stack;                     /*!< Saved stack pointer. */
     int priority;                       /*!< Priority. */
     struct list_elem allelem;           /*!< List element for all threads list. */
+    struct file * files[NUM_FILES];
     /**@}*/
 
     /*! Shared between thread.c and synch.c. */
@@ -115,7 +118,25 @@ struct thread {
     /**@{*/
     unsigned magic;                     /* Detects stack overflow. */
     /**@}*/
+
+    /* If this thread is a parent waiting on a child */
+    struct list_elem child_elem;
+    struct list_elem dead_elem; /* Keep track of dead children */
+
+    /* List of children. */
+    struct list children;
+    /* List of children which have died already */
+    struct list dead_list;
+
+    /* Parent of thread. */
+    struct thread *parent;
+
+    /* Stores it's own exit status. This is so parent knows the status after
+    child death */
+    int exit_status;
 };
+
+
 
 /*! If false (default), use round-robin scheduler.
     If true, use multi-level feedback queue scheduler.
@@ -127,6 +148,8 @@ void thread_start(void);
 
 void thread_tick(void);
 void thread_print_stats(void);
+int next_fd(struct thread * t);
+bool is_valid_fd(struct thread * t, int fd);
 
 typedef void thread_func(void *aux);
 tid_t thread_create(const char *name, int priority, thread_func *, void *);
@@ -140,6 +163,7 @@ const char *thread_name(void);
 
 void thread_exit(void) NO_RETURN;
 void thread_yield(void);
+void thread_sleep(void);
 
 /*! Performs some operation on thread t, given auxiliary data AUX. */
 typedef void thread_action_func(struct thread *t, void *aux);
