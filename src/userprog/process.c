@@ -8,6 +8,7 @@
 #include "userprog/gdt.h"
 #include "userprog/pagedir.h"
 #include "userprog/tss.h"
+#include "userprog/syscall.h"
 #include "filesys/directory.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
@@ -86,6 +87,7 @@ static void start_process(void *file_name_) {
         token = strtok_r(NULL, " ", &saveptr);        
     }
 
+    lock_acquire(&exec_lock);
     /* Initialize interrupt frame and load executable. */
     memset(&if_, 0, sizeof(if_));
     if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
@@ -138,12 +140,24 @@ static void start_process(void *file_name_) {
 
         /* esp should point to the unused return address. */
         if_.esp = stack_argv;
+
     }
+    else { 
+        load_success = false;
+    }
+
+    cond_signal(&exec_cond, &exec_lock);
+    lock_release(&exec_lock);
+    //printf("Signaled\n");
     
     /* If load failed, quit. */
     palloc_free_page(file_name);
-    if (!success) 
+    if (!success) {
+        struct thread *cur = thread_current(); 
+        cur->tid = TID_ERROR;
+        thread_current()->exit_status = -1;
         thread_exit();
+    }
 
     /* Start the user process by simulating a return from an
        interrupt, implemented by intr_exit (in

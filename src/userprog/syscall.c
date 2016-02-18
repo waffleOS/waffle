@@ -32,6 +32,8 @@ void syscall_init(void) {
     intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
     sema_init(&file_sem, 1);
     sema_init(&exec_sem, 1);
+    lock_init(&exec_lock);
+    cond_init(&exec_cond);
 }
 
 static void syscall_handler(struct intr_frame *f UNUSED) {
@@ -85,9 +87,6 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             }
             cmd_line = *((const char **) (f->esp + 4));
             pid = do_exec(cmd_line);
-            if(pid == TID_ERROR) {
-                return;
-            }
             f->eax = pid;
            break;
         case SYS_WAIT:
@@ -246,6 +245,12 @@ void do_exit(int status)
 
 pid_t do_exec(const char * cmd_line)
 {
+    /* TODO: Implement synchronization */
+    if (exec_lock.holder != thread_current()) {
+        lock_acquire(&exec_lock);
+    }
+    load_success = true;
+    
     /* For ease, let's say process ids and thread ids line up in a one-to-one
     mapping */
     if (cmd_line == NULL)
@@ -256,13 +261,24 @@ pid_t do_exec(const char * cmd_line)
     pid_t child = process_execute(cmd_line);
     sema_up(&exec_sem);
 
-    /* TODO: Implement synchronization */
-
-    if(child == TID_ERROR) {
-        do_exit(-1);
+    
+    /* Check if a thread was allocated. */
+    if (child == TID_ERROR) {
+        // do_exit(-1);
         return TID_ERROR;
     }
-    return child;
+
+    //printf("About to wait.\n");
+    cond_wait(&exec_cond, &exec_lock);
+    //printf("End cond_wait\n");
+
+    /* Check if the child loaded successfully. */
+    if (load_success) { 
+        return child;
+    }
+    else { 
+        return TID_ERROR;
+    }
 }
 
 int do_wait(pid_t pid)
