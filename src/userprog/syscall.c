@@ -177,6 +177,10 @@ int do_open(const char * file)
     printf("Opening file %s\n", file);
     struct file * f = filesys_open(file);
     sema_up(&file_sem);
+    if (f == NULL)
+    {
+        return -1;
+    }
     struct thread * t = thread_current();
     int fd = next_fd(t);
     t->files[fd - 2] = f;
