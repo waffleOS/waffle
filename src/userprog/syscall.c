@@ -35,7 +35,7 @@ void syscall_init(void) {
 static void syscall_handler(struct intr_frame *f UNUSED) {
     int syscall_num;
     syscall_num = *((int *) f->esp);
-    printf("system call %d\n", syscall_num);
+    /*printf("system call %d\n", syscall_num);*/
     
     // Declarations of arguments
     int status;
@@ -160,7 +160,7 @@ int do_wait(pid_t pid)
 bool do_create(const char * file, unsigned int initial_size)
 {
     sema_down(&file_sem);
-    printf("Creating file %s with size %d\n", file, initial_size);
+    /*printf("Creating file %s with size %d\n", file, initial_size);*/
     bool success = filesys_create(file, initial_size);
     sema_up(&file_sem);
     return success;
@@ -169,7 +169,7 @@ bool do_create(const char * file, unsigned int initial_size)
 bool do_remove(const char * file)
 {
     sema_down(&file_sem);
-    printf("Removing file %s\n", file);
+    /*printf("Removing file %s\n", file);*/
     bool success = filesys_remove(file);
     sema_up(&file_sem);
     return success;
@@ -182,7 +182,7 @@ int do_open(const char * file)
         return -1;
     }
     sema_down(&file_sem);
-    printf("Opening file %s\n", file);
+    /*printf("Opening file %s\n", file);*/
     struct file * f = filesys_open(file);
     sema_up(&file_sem);
     if (f == NULL)
@@ -197,7 +197,7 @@ int do_open(const char * file)
 
 int do_filesize(int fd)
 {
-    printf("Getting filesize of file with fd %d\n", fd);
+    /*printf("Getting filesize of file with fd %d\n", fd);*/
     struct thread * t = thread_current();
     sema_down(&file_sem);
     int length = file_length(t->files[fd - 2]);
@@ -207,7 +207,7 @@ int do_filesize(int fd)
 
 int do_read(int fd, void * buffer, unsigned int size)
 {
-    printf("Reading file with fd %d\n", fd);
+    /*printf("Reading file with fd %d\n", fd);*/
     if (fd == 0)
     {
         int i;
@@ -227,7 +227,7 @@ int do_read(int fd, void * buffer, unsigned int size)
 
 int do_write(int fd, const void * buffer, unsigned int size)
 {
-    printf("In do_write... fd is %d, buffer is %s, size is %d\n", fd, (char *) buffer, size);
+    /*printf("In do_write... fd is %d, buffer is %s, size is %d\n", fd, (char *) buffer, size);*/
     if (fd == 1)
     {
         putbuf((char *) buffer, size);
@@ -243,7 +243,7 @@ int do_write(int fd, const void * buffer, unsigned int size)
 
 void do_seek(int fd, unsigned int position)
 {
-    printf("Seeking file with fd %d to position %d\n", fd, position);
+    /*printf("Seeking file with fd %d to position %d\n", fd, position);*/
     struct thread * t = thread_current();
     sema_down(&file_sem);
     file_seek(t->files[fd - 2], position);
@@ -266,7 +266,7 @@ void do_close(int fd)
     }
     else
     {
-        printf("Closing file with fd %d\n", fd);
+        /*printf("Closing file with fd %d\n", fd);*/
         struct thread * t = thread_current();
         sema_down(&file_sem);
         file_close(t->files[fd - 2]);
