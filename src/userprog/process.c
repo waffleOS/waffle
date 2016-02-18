@@ -37,7 +37,6 @@ uint8_t *push_string(uint8_t *stack, char *string) {
     int i = 0;
     for (i = length; i >= 0; i--) { 
         *stack = string[i];
-        printf("%c", string[i]);
         stack--;
     }
     printf("\n");
@@ -84,7 +83,6 @@ static void start_process(void *file_name_) {
     while (token != NULL) {
         tokens[token_count] = token;
         token_count++;
-        printf("%d tokens: %s\n", token_count, token);
         token = strtok_r(NULL, " ", &saveptr);        
     }
 
@@ -109,21 +107,17 @@ static void start_process(void *file_name_) {
     }
 
     hex_dump(0,(void *) 0xc0000000, 100, true);
-    printf("0x%8x %s\n", (uint32_t) stack, tokens[0]); 
 
     /* 
      * Word align stack.
      */
     while (((uint32_t) stack % 4) != 3) { 
         *stack = (uint8_t) 0;
-        printf("About to stack--\n");
         stack--;
-        printf("0x%8x %s\n", (uint32_t) stack, tokens[0]); 
     }
     stack -= 3;
     uint8_t **stack_argv = (uint8_t **) stack;
 
-    printf("0x%8x %s\n", (uint32_t) stack, tokens[0]); 
     *stack_argv-- = 0;
     /* Push pointers to argument strings. */
     for (i = token_count - 1; i >= 0; i--) {
@@ -135,13 +129,11 @@ static void start_process(void *file_name_) {
     *stack_argv = (uint8_t *) (stack_argv + 1);
     stack_argv--;
 
-    printf("0x%8x %s\n", (uint32_t) stack_argv, tokens[0]); 
     
     /* Add int argc to stack. */
     *((int *) stack_argv) = token_count;
     stack_argv--;
 
-    printf("0x%8x %s\n", (uint32_t) stack_argv, tokens[0]); 
     /* Add unused return address. */
     *((int *) stack_argv) = 0;
 

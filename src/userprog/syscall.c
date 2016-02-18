@@ -29,14 +29,13 @@ bool validate_pointer(void *ptr);
 
 void syscall_init(void) {
     intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
-    last_fd_used = 2;
+    last_fd_used = 1;
 }
 
 static void syscall_handler(struct intr_frame *f UNUSED) {
     int syscall_num;
-    printf("ESP: 0x%8x\n", f->esp);
     syscall_num = *((int *) f->esp);
-    printf("system call %d. SYS_EXIT: %d\n", syscall_num, SYS_EXIT);
+    printf("system call %d\n", syscall_num);
     
     // Declarations of arguments
     int status;
@@ -80,6 +79,12 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             file = *((const char **) (f->esp + 4));
             success = do_remove(file);
             *((bool *) f->eax) = success;
+            break;
+        case SYS_OPEN:
+            file = *((const char **) (f->esp + 4));
+            fd = do_open(file);
+            printf("Opened file with fd %d\n", fd);
+            *((int *) f->eax) = fd;
             break;
         case SYS_FILESIZE:
             fd = *((int *) (f->esp + 4));
@@ -151,28 +156,33 @@ int do_wait(pid_t pid)
 
 bool do_create(const char * file, unsigned int initial_size)
 {
+    printf("Creating file %s with size %d\n", file, initial_size);
     filesys_create(file, initial_size);
 }
 
 bool do_remove(const char * file)
 {
+    printf("Removing file %s\n", file);
     filesys_remove(file);
 }
 
 int do_open(const char * file)
 {
-   struct file * f= filesys_open(file); 
-   files[++last_fd_used] = f;
-   return last_fd_used;
+    printf("Opening file %s\n", file);    
+    struct file * f= filesys_open(file); 
+    files[++last_fd_used] = f;
+    return last_fd_used;
 }
 
 int do_filesize(int fd)
 {
+    printf("Getting filesize of file with fd %d\n", fd);
     return file_length(files[fd]); 
 }
 
 int do_read(int fd, void * buffer, unsigned int size)
 {
+    printf("Reading file with fd %d\n", fd);
     if (fd == 0)
     {
         int i;
@@ -188,6 +198,7 @@ int do_read(int fd, void * buffer, unsigned int size)
 
 int do_write(int fd, const void * buffer, unsigned int size)
 {
+    printf("In do_write... fd is %d, buffer is %s, size is %d\n", fd, (char *) buffer, size);
     if (fd == 1)
     {
         putbuf((char *) buffer, size);
@@ -199,6 +210,7 @@ int do_write(int fd, const void * buffer, unsigned int size)
 
 void do_seek(int fd, unsigned int position)
 {
+    printf("Seeking file with fd %d to position %d\n", fd, position);
     file_seek(files[fd], position);
 }
 
@@ -209,6 +221,7 @@ unsigned int do_tell(int fd)
 
 void do_close (int fd)
 {
+    printf("Closing file with fd %d\n", fd);
     file_close(files[fd]);
 }
 
