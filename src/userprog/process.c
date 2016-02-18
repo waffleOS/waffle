@@ -163,18 +163,10 @@ static void start_process(void *file_name_) {
     nothing. */
 int process_wait(tid_t child_tid UNUSED) {
 
-    /*
-    while (true) {
-
-    }
-    */
-    /*printf("Entering process_wait\n");*/
     struct thread *child = NULL;
 
     struct thread *cur = thread_current();
-    /*printf("Thread %s tid: %d waiting \n", cur->name, cur->tid);*/
 
-    /*printf("Looking for child %d\n", child_tid);*/
     struct list_elem *elem;
     for (elem = list_begin(&cur->children); elem != list_end(&cur->children);
         elem = list_next(elem))
@@ -184,13 +176,11 @@ int process_wait(tid_t child_tid UNUSED) {
             child = t;
             break;
         } 
-        /*printf("Child %s tid %d want %d\n", t->name, t->tid, child_tid);*/
     }
 
     // If TID is invalid, return -1. Loop through existing threads looking
     // child_tid. Return -1 if we can't find it.
     if (child == NULL) {
-        /*printf("Child is NULL. Return -1.\n");*/
         return -1;
     }
 
@@ -212,9 +202,7 @@ int process_wait(tid_t child_tid UNUSED) {
         for (elem = list_begin(&cur->dead_list); elem != list_end(&cur->dead_list);
                 elem = list_next(elem))
         {
-            //printf("%10x\n", elem);
             struct thread *t = list_entry(elem, struct thread, dead_elem);
-            //printf("Child %s tid %d want %d\n", t->name, t->tid, child_tid);
             if (t->tid == child_tid) {
                 child = t;
                 found_child = true;
