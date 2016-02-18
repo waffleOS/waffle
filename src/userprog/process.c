@@ -39,7 +39,6 @@ uint8_t *push_string(uint8_t *stack, char *string) {
         *stack = string[i];
         stack--;
     }
-    printf("\n");
     return stack;
 }
 
@@ -62,6 +61,7 @@ tid_t process_execute(const char *file_name) {
     
     /* Create a new thread to execute FILE_NAME. */
     tid = thread_create(fn_copy, PRI_DEFAULT, start_process, fn_copy);
+    
     if (tid == TID_ERROR)
         palloc_free_page(fn_copy); 
     return tid;
@@ -163,41 +163,70 @@ static void start_process(void *file_name_) {
     nothing. */
 int process_wait(tid_t child_tid UNUSED) {
 
+    /*
     while (true) {
 
     }
-    
+    */
+    /*printf("Entering process_wait\n");*/
     struct thread *child = NULL;
 
-    struct list_elem *elem;
-
     struct thread *cur = thread_current();
+    /*printf("Thread %s tid: %d waiting \n", cur->name, cur->tid);*/
 
-    for(elem = list_begin(&cur->children); elem != list_end(&cur->children);
+    /*printf("Looking for child %d\n", child_tid);*/
+    struct list_elem *elem;
+    for (elem = list_begin(&cur->children); elem != list_end(&cur->children);
         elem = list_next(elem))
     {
-        struct thread *t = list_entry(elem, struct thread, elem);
+        struct thread *t = list_entry(elem, struct thread, child_elem);
         if(t->tid == child_tid) {
             child = t;
             break;
         } 
+        /*printf("Child %s tid %d want %d\n", t->name, t->tid, child_tid);*/
     }
 
     // If TID is invalid, return -1. Loop through existing threads looking
     // child_tid. Return -1 if we can't find it.
-    if(child == NULL) {
+    if (child == NULL) {
+        /*printf("Child is NULL. Return -1.\n");*/
         return -1;
     }
 
+    // Prevent a wait on the same child thread by removing it from the list
+    // of children.
+    list_remove(&child->child_elem);
+
     // Run until an interrupt of the child process (return -1) or let it
     // die on its own (return 0). 
-    while(true) {
-        if(child->status == THREAD_DYING) {
-            break;
+
+    /*printf("Waiting for children to die...\n");*/
+    // Wait until the child we are waiting for shows up in the dead_list
+    bool found_child = false;
+    int exit_status;
+    while (!found_child) {
+        enum intr_level old_level;
+        old_level = intr_disable();
+
+        for (elem = list_begin(&cur->dead_list); elem != list_end(&cur->dead_list);
+                elem = list_next(elem))
+        {
+            //printf("%10x\n", elem);
+            struct thread *t = list_entry(elem, struct thread, dead_elem);
+            //printf("Child %s tid %d want %d\n", t->name, t->tid, child_tid);
+            if (t->tid == child_tid) {
+                child = t;
+                found_child = true;
+                list_remove(elem);
+                exit_status = t->exit_status;
+                palloc_free_page(t);
+                break;
+            }
         }
+        intr_set_level(old_level);
     }
-   
-    return 0;
+    return exit_status;
 }
 
 /*! Free the current process's resources. */

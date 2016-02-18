@@ -119,12 +119,24 @@ struct thread {
     unsigned magic;                     /* Detects stack overflow. */
     /**@}*/
 
-    /* Keep a list of my children */
-    struct list children;
-    /* If this thread itself is a child of its parent */
-    struct list_elem childElem;
+    /* If this thread is a parent waiting on a child */
+    struct list_elem child_elem;
+    struct list_elem dead_elem; /* Keep track of dead children */
 
+    /* List of children. */
+    struct list children;
+    /* List of children which have died already */
+    struct list dead_list;
+
+    /* Parent of thread. */
+    struct thread *parent;
+
+    /* Stores it's own exit status. This is so parent knows the status after
+    child death */
+    int exit_status;
 };
+
+
 
 /*! If false (default), use round-robin scheduler.
     If true, use multi-level feedback queue scheduler.
@@ -150,6 +162,7 @@ const char *thread_name(void);
 
 void thread_exit(void) NO_RETURN;
 void thread_yield(void);
+void thread_sleep(void);
 
 /*! Performs some operation on thread t, given auxiliary data AUX. */
 typedef void thread_action_func(struct thread *t, void *aux);
