@@ -8,17 +8,19 @@
 
 >> Fill in the names and email addresses of your group members.
 
-FirstName LastName <email@domain.example>
-FirstName LastName <email@domain.example>
-FirstName LastName <email@domain.example>
+Rahul Bachal <rbachal@caltech.edu>
+Robert Eng <reng@caltech.edu>
+David Qu <dqu@caltech.edu>
 
->> Specify how many late tokens you are using on this assignment:  
+>> Specify how many late tokens you are using on this assignment:
+0
 
 >> What is the Git repository and commit hash for your submission?
    (You only need to include the commit-hash in the file you submit
    on Moodle.)
 
-   Repository URL:  
+   Repository URL: login.cms.caltech.edu:/cs/course/cs124/teams/waffle.git
+                   https://github.com/waffleOS/waffle.git
    commit ...
 
 ---- PRELIMINARIES ----
@@ -41,10 +43,20 @@ which parts.
 
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
+   Rahul:  25 hours
+   Robert: 20 hours
+   David:  20 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
-
+   
+   Rahul: Implemented most of the system calls, interfaced with filesystem
+       and debugged various system call tests.
+   Robert: Implemented and debugged process_wait, which was used for
+       the wait system call.
+   David: Implemented/debugged argument passing and helped implement 
+       process_wait.
+   
                            ARGUMENT PASSING
                            ================
 
@@ -53,21 +65,29 @@ which parts.
 >> A1: Copy here the declaration of each new or changed `struct' or
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
+    None.
 
 ---- ALGORITHMS ----
 
 >> A2: Briefly describe how you implemented argument parsing.  How do
 >> you arrange for the elements of argv[] to be in the right order?
 >> How do you avoid overflowing the stack page?
+    The strings to push are added in reverse character order by
+    first iterating through the string once to determine the length.
+    A limit of 100 arguments is imposed.
 
 ---- RATIONALE ----
 
 >> A3: Why does Pintos implement strtok_r() but not strtok()?
+    strtok_r is reentrant, which is important since the kernel
+    threads get prempted by the scheduler. 
 
 >> A4: In Pintos, the kernel separates commands into a executable name
 >> and arguments.  In Unix-like systems, the shell does this
 >> separation.  Identify at least two advantages of the Unix approach.
-
+    1. Allows the shell to pipe commands because the shell can pass arguments 
+       to programs.
+    2. 
                              SYSTEM CALLS
                              ============
 
