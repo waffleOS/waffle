@@ -149,6 +149,7 @@ void thread_start(void);
 void thread_tick(void);
 void thread_print_stats(void);
 int next_fd(struct thread * t);
+bool is_valid_fd(struct thread * t, int fd);
 
 typedef void thread_func(void *aux);
 tid_t thread_create(const char *name, int priority, thread_func *, void *);
