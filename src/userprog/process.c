@@ -201,16 +201,25 @@ int process_wait(tid_t child_tid UNUSED) {
     if (child == NULL) {
         return -1;
     }
-    else {
-        list_push_back(&cur->wait_for_list, &child->wait_elem);
-    }
-
-    // TODO Interrupts
 
     // Run until an interrupt of the child process (return -1) or let it
     // die on its own (return 0). 
+
+    // Wait until the child we are waiting for shows up in the dead_list
     while(true) {
+        for(elem = list_begin(&cur->dead_list); elem != list_end(&cur->dead_list);
+                elem = list_next(elem))
+        {
+            struct thread *t = list_entry(elem, struct thread, dead_elem);
+            if(t->tid == child_tid) {
+                child = t;
+                break;
+            } 
+            printf("Child %s tid %d want %d\n", t->name, t->tid, child_tid);
+        }
     }
+
+    return t->exit_status;
    
     return 0;
 }

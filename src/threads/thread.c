@@ -202,6 +202,8 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
     printf("\n Thread %s tid: %d spawned %s tid: %d\n", cur->name, cur->tid, 
                                                         t->name, t->tid);
 
+    /* Set default exit status to 0 */
+    t->exit_status = 0;
 
     return tid;
 }
@@ -280,6 +282,11 @@ void thread_exit(void) {
     intr_disable();
     list_remove(&thread_current()->allelem);
     thread_current()->status = THREAD_DYING;
+    
+    struct thread *cur = thread_current();
+    
+    list_push_back(&cur->parent->dead_list, &cur->dead_elem);
+
     schedule();
     NOT_REACHED();
 }

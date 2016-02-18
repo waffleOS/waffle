@@ -119,16 +119,19 @@ struct thread {
 
     /* If this thread is a parent waiting on a child */
     struct list_elem child_elem;
-    struct list_elem wait_elem; /* Keep track of how many children the parent is
-                              waiting on */
+    struct list_elem dead_elem; /* Keep track of dead children */
 
     /* List of children. */
     struct list children;
-    /* List of children we're waiting for. */
-    struct list wait_for_list;
+    /* List of children which have died already */
+    struct list dead_list;
 
     /* Parent of thread. */
     struct thread *parent;
+
+    /* Stores it's own exit status. This is so parent knows the status after
+    child death */
+    int exit_status;
 };
 
 
