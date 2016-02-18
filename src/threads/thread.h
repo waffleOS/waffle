@@ -27,6 +27,7 @@ typedef int tid_t;
 #define PRI_MIN 0                       /*!< Lowest priority. */
 #define PRI_DEFAULT 31                  /*!< Default priority. */
 #define PRI_MAX 63                      /*!< Highest priority. */
+#define NUM_FILES 128
 
 
 /*! A kernel thread or user process.
@@ -98,6 +99,7 @@ struct thread {
     uint8_t *stack;                     /*!< Saved stack pointer. */
     int priority;                       /*!< Priority. */
     struct list_elem allelem;           /*!< List element for all threads list. */
+    struct file * files[NUM_FILES];
     /**@}*/
 
     /*! Shared between thread.c and synch.c. */
@@ -146,6 +148,7 @@ void thread_start(void);
 
 void thread_tick(void);
 void thread_print_stats(void);
+int next_fd(struct thread * t);
 
 typedef void thread_func(void *aux);
 tid_t thread_create(const char *name, int priority, thread_func *, void *);

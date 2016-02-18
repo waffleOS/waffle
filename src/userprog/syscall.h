@@ -1,9 +1,9 @@
 #ifndef USERPROG_SYSCALL_H
 #define USERPROG_SYSCALL_H
+#include "threads/synch.h"
 
-#define NUM_FILES
+struct semaphore file_sem;
+
 void syscall_init(void);
-int last_fd_used;
-struct file * files[NUM_FILES];
 #endif /* userprog/syscall.h */
 
