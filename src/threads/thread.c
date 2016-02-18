@@ -199,7 +199,8 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
 
     /* Add current thread as parent to child. */
     t->parent = cur;
-    printf("\n Thread %s spawned %s\n", cur->name, t->name);
+    printf("\n Thread %s tid: %d spawned %s tid: %d\n", cur->name, cur->tid, 
+                                                        t->name, t->tid);
 
 
     return tid;

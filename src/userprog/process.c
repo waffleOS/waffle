@@ -182,12 +182,13 @@ int process_wait(tid_t child_tid UNUSED) {
     struct thread *child = NULL;
 
     struct thread *cur = thread_current();
+    printf("Thread %s tid: %d waiting \n", cur->name, cur->tid);
 
     struct list_elem *elem;
     for(elem = list_begin(&cur->children); elem != list_end(&cur->children);
         elem = list_next(elem))
     {
-        struct thread *t = list_entry(elem, struct thread, elem);
+        struct thread *t = list_entry(elem, struct thread, child_elem);
         if(t->tid == child_tid) {
             child = t;
             break;
