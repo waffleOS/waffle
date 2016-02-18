@@ -230,8 +230,8 @@ int do_write(int fd, const void * buffer, unsigned int size)
         return size;
     }
 
-    sema_down(&file_sem);
     struct thread * t = thread_current();
+    sema_down(&file_sem);
     int length = file_write(t->files[fd - 2], buffer, size);
     sema_up(&file_sem);
     return length;
