@@ -173,6 +173,10 @@ bool do_remove(const char * file)
 
 int do_open(const char * file)
 {
+    if (file == NULL)
+    {
+        return -1;
+    }
     sema_down(&file_sem);
     printf("Opening file %s\n", file);
     struct file * f = filesys_open(file);
