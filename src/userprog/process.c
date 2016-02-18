@@ -219,9 +219,7 @@ int process_wait(tid_t child_tid UNUSED) {
         }
     }
 
-    return t->exit_status;
-   
-    return 0;
+    return child->exit_status;
 }
 
 /*! Free the current process's resources. */
