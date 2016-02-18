@@ -72,8 +72,13 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
         case SYS_CREATE:
             file = *((const char **) (f->esp + 4));
             initial_size = *((int *) (f->esp + 8));
-            success = do_create(file, initial_size);
-            f->eax = success;
+            if (validate_pointer(file)) {
+                success = do_create(file, initial_size);
+                f->eax = success;
+            }
+            else {
+                do_exit(-1);
+            }
             break;
         case SYS_REMOVE:
             file = *((const char **) (f->esp + 4));
@@ -82,8 +87,13 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             break;
         case SYS_OPEN:
             file = *((const char **) (f->esp + 4));
-            fd = do_open(file);
-            f->eax = fd;
+            if (validate_pointer(file)) {
+                fd = do_open(file);
+                f->eax = fd;
+            }
+            else {
+                do_exit(-1);
+            }
             break;
         case SYS_FILESIZE:
             fd = *((int *) (f->esp + 4));
@@ -98,6 +108,9 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
                 num_bytes = do_read(fd, buffer, size);
                 f->eax = num_bytes;
             }
+            else {
+                do_exit(-1);
+            }
             break;
         case SYS_WRITE:
             fd = *((int *) (f->esp + 4));
@@ -106,6 +119,9 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
                 size = *((unsigned int *) (f->esp + 12));
                 num_bytes = do_write(fd, buffer, size);
                 f->eax = num_bytes;
+            }
+            else {
+                do_exit(-1);
             }
             break;
         case SYS_SEEK:
@@ -165,7 +181,7 @@ bool do_create(const char * file, unsigned int initial_size)
 {
     if (file == NULL)
     {
-        return false;
+        do_exit(-1);
     }
     sema_down(&file_sem);
     /*printf("Creating file %s with size %d\n", file, initial_size);*/
@@ -187,7 +203,7 @@ int do_open(const char * file)
 {
     if (file == NULL)
     {
-        return -1;
+        do_exit(-1);
     }
     sema_down(&file_sem);
     /*printf("Opening file %s\n", file);*/
@@ -227,10 +243,14 @@ int do_read(int fd, void * buffer, unsigned int size)
     }
 
     struct thread * t = thread_current();
-    sema_down(&file_sem);
-    int length = file_read(t->files[fd - 2], buffer, size); 
-    sema_up(&file_sem);
-    return length;
+    if (is_valid_fd(t, fd)) {
+        sema_down(&file_sem);
+        int length = file_read(t->files[fd - 2], buffer, size); 
+        sema_up(&file_sem);
+        return length;
+    }
+
+    return -1;
 }
 
 int do_write(int fd, const void * buffer, unsigned int size)
@@ -285,17 +305,18 @@ void do_close(int fd)
     {
         /*printf("Closing file with fd %d\n", fd);*/
         struct thread * t = thread_current();
-        sema_down(&file_sem);
-        file_close(t->files[fd - 2]);
-        sema_up(&file_sem);
-        t->files[fd - 2] = NULL;
+        if (is_valid_fd(t, fd)) {
+            sema_down(&file_sem);
+            file_close(t->files[fd - 2]);
+            sema_up(&file_sem);
+            t->files[fd - 2] = NULL;
+        }
     }
 }
 
 bool validate_pointer(void *ptr) {
     /* Check if pointer is in correct space. */
     if (ptr == NULL || !is_user_vaddr(ptr)) {
-        process_exit();
         return false;
     }
     
