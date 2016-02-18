@@ -3,6 +3,7 @@
 #include "threads/synch.h"
 
 struct semaphore file_sem;
+struct semaphore exec_sem;
 
 void syscall_init(void);
 #endif /* userprog/syscall.h */

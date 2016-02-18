@@ -31,12 +31,13 @@ void * sanitize_buffer(void ** buffer);
 void syscall_init(void) {
     intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
     sema_init(&file_sem, 1);
+    sema_init(&exec_sem, 1);
 }
 
 static void syscall_handler(struct intr_frame *f UNUSED) {
     int syscall_num;
 
-    printf("Starting a system call\n");
+    /*printf("Starting a system call\n");*/
     // Check for Stack pointer corrupted.
     if(!validate_pointer((void *)(f->esp))) {
         do_exit(-1);
@@ -46,7 +47,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
 
 
     syscall_num = *((int *) f->esp);
-    printf("system call %d\n", syscall_num);
+    /*printf("system call %d\n", syscall_num);*/
     
     // Declarations of arguments
     int status;
@@ -132,7 +133,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
                 do_exit(-1);
                 return;
             }
-            printf("Printing inside open\n");
+            /*printf("Printing inside open\n");*/
             file = *((const char **) (f->esp + 4));
             if (validate_pointer(file)) {
                 fd = do_open(file);
@@ -158,10 +159,10 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
                 do_exit(-1);
                 return;
             }
-            printf("Printing inside read\n");
+            /*printf("Printing inside read\n");*/
             fd = *((int *) (f->esp + 4));
             buffer = sanitize_buffer((void **) (f->esp + 8));
-            printf("Done sanitizing inside read\n");
+            /*printf("Done sanitizing inside read\n");*/
             if (validate_pointer(buffer)) {
                 size = *((unsigned int *) (f->esp + 12));
                 num_bytes = do_read(fd, buffer, size);
@@ -177,22 +178,22 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
                 do_exit(-1);
                 return;
             }
-            printf("Printing inside write\n");
+            /*printf("Printing inside write\n");*/
             fd = *((int *) (f->esp + 4));
             buffer = sanitize_buffer((void **) (f->esp + 8));
-            printf("Done sanitizing inside write\n");
+            /*printf("Done sanitizing inside write\n");*/
             if(validate_pointer(buffer)) {
                 size = *((unsigned int *) (f->esp + 12));
-                printf("Got here\n");
-                printf("The buffer looks like %s\n", (char *) buffer);
+                /*printf("Got here\n");*/
+                /*printf("The buffer looks like %s\n", (char *) buffer);*/
                 num_bytes = do_write(fd, buffer, size);
                 f->eax = num_bytes;
-                printf("Number of bytes: %d\n", num_bytes);
+                /*printf("Number of bytes: %d\n", num_bytes);*/
             }
             else {
                 do_exit(-1);
             }
-            printf("Got here 2\n");
+            /*printf("Got here 2\n");*/
             break;
         case SYS_SEEK:
             // Check stack pointer isn't too far up
@@ -248,7 +249,9 @@ pid_t do_exec(const char * cmd_line)
 {
     /* For ease, let's say process ids and thread ids line up in a one-to-one
     mapping */
+    sema_down(&exec_sem);
     pid_t child = process_execute(cmd_line);
+    sema_up(&exec_sem);
 
     /* TODO: Implement synchronization */
 
@@ -403,7 +406,7 @@ void do_close(int fd)
 
 bool validate_pointer(void *ptr) {
     /* Check if pointer is in correct space. */
-    printf("Printing inside validator\n");
+    /*printf("Printing inside validator\n");*/
     if (ptr == NULL || !is_user_vaddr(ptr)) {
         return false;
     }
@@ -422,7 +425,7 @@ bool validate_pointer(void *ptr) {
 
 void * sanitize_buffer(void ** buffer)
 {
-    printf("Printing inside sanitizer\n");
+    /*printf("Printing inside sanitizer\n");*/
     if (!validate_pointer(buffer))
     {
         do_exit(-1);
