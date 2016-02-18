@@ -61,48 +61,48 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
         case SYS_EXEC:
             cmd_line = *((const char **) (f->esp + 4));
             pid = do_exec(cmd_line);
-            *((pid_t *) f->eax) = pid;
+            f->eax = pid;
            break;
         case SYS_WAIT:
             pid = *((pid_t *) (f->esp + 4));
             status = do_wait(pid);
-            *((int *) f->eax) = status;
+            f->eax = status;
             break;
         case SYS_CREATE:
             file = *((const char **) (f->esp + 4));
             initial_size = *((int *) (f->esp + 8));
             success = do_create(file, initial_size);
-            *((bool *) f->eax) = success;
+            f->eax = success;
             break;
         case SYS_REMOVE:
             file = *((const char **) (f->esp + 4));
             success = do_remove(file);
-            *((bool *) f->eax) = success;
+            f->eax = success;
             break;
         case SYS_OPEN:
             file = *((const char **) (f->esp + 4));
             fd = do_open(file);
             printf("Opened file with fd %d\n", fd);
-            *((int *) f->eax) = fd;
+            f->eax = fd;
             break;
         case SYS_FILESIZE:
             fd = *((int *) (f->esp + 4));
             size = do_filesize(fd);
-            *((int *) f->eax) = size;
+            f->eax = size;
             break;
         case SYS_READ:
             fd = *((int *) (f->esp + 4));
             buffer = *((void **) (f->esp + 8));
             size = *((unsigned int *) (f->esp + 12));
             num_bytes = do_read(fd, buffer, size);
-            *((int *) f->eax) = num_bytes;
+            f->eax = num_bytes;
             break;
         case SYS_WRITE:
             fd = *((int *) (f->esp + 4));
             buffer = *((void **) (f->esp + 8));
             size = *((unsigned int *) (f->esp + 12));
             num_bytes = do_write(fd, buffer, size);
-            *((int *) f->eax) = num_bytes;
+            f->eax = num_bytes;
             break;
         case SYS_SEEK:
             fd = *((int *) (f->esp + 4));
@@ -112,7 +112,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
         case SYS_TELL:
             fd = *((int *) (f->esp + 4));
             position = do_tell(fd);
-            *((unsigned int *) f->eax) = position;
+            f->eax = position;
             break;
         case SYS_CLOSE:
             fd = *((int *) (f->esp + 4));
@@ -230,6 +230,7 @@ void do_close (int fd)
     printf("Closing file with fd %d\n", fd);
     struct thread * t = thread_current();
     file_close(t->files[fd - 2]);
+    t->files[fd - 2] = NULL;
 }
 
 bool validate_pointer(void *ptr) {
