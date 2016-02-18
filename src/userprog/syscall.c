@@ -163,6 +163,10 @@ int do_wait(pid_t pid)
 
 bool do_create(const char * file, unsigned int initial_size)
 {
+    if (file == NULL)
+    {
+        return false;
+    }
     sema_down(&file_sem);
     /*printf("Creating file %s with size %d\n", file, initial_size);*/
     bool success = filesys_create(file, initial_size);
@@ -231,18 +235,27 @@ int do_read(int fd, void * buffer, unsigned int size)
 
 int do_write(int fd, const void * buffer, unsigned int size)
 {
-    /*printf("In do_write... fd is %d, buffer is %s, size is %d\n", fd, (char *) buffer, size);*/
+    if (fd == 0)
+    {
+        return 0;
+    }
+
     if (fd == 1)
     {
         putbuf((char *) buffer, size);
         return size;
     }
 
-    sema_down(&file_sem);
     struct thread * t = thread_current();
-    int length = file_write(t->files[fd - 2], buffer, size);
-    sema_up(&file_sem);
-    return length;
+    if (is_valid_fd(t, fd))
+    {
+        sema_down(&file_sem);
+        int length = file_write(t->files[fd - 2], buffer, size);
+        sema_up(&file_sem);
+        return length;
+    }
+
+    return 0;
 }
 
 void do_seek(int fd, unsigned int position)
