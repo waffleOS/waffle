@@ -178,12 +178,13 @@ int process_wait(tid_t child_tid UNUSED) {
 
     }
     */
-    
+    printf("Entering process_wait\n");
     struct thread *child = NULL;
 
     struct thread *cur = thread_current();
     printf("Thread %s tid: %d waiting \n", cur->name, cur->tid);
 
+    printf("Looking for child %d\n", child_tid);
     struct list_elem *elem;
     for(elem = list_begin(&cur->children); elem != list_end(&cur->children);
         elem = list_next(elem))
@@ -199,12 +200,18 @@ int process_wait(tid_t child_tid UNUSED) {
     // If TID is invalid, return -1. Loop through existing threads looking
     // child_tid. Return -1 if we can't find it.
     if (child == NULL) {
+        printf("Child is NULL. Return -1.\n");
         return -1;
     }
+
+    // Prevent a wait on the same child thread by removing it from the list
+    // of children.
+    list_remove(&child->child_elem);
 
     // Run until an interrupt of the child process (return -1) or let it
     // die on its own (return 0). 
 
+    printf("Waiting for children to die...\n");
     // Wait until the child we are waiting for shows up in the dead_list
     bool found_child = false;
     while(!found_child) {
