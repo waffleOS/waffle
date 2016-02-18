@@ -167,8 +167,8 @@ bool do_remove(const char * file)
 
 int do_open(const char * file)
 {
-    printf("Opening file %s\n", file);    
-    struct file * f= filesys_open(file); 
+    printf("Opening file %s\n", file);
+    struct file * f= filesys_open(file);
     struct thread * t = thread_current();
     int fd = next_fd(t);
     t->files[fd - 2] = f;
@@ -179,7 +179,7 @@ int do_filesize(int fd)
 {
     printf("Getting filesize of file with fd %d\n", fd);
     struct thread * t = thread_current();
-    return file_length(t->files[fd - 2]); 
+    return file_length(t->files[fd - 2]);
 }
 
 int do_read(int fd, void * buffer, unsigned int size)
@@ -225,12 +225,19 @@ unsigned int do_tell(int fd)
     return file_tell(t->files[fd - 2]);
 }
 
-void do_close (int fd)
+void do_close(int fd)
 {
-    printf("Closing file with fd %d\n", fd);
-    struct thread * t = thread_current();
-    file_close(t->files[fd - 2]);
-    t->files[fd - 2] = NULL;
+    if (fd < 2)
+    {
+        /*close(fd);*/
+    }
+    else
+    {
+        printf("Closing file with fd %d\n", fd);
+        struct thread * t = thread_current();
+        file_close(t->files[fd - 2]);
+        t->files[fd - 2] = NULL;
+    }
 }
 
 bool validate_pointer(void *ptr) {

@@ -106,8 +106,6 @@ static void start_process(void *file_name_) {
         argv[i] = (uint8_t *) (stack + 1);
     }
 
-    hex_dump(0,(void *) 0xc0000000, 100, true);
-
     /* 
      * Word align stack.
      */
