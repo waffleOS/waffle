@@ -166,6 +166,7 @@ void do_exit(int status)
 {
     struct thread *cur = thread_current();
     
+    cur->exit_status = status;
     char *saveptr;
     char *name;
     name = strtok_r(cur->name, " ", &saveptr);
