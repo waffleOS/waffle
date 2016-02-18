@@ -94,49 +94,51 @@ static void start_process(void *file_name_) {
     success = load(file_name, &if_.eip, &if_.esp);
 
     
+    if (success) {
   
-    /* Start at PHYS_BASE - 1 byte*/
-    uint8_t *stack = (uint8_t *) (if_.esp) - 1;
-    uint8_t *argv[100];
+        /* Start at PHYS_BASE - 1 byte*/
+        uint8_t *stack = (uint8_t *) (if_.esp) - 1;
+        uint8_t *argv[100];
 
-    /* Push actual strings. */
-    int i;
-    for (i = token_count - 1; i >= 0; i--) {
-        stack = push_string(stack, tokens[i]);
-        argv[i] = (uint8_t *) (stack + 1);
-    }
+        /* Push actual strings. */
+        int i;
+        for (i = token_count - 1; i >= 0; i--) {
+            stack = push_string(stack, tokens[i]);
+            argv[i] = (uint8_t *) (stack + 1);
+        }
 
-    /* 
-     * Word align stack.
-     */
-    while (((uint32_t) stack % 4) != 3) { 
-        *stack = (uint8_t) 0;
-        stack--;
-    }
-    stack -= 3;
-    uint8_t **stack_argv = (uint8_t **) stack;
+        /* 
+         * Word align stack.
+         */
+        while (((uint32_t) stack % 4) != 3) { 
+            *stack = (uint8_t) 0;
+            stack--;
+        }
+        stack -= 3;
+        uint8_t **stack_argv = (uint8_t **) stack;
 
-    *stack_argv-- = 0;
-    /* Push pointers to argument strings. */
-    for (i = token_count - 1; i >= 0; i--) {
-        *stack_argv = argv[i];
+        *stack_argv-- = 0;
+        /* Push pointers to argument strings. */
+        for (i = token_count - 1; i >= 0; i--) {
+            *stack_argv = argv[i];
+            stack_argv--;
+        }
+
+        /* Add char **argv argument to stack. */
+        *stack_argv = (uint8_t *) (stack_argv + 1);
         stack_argv--;
+
+        
+        /* Add int argc to stack. */
+        *((int *) stack_argv) = token_count;
+        stack_argv--;
+
+        /* Add unused return address. */
+        *((int *) stack_argv) = 0;
+
+        /* esp should point to the unused return address. */
+        if_.esp = stack_argv;
     }
-
-    /* Add char **argv argument to stack. */
-    *stack_argv = (uint8_t *) (stack_argv + 1);
-    stack_argv--;
-
-    
-    /* Add int argc to stack. */
-    *((int *) stack_argv) = token_count;
-    stack_argv--;
-
-    /* Add unused return address. */
-    *((int *) stack_argv) = 0;
-
-    /* esp should point to the unused return address. */
-    if_.esp = stack_argv;
     
     /* If load failed, quit. */
     palloc_free_page(file_name);
