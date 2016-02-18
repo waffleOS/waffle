@@ -214,6 +214,7 @@ int process_wait(tid_t child_tid UNUSED) {
     printf("Waiting for children to die...\n");
     // Wait until the child we are waiting for shows up in the dead_list
     bool found_child = false;
+    int exit_status;
     while (!found_child) {
         enum intr_level old_level;
         old_level = intr_disable();
@@ -221,18 +222,21 @@ int process_wait(tid_t child_tid UNUSED) {
         for (elem = list_begin(&cur->dead_list); elem != list_end(&cur->dead_list);
                 elem = list_next(elem))
         {
+            printf("%10x\n", elem);
             struct thread *t = list_entry(elem, struct thread, dead_elem);
             printf("Child %s tid %d want %d\n", t->name, t->tid, child_tid);
             if (t->tid == child_tid) {
                 child = t;
                 found_child = true;
                 list_remove(elem);
+                exit_status = t->exit_status;
+                palloc_free_page(t);
                 break;
             }
         }
         intr_set_level(old_level);
     }
-    return child->exit_status;
+    return exit_status;
 }
 
 /*! Free the current process's resources. */
