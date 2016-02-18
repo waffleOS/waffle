@@ -280,13 +280,13 @@ void thread_exit(void) {
        and schedule another process.  That process will destroy us
        when it calls thread_schedule_tail(). */
     intr_disable();
+    struct thread *cur = thread_current();
+    list_push_back(&cur->parent->dead_list, &cur->dead_elem);
+
     list_remove(&thread_current()->allelem);
     thread_current()->status = THREAD_DYING;
     
-    struct thread *cur = thread_current();
     
-    list_push_back(&cur->parent->dead_list, &cur->dead_elem);
-
     schedule();
     NOT_REACHED();
 }

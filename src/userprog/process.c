@@ -186,7 +186,7 @@ int process_wait(tid_t child_tid UNUSED) {
 
     printf("Looking for child %d\n", child_tid);
     struct list_elem *elem;
-    for(elem = list_begin(&cur->children); elem != list_end(&cur->children);
+    for (elem = list_begin(&cur->children); elem != list_end(&cur->children);
         elem = list_next(elem))
     {
         struct thread *t = list_entry(elem, struct thread, child_elem);
@@ -214,20 +214,24 @@ int process_wait(tid_t child_tid UNUSED) {
     printf("Waiting for children to die...\n");
     // Wait until the child we are waiting for shows up in the dead_list
     bool found_child = false;
-    while(!found_child) {
-        for(elem = list_begin(&cur->dead_list); elem != list_end(&cur->dead_list);
+    while (!found_child) {
+        enum intr_level old_level;
+        old_level = intr_disable();
+
+        for (elem = list_begin(&cur->dead_list); elem != list_end(&cur->dead_list);
                 elem = list_next(elem))
         {
             struct thread *t = list_entry(elem, struct thread, dead_elem);
-            if(t->tid == child_tid) {
+            printf("Child %s tid %d want %d\n", t->name, t->tid, child_tid);
+            if (t->tid == child_tid) {
                 child = t;
                 found_child = true;
+                list_remove(elem);
                 break;
-            } 
-            printf("Child %s tid %d want %d\n", t->name, t->tid, child_tid);
+            }
         }
+        intr_set_level(old_level);
     }
-
     return child->exit_status;
 }
 
