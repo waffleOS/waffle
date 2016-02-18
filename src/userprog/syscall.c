@@ -29,6 +29,7 @@ bool validate_pointer(void *ptr);
 
 void syscall_init(void) {
     intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
+    sema_init(&file_sem, 1);
 }
 
 static void syscall_handler(struct intr_frame *f UNUSED) {
@@ -82,7 +83,6 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
         case SYS_OPEN:
             file = *((const char **) (f->esp + 4));
             fd = do_open(file);
-            printf("Opened file with fd %d\n", fd);
             f->eax = fd;
             break;
         case SYS_FILESIZE:
@@ -155,20 +155,28 @@ int do_wait(pid_t pid)
 
 bool do_create(const char * file, unsigned int initial_size)
 {
+    sema_down(&file_sem);
     printf("Creating file %s with size %d\n", file, initial_size);
-    return filesys_create(file, initial_size);
+    bool success = filesys_create(file, initial_size);
+    sema_up(&file_sem);
+    return success;
 }
 
 bool do_remove(const char * file)
 {
+    sema_down(&file_sem);
     printf("Removing file %s\n", file);
-    return filesys_remove(file);
+    bool success = filesys_remove(file);
+    sema_up(&file_sem);
+    return success;
 }
 
 int do_open(const char * file)
 {
+    sema_down(&file_sem);
     printf("Opening file %s\n", file);
-    struct file * f= filesys_open(file);
+    struct file * f = filesys_open(file);
+    sema_up(&file_sem);
     struct thread * t = thread_current();
     int fd = next_fd(t);
     t->files[fd - 2] = f;
@@ -179,7 +187,10 @@ int do_filesize(int fd)
 {
     printf("Getting filesize of file with fd %d\n", fd);
     struct thread * t = thread_current();
-    return file_length(t->files[fd - 2]);
+    sema_down(&file_sem);
+    int length = file_length(t->files[fd - 2]);
+    sema_up(&file_sem);
+    return length;
 }
 
 int do_read(int fd, void * buffer, unsigned int size)
@@ -196,7 +207,10 @@ int do_read(int fd, void * buffer, unsigned int size)
     }
 
     struct thread * t = thread_current();
-    return file_read(t->files[fd - 2], buffer, size); 
+    sema_down(&file_sem);
+    int length = file_read(t->files[fd - 2], buffer, size); 
+    sema_up(&file_sem);
+    return length;
 }
 
 int do_write(int fd, const void * buffer, unsigned int size)
@@ -208,21 +222,28 @@ int do_write(int fd, const void * buffer, unsigned int size)
         return size;
     }
 
+    sema_down(&file_sem);
     struct thread * t = thread_current();
-    return file_write(t->files[fd - 2], buffer, size);
+    int length = file_write(t->files[fd - 2], buffer, size);
+    sema_up(&file_sem);
+    return length;
 }
 
 void do_seek(int fd, unsigned int position)
 {
     printf("Seeking file with fd %d to position %d\n", fd, position);
     struct thread * t = thread_current();
+    sema_down(&file_sem);
     file_seek(t->files[fd - 2], position);
+    sema_up(&file_sem);
 }
 
 unsigned int do_tell(int fd)
 {
     struct thread * t = thread_current();
-    return file_tell(t->files[fd - 2]);
+    sema_down(&file_sem);
+    int position = file_tell(t->files[fd - 2]);
+    sema_up(&file_sem);
 }
 
 void do_close(int fd)
@@ -235,7 +256,9 @@ void do_close(int fd)
     {
         printf("Closing file with fd %d\n", fd);
         struct thread * t = thread_current();
+        sema_down(&file_sem);
         file_close(t->files[fd - 2]);
+        sema_up(&file_sem);
         t->files[fd - 2] = NULL;
     }
 }
