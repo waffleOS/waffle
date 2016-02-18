@@ -34,6 +34,19 @@ void syscall_init(void) {
 
 static void syscall_handler(struct intr_frame *f UNUSED) {
     int syscall_num;
+
+    // Check for Stack pointer corrupted.
+    if(!validate_pointer((void *)(f->esp))) {
+        do_exit(-1);
+        return;
+    }
+
+    // Check stack pointer isn't too far up
+    if(!validate_pointer((void *)(f->esp - 4))) {
+        do_exit(-1);
+        return;
+    }
+
     syscall_num = *((int *) f->esp);
     /*printf("system call %d\n", syscall_num);*/
     
@@ -49,6 +62,8 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
     int size;
     int fd;
     bool success;
+
+
 
     switch (syscall_num)
     {
