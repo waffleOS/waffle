@@ -442,7 +442,7 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     t->magic = THREAD_MAGIC;
 
     list_init(&t->children);
-    list_init(&t->wait_for_list);
+    list_init(&t->dead_list);
 
     old_level = intr_disable();
     list_push_back(&all_list, &t->allelem);
