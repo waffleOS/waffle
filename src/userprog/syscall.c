@@ -63,7 +63,6 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
     bool success;
 
 
-
     switch (syscall_num)
     {
         case SYS_HALT:
@@ -249,6 +248,10 @@ pid_t do_exec(const char * cmd_line)
 {
     /* For ease, let's say process ids and thread ids line up in a one-to-one
     mapping */
+    if (cmd_line == NULL)
+    {
+        do_exit(-1);
+    }
     sema_down(&exec_sem);
     pid_t child = process_execute(cmd_line);
     sema_up(&exec_sem);
