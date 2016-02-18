@@ -150,17 +150,17 @@ pid_t do_exec(const char * cmd_line)
 
 int do_wait(pid_t pid)
 {
-    process_wait(pid);
+    return process_wait(pid);
 }
 
 bool do_create(const char * file, unsigned int initial_size)
 {
-    filesys_create(file, initial_size);
+    return filesys_create(file, initial_size);
 }
 
 bool do_remove(const char * file)
 {
-    filesys_remove(file);
+    return filesys_remove(file);
 }
 
 int do_open(const char * file)
