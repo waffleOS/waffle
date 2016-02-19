@@ -183,6 +183,9 @@ penalized.  We can't fix things until we know about them.  :-)
 
 >> Did you find that working on a particular part of the assignment gave
 >> you greater insight into some aspect of OS design?
+    Working on the system calls for the file system gave us greater insight
+    into how file descriptors and files work on OSes, although we will see
+    more in the file systems project.
 
 >> Were there any parts of the assignment that you felt were unnecessarily
 >> tedious or pointless?
@@ -196,4 +199,4 @@ penalized.  We can't fix things until we know about them.  :-)
 >> projects?
 
 >> Any other comments?
-
+    Nope.
