@@ -262,11 +262,23 @@ pid_t do_exec(const char * cmd_line)
     {
         do_exit(-1);
     }
+
+
+    bool had_filesys = false;
+    if (file_sem.value == 0 ) {
+        had_filesys = true;
+        sema_up(&file_sem);
+        //printf("Sema value: %d\n", file_sem.value);
+    }
+
     sema_down(&exec_sem);
     pid_t child = process_execute(cmd_line);
     sema_up(&exec_sem);
-
     
+    if (had_filesys) {
+        sema_down(&file_sem);
+    }
+
     /* Check if a thread was allocated. */
     if (child == TID_ERROR) {
         // do_exit(-1);
