@@ -233,12 +233,13 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
     }
 
 }
-
+/* Halts the systems by shutting down */
 void do_halt(void)
 {
     shutdown_power_off();
 }
 
+/* Exits the current thread and prints a status */
 void do_exit(int status)
 {
     struct thread *cur = thread_current();
@@ -251,6 +252,7 @@ void do_exit(int status)
     thread_exit();
 }
 
+/* Executes a command and spawns a new thread */
 pid_t do_exec(const char * cmd_line)
 {
     /* TODO: Implement synchronization */
@@ -261,11 +263,12 @@ pid_t do_exec(const char * cmd_line)
     
     /* For ease, let's say process ids and thread ids line up in a one-to-one
     mapping */
+
+    // Make sure the command is not NULL
     if (cmd_line == NULL)
     {
         do_exit(-1);
     }
-
 
     /* File system race conditions. */
     /* bool had_filesys = false;
@@ -284,6 +287,7 @@ pid_t do_exec(const char * cmd_line)
         sema_down(&file_sem);
     }*/
 
+    
     /* Check if a thread was allocated. */
     if (child == TID_ERROR) {
         do_exit(-1);
@@ -303,33 +307,40 @@ pid_t do_exec(const char * cmd_line)
     }
 }
 
+/* Waits on a process */
 int do_wait(pid_t pid)
 {
     return process_wait(pid);
 }
 
+/* Creates a new file */
 bool do_create(const char * file, unsigned int initial_size)
 {
+    // If the file is NULL, exit the thread
     if (file == NULL)
     {
         do_exit(-1);
     }
+
+    // Entering critical code
     sema_down(&file_sem);
-    /*printf("Creating file %s with size %d\n", file, initial_size);*/
     bool success = filesys_create(file, initial_size);
     sema_up(&file_sem);
+    // Left critical code
+    
     return success;
 }
 
+/* Removes a new file */
 bool do_remove(const char * file)
 {
     sema_down(&file_sem);
-    /*printf("Removing file %s\n", file);*/
     bool success = filesys_remove(file);
     sema_up(&file_sem);
     return success;
 }
 
+/* Opens a new file */
 int do_open(const char * file)
 {
     if (file == NULL)
@@ -337,7 +348,6 @@ int do_open(const char * file)
         do_exit(-1);
     }
     sema_down(&file_sem);
-    /*printf("Opening file %s\n", file);*/
     struct file * f = filesys_open(file);
     sema_up(&file_sem);
     if (f == NULL)
@@ -350,9 +360,9 @@ int do_open(const char * file)
     return fd;
 }
 
+/* Returns the size of a file */
 int do_filesize(int fd)
 {
-    /*printf("Getting filesize of file with fd %d\n", fd);*/
     struct thread * t = thread_current();
     sema_down(&file_sem);
     int length = file_length(t->files[fd - 2]);
@@ -360,9 +370,9 @@ int do_filesize(int fd)
     return length;
 }
 
+/* Reads from a file */
 int do_read(int fd, void * buffer, unsigned int size)
 {
-    /*printf("Reading file with fd %d\n", fd);*/
     if (fd == 0)
     {
         int i;
@@ -384,6 +394,7 @@ int do_read(int fd, void * buffer, unsigned int size)
     return -1;
 }
 
+/* Writes to a file */
 int do_write(int fd, const void * buffer, unsigned int size)
 {
     if (fd == 0)
@@ -409,15 +420,16 @@ int do_write(int fd, const void * buffer, unsigned int size)
     return 0;
 }
 
+/* Seeks in a file */
 void do_seek(int fd, unsigned int position)
 {
-    /*printf("Seeking file with fd %d to position %d\n", fd, position);*/
     struct thread * t = thread_current();
     sema_down(&file_sem);
     file_seek(t->files[fd - 2], position);
     sema_up(&file_sem);
 }
 
+/* Returns the position of a file */
 unsigned int do_tell(int fd)
 {
     struct thread * t = thread_current();
@@ -426,15 +438,11 @@ unsigned int do_tell(int fd)
     sema_up(&file_sem);
 }
 
+/* Closes a file */
 void do_close(int fd)
 {
-    if (fd < 2)
+    if (fd >= 2)
     {
-        /*close(fd);*/
-    }
-    else
-    {
-        /*printf("Closing file with fd %d\n", fd);*/
         struct thread * t = thread_current();
         if (is_valid_fd(t, fd)) {
             sema_down(&file_sem);
@@ -445,6 +453,7 @@ void do_close(int fd)
     }
 }
 
+/* Validates pointers */
 bool validate_pointer(void *ptr) {
     /* Check if pointer is in correct space. */
     if (ptr == NULL || !is_user_vaddr(ptr)) {
@@ -455,16 +464,15 @@ bool validate_pointer(void *ptr) {
     uint32_t *pd = cur->pagedir;
     /* Check if in page directory of the current thread. */
     if (pagedir_get_page(pd, ptr) == NULL) {
-        /*process_exit();*/
         return false;
     }
 
     return true;
 }
 
+/* Validates pointers and dereferences */
 void * sanitize_buffer(void ** buffer)
 {
-    /*printf("Printing inside sanitizer\n");*/
     if (!validate_pointer(buffer))
     {
         do_exit(-1);
