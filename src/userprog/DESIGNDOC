@@ -43,7 +43,7 @@ which parts.
 
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
-   Rahul:  35 hours
+   Rahul:  40 hours
    Robert: 20 hours
    David:  30 hours
 
@@ -100,7 +100,12 @@ which parts.
 >> B2: Describe how file descriptors are associated with open files.
 >> Are file descriptors unique within the entire OS or just within a
 >> single process?
-
+    File descriptors are unique within a single process. When a file is
+    sucessfully opened, a new file descriptor is created. This is done by
+    iterating through an array of open files for the current process and
+    returning the first index that has a NULL entry. This allows us to
+    close files without creating fragmentation in the array and guarantees
+    that the file descriptor is unused.
 ---- ALGORITHMS ----
 
 >> B3: Describe your code for reading and writing user data from the
