@@ -8,6 +8,7 @@
 #include "userprog/gdt.h"
 #include "userprog/pagedir.h"
 #include "userprog/tss.h"
+#include "userprog/syscall.h"
 #include "filesys/directory.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
@@ -20,6 +21,28 @@
 
 static thread_func start_process NO_RETURN;
 static bool load(const char *cmdline, void (**eip)(void), void **esp);
+uint8_t *push_string(uint8_t *stack, char *string);
+
+/* 
+ * Pushes the string on the stack, with the ASCII null terminator
+ * at the highest address. 
+ */
+uint8_t *push_string(uint8_t *stack, char *string) {
+    /* String length. */
+    int length = 0;
+    while (string[length] != '\0') {
+        length++;
+    }
+
+    /* Start with ASCII null and work backwards. */
+    int i = 0;
+    for (i = length; i >= 0; i--) { 
+        *stack = string[i];
+        stack--;
+    }
+    return stack;
+}
+
 
 /*! Starts a new thread running a user program loaded from FILENAME.  The new
     thread may be scheduled (and may even exit) before process_execute()
@@ -36,8 +59,10 @@ tid_t process_execute(const char *file_name) {
         return TID_ERROR;
     strlcpy(fn_copy, file_name, PGSIZE);
 
+    
     /* Create a new thread to execute FILE_NAME. */
-    tid = thread_create(file_name, PRI_DEFAULT, start_process, fn_copy);
+    tid = thread_create(fn_copy, PRI_DEFAULT, start_process, fn_copy);
+    
     if (tid == TID_ERROR)
         palloc_free_page(fn_copy); 
     return tid;
@@ -48,7 +73,32 @@ static void start_process(void *file_name_) {
     char *file_name = file_name_;
     struct intr_frame if_;
     bool success;
+    
+    /* Parse file arguments. */
+    char * saveptr;
+    char * token;
+    char * tokens[100];
+    token = strtok_r(file_name, " ", &saveptr);
+    int token_count = 0;
+    
+    while (token != NULL) {
+        tokens[token_count] = token;
+        token_count++;
+        token = strtok_r(NULL, " ", &saveptr);        
+    }
 
+    lock_acquire(&exec_lock);
+    sema_down(&file_sem);
+    if (file_name != NULL)
+    {
+        struct file * thread_file = filesys_open(file_name);
+        if (thread_file != NULL)
+        {
+            file_deny_write(thread_file);
+        }
+        thread_current()->thread_file = thread_file;
+    }
+    sema_up(&file_sem);
     /* Initialize interrupt frame and load executable. */
     memset(&if_, 0, sizeof(if_));
     if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
@@ -56,10 +106,69 @@ static void start_process(void *file_name_) {
     if_.eflags = FLAG_IF | FLAG_MBS;
     success = load(file_name, &if_.eip, &if_.esp);
 
+    
+    if (success) {
+  
+        /* Start at PHYS_BASE - 1 byte*/
+        uint8_t *stack = (uint8_t *) (if_.esp) - 1;
+        uint8_t *argv[100];
+
+        /* Push actual strings. */
+        int i;
+        for (i = token_count - 1; i >= 0; i--) {
+            stack = push_string(stack, tokens[i]);
+            argv[i] = (uint8_t *) (stack + 1);
+        }
+
+        /* 
+         * Word align stack.
+         */
+        while (((uint32_t) stack % 4) != 3) { 
+            *stack = (uint8_t) 0;
+            stack--;
+        }
+        stack -= 3;
+        uint8_t **stack_argv = (uint8_t **) stack;
+
+        *stack_argv-- = 0;
+        /* Push pointers to argument strings. */
+        for (i = token_count - 1; i >= 0; i--) {
+            *stack_argv = argv[i];
+            stack_argv--;
+        }
+
+        /* Add char **argv argument to stack. */
+        *stack_argv = (uint8_t *) (stack_argv + 1);
+        stack_argv--;
+
+        
+        /* Add int argc to stack. */
+        *((int *) stack_argv) = token_count;
+        stack_argv--;
+
+        /* Add unused return address. */
+        *((int *) stack_argv) = 0;
+
+        /* esp should point to the unused return address. */
+        if_.esp = stack_argv;
+
+    }
+    else { 
+        load_success = false;
+    }
+
+    cond_signal(&exec_cond, &exec_lock);
+    lock_release(&exec_lock);
+    //printf("Signaled\n");
+    
     /* If load failed, quit. */
     palloc_free_page(file_name);
-    if (!success) 
+    if (!success) {
+        //struct thread *cur = thread_current(); 
+        //cur->tid = TID_ERROR;
+        //thread_current()->exit_status = -1;
         thread_exit();
+    }
 
     /* Start the user process by simulating a return from an
        interrupt, implemented by intr_exit (in
@@ -80,7 +189,59 @@ static void start_process(void *file_name_) {
     This function will be implemented in problem 2-2.  For now, it does
     nothing. */
 int process_wait(tid_t child_tid UNUSED) {
-    return -1;
+
+    struct thread *child = NULL;
+
+    struct thread *cur = thread_current();
+
+    struct list_elem *elem;
+    for (elem = list_begin(&cur->children); elem != list_end(&cur->children);
+        elem = list_next(elem))
+    {
+        struct thread *t = list_entry(elem, struct thread, child_elem);
+        if(t->tid == child_tid) {
+            child = t;
+            break;
+        } 
+    }
+
+    // If TID is invalid, return -1. Loop through existing threads looking
+    // child_tid. Return -1 if we can't find it.
+    if (child == NULL) {
+        return -1;
+    }
+
+    // Prevent a wait on the same child thread by removing it from the list
+    // of children.
+    list_remove(&child->child_elem);
+
+    // Run until an interrupt of the child process (return -1) or let it
+    // die on its own (return 0). 
+
+    /*printf("Waiting for children to die...\n");*/
+    // Wait until the child we are waiting for shows up in the dead_list
+    bool found_child = false;
+    int exit_status;
+    while (!found_child) {
+        enum intr_level old_level;
+        old_level = intr_disable();
+
+        for (elem = list_begin(&cur->dead_list); elem != list_end(&cur->dead_list);
+                elem = list_next(elem))
+        {
+            struct thread *t = list_entry(elem, struct thread, dead_elem);
+            if (t->tid == child_tid) {
+                child = t;
+                found_child = true;
+                list_remove(elem);
+                exit_status = t->exit_status;
+                palloc_free_page(t);
+                break;
+            }
+        }
+        intr_set_level(old_level);
+    }
+    return exit_status;
 }
 
 /*! Free the current process's resources. */
@@ -391,6 +552,7 @@ static bool load_segment(struct file *file, off_t ofs, uint8_t *upage,
         zero_bytes -= page_zero_bytes;
         upage += PGSIZE;
     }
+
     return true;
 }
 

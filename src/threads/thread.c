@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "userprog/syscall.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -27,6 +28,11 @@ static struct list ready_list;
 /*! List of all processes.  Processes are added to this list
     when they are first scheduled and removed when they exit. */
 static struct list all_list;
+
+
+/*! List of the processes which are waiting on children. 
+    Keep a list of waiting parents */
+/*static struct list wait_list;*/
 
 /*! Idle thread. */
 static struct thread *idle_thread;
@@ -87,6 +93,7 @@ void thread_init(void) {
     lock_init(&tid_lock);
     list_init(&ready_list);
     list_init(&all_list);
+    /*list_init(&wait_list);*/
 
     /* Set up a thread structure for the running thread. */
     initial_thread = running_thread();
@@ -134,6 +141,27 @@ void thread_tick(void) {
 void thread_print_stats(void) {
     printf("Thread: %lld idle ticks, %lld kernel ticks, %lld user ticks\n",
            idle_ticks, kernel_ticks, user_ticks);
+}
+
+int next_fd(struct thread * t) {
+    int i;
+    for (i = 0; i < NUM_FILES; i++)
+    {
+        if (t->files[i] == NULL)
+        {
+            return i + 2;
+        }
+    }
+    return -1;
+}
+
+bool is_valid_fd(struct thread * t, int fd) {
+   if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+   {
+       return true;
+   }
+
+   return false;
 }
 
 /*! Creates a new kernel thread named NAME with the given initial PRIORITY,
@@ -186,6 +214,18 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
 
     /* Add to run queue. */
     thread_unblock(t);
+
+    struct thread *cur = thread_current();
+    /* Add thread as child to current thread. */
+    list_push_back(&cur->children, &t->child_elem);
+
+    /* Add current thread as parent to child. */
+    t->parent = cur;
+    /* printf("\n Thread %s tid: %d spawned %s tid: %d\n", cur->name, cur->tid, 
+                                                        t->name, t->tid);*/
+
+    /* Set default exit status to 0 */
+    t->exit_status = 0;
 
     return tid;
 }
@@ -262,8 +302,17 @@ void thread_exit(void) {
        and schedule another process.  That process will destroy us
        when it calls thread_schedule_tail(). */
     intr_disable();
+    struct thread *cur = thread_current();
+    sema_down(&file_sem);
+    file_close(cur->thread_file);
+    sema_up(&file_sem);
+
+    list_push_back(&cur->parent->dead_list, &cur->dead_elem);
+
     list_remove(&thread_current()->allelem);
     thread_current()->status = THREAD_DYING;
+    
+    
     schedule();
     NOT_REACHED();
 }
@@ -280,6 +329,20 @@ void thread_yield(void) {
     if (cur != idle_thread) 
         list_push_back(&ready_list, &cur->elem);
     cur->status = THREAD_READY;
+    schedule();
+    intr_set_level(old_level);
+}
+
+/*! The current thread is put to sleep until woken up
+ * by something else. */
+void thread_sleep(void) { 
+    struct thread *cur = thread_current();
+    enum intr_level old_level;
+
+    ASSERT(!intr_context());
+
+    old_level = intr_disable();
+    cur->status = THREAD_BLOCKED;
     schedule();
     intr_set_level(old_level);
 }
@@ -403,6 +466,10 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     t->stack = (uint8_t *) t + PGSIZE;
     t->priority = priority;
     t->magic = THREAD_MAGIC;
+    t->thread_file = NULL;
+
+    list_init(&t->children);
+    list_init(&t->dead_list);
 
     old_level = intr_disable();
     list_push_back(&all_list, &t->allelem);
@@ -468,7 +535,7 @@ void thread_schedule_tail(struct thread *prev) {
     if (prev != NULL && prev->status == THREAD_DYING &&
         prev != initial_thread) {
         ASSERT(prev != cur);
-        palloc_free_page(prev);
+        // palloc_free_page(prev);
     }
 }
 
@@ -507,4 +574,5 @@ static tid_t allocate_tid(void) {
 /*! Offset of `stack' member within `struct thread'.
     Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof(struct thread, stack);
+
 
