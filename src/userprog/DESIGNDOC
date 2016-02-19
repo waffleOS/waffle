@@ -150,13 +150,8 @@ which parts.
 >> and how it interacts with process termination.
     The wait system call busy waits the thread until the child signals
     that it has terminated by adding itself to the parent's dead list.
-    It manages resource collection after process termination.
-
-We originally had implemented a zombie method where wait would be the
-only way to reap children, but we realized this leaks the children,
-so instead the parent thread will keep track of all children exit 
-statuses so even when the child dies, the parent knows what the exit
-status was.
+    It manages resource collection after process termination. Exit
+    statuses are kept by the parent after child termination.
 
 >> B6: Any access to user program memory at a user-specified address
 >> can fail due to a bad pointer value.  Such accesses must cause the
