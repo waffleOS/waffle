@@ -44,9 +44,9 @@ which parts.
 
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
-   Rahul:  40 hours
-   Robert: 20 hours
-   David:  30 hours
+   Rahul:  41 hours
+   Robert: 25 hours
+   David:  31 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
@@ -102,6 +102,24 @@ which parts.
 >> B1: Copy here the declaration of each new or changed `struct' or
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
+    Modified struct thread (thread.h)
+        Added struct file * files[NUM_FILES] to keep track of open files
+        Added struct file * thread_file to keep track of the execution file
+        for the thread
+    Added struct semaphore file_sem (syscall.h)
+        To lock and unlock file system calls
+    Added struct semaphore exec_sem (syscall.h)
+        To synchronize executing new processes
+    Added struct lock exec_lock (syscall.h)
+        To synchronize executing new processes
+    Added struct condition exec_cond (syscall.h)
+        To synchronize executing new processes
+    Added bool load_success (syscall.h)
+        To determine whether a file is loaded properly or if there is an error
+        such as file not existing
+    Added struct semaphore filesys_sem (filesys.h)
+        To lock and unlock file system calls
+
 
 >> B2: Describe how file descriptors are associated with open files.
 >> Are file descriptors unique within the entire OS or just within a
