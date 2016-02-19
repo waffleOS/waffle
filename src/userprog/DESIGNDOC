@@ -88,7 +88,12 @@ which parts.
 >> separation.  Identify at least two advantages of the Unix approach.
     1. Allows the shell to pipe commands because the shell can pass arguments 
        to programs.
-    2. 
+    2. It is simplier kernel code because less parsing needs to be done, making
+       the kernel easier to debug and maintain.
+    3. Makes it easier to protect the kernel from argument passing security violations
+       because it can treat the arguments as user space pointers and check the
+       address space.
+
                              SYSTEM CALLS
                              ============
 
@@ -154,6 +159,10 @@ which parts.
 
 >> B9: Why did you choose to implement access to user memory from the
 >> kernel in the way that you did?
+    We have valid_pointer and sanitize_buffer helper functions that
+    check whether the pointers are in user space, and coming from
+    proper page table entries. This allows us to protect against
+    security violations such as the ones in the tests.
 
 >> B10: What advantages or disadvantages can you see to your design
 >> for file descriptors?
@@ -168,6 +177,7 @@ which parts.
 
 >> B11: The default tid_t to pid_t mapping is the identity mapping.
 >> If you changed it, what advantages are there to your approach?
+    We kept the identity mapping.
 
 			  SURVEY QUESTIONS
 			  ================
