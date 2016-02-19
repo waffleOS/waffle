@@ -266,23 +266,11 @@ pid_t do_exec(const char * cmd_line)
     {
         do_exit(-1);
     }
-
-
-    bool had_filesys = false;
-    if (file_sem.value == 0 ) {
-        had_filesys = true;
-        sema_up(&file_sem);
-        //printf("Sema value: %d\n", file_sem.value);
-    }
-
     sema_down(&exec_sem);
     pid_t child = process_execute(cmd_line);
     sema_up(&exec_sem);
-    
-    if (had_filesys) {
-        sema_down(&file_sem);
-    }
 
+    
     /* Check if a thread was allocated. */
     if (child == TID_ERROR) {
         // do_exit(-1);
@@ -311,14 +299,18 @@ int do_wait(pid_t pid)
 /* Creates a new file */
 bool do_create(const char * file, unsigned int initial_size)
 {
+    // If the file is NULL, exit the thread
     if (file == NULL)
     {
         do_exit(-1);
     }
+
+    // Entering critical code
     sema_down(&file_sem);
-    /*printf("Creating file %s with size %d\n", file, initial_size);*/
     bool success = filesys_create(file, initial_size);
     sema_up(&file_sem);
+    // Left critical code
+    
     return success;
 }
 
@@ -326,7 +318,6 @@ bool do_create(const char * file, unsigned int initial_size)
 bool do_remove(const char * file)
 {
     sema_down(&file_sem);
-    /*printf("Removing file %s\n", file);*/
     bool success = filesys_remove(file);
     sema_up(&file_sem);
     return success;
@@ -340,7 +331,6 @@ int do_open(const char * file)
         do_exit(-1);
     }
     sema_down(&file_sem);
-    /*printf("Opening file %s\n", file);*/
     struct file * f = filesys_open(file);
     sema_up(&file_sem);
     if (f == NULL)
@@ -356,7 +346,6 @@ int do_open(const char * file)
 /* Returns the size of a file */
 int do_filesize(int fd)
 {
-    /*printf("Getting filesize of file with fd %d\n", fd);*/
     struct thread * t = thread_current();
     sema_down(&file_sem);
     int length = file_length(t->files[fd - 2]);
@@ -367,7 +356,6 @@ int do_filesize(int fd)
 /* Reads from a file */
 int do_read(int fd, void * buffer, unsigned int size)
 {
-    /*printf("Reading file with fd %d\n", fd);*/
     if (fd == 0)
     {
         int i;
@@ -418,7 +406,6 @@ int do_write(int fd, const void * buffer, unsigned int size)
 /* Seeks in a file */
 void do_seek(int fd, unsigned int position)
 {
-    /*printf("Seeking file with fd %d to position %d\n", fd, position);*/
     struct thread * t = thread_current();
     sema_down(&file_sem);
     file_seek(t->files[fd - 2], position);
@@ -437,13 +424,8 @@ unsigned int do_tell(int fd)
 /* Closes a file */
 void do_close(int fd)
 {
-    if (fd < 2)
+    if (fd >= 2)
     {
-        /*close(fd);*/
-    }
-    else
-    {
-        /*printf("Closing file with fd %d\n", fd);*/
         struct thread * t = thread_current();
         if (is_valid_fd(t, fd)) {
             sema_down(&file_sem);
@@ -465,7 +447,6 @@ bool validate_pointer(void *ptr) {
     uint32_t *pd = cur->pagedir;
     /* Check if in page directory of the current thread. */
     if (pagedir_get_page(pd, ptr) == NULL) {
-        /*process_exit();*/
         return false;
     }
 
