@@ -44,9 +44,9 @@ which parts.
 
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
-   Rahul:  41 hours
-   Robert: 25 hours
-   David:  31 hours
+   Rahul:  44 hours
+   Robert: 28 hours
+   David:  34 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
@@ -150,7 +150,8 @@ which parts.
 >> and how it interacts with process termination.
     The wait system call busy waits the thread until the child signals
     that it has terminated by adding itself to the parent's dead list.
-    It manages resource collection after process termination.
+    It manages resource collection after process termination. Exit
+    statuses are kept by the parent after child termination.
 
 >> B6: Any access to user program memory at a user-specified address
 >> can fail due to a bad pointer value.  Such accesses must cause the
