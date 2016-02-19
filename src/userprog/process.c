@@ -87,7 +87,8 @@ static void start_process(void *file_name_) {
         token = strtok_r(NULL, " ", &saveptr);        
     }
 
-    lock_acquire(&exec_lock);
+    /* Acquire lock to signal parent. */
+    //lock_acquire(&exec_lock);
     sema_down(&file_sem);
     if (file_name != NULL)
     {
@@ -154,11 +155,15 @@ static void start_process(void *file_name_) {
 
     }
     else { 
-        load_success = false;
+        //load_success = false;
     }
 
-    cond_signal(&exec_cond, &exec_lock);
-    lock_release(&exec_lock);
+    /* 
+     * Signal to parent that load status has been
+     * determined.
+     */
+    //cond_signal(&exec_cond, &exec_lock);
+    //lock_release(&exec_lock);
     //printf("Signaled\n");
     
     /* If load failed, quit. */
