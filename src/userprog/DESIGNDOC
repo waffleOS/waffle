@@ -145,6 +145,16 @@ which parts.
 >> (e.g. calls to pagedir_get_page()) that might result?  What about
 >> for a system call that only copies 2 bytes of data?  Is there room
 >> for improvement in these numbers, and how much?
+    The least number of calls for 4096 bytes is 1 call if the bytes
+    line up exactly to one page.
+    The greatest number of calls possible for 4096 bytes is 2 calls
+    if the bytes straddle two pages.
+    The least number of calls for 2 bytes is 1 call when both bytes
+    are in the same page.
+    The greatest number of calls possible for 2 bytes is 2 calls if
+    1 byte is on one page and the other is on the adjacent page.
+    Ideally you would want to keep chunks of data on a single page so
+    you aren't calling up more pages than you need to.
 
 >> B5: Briefly describe your implementation of the "wait" system call
 >> and how it interacts with process termination.
