@@ -27,6 +27,7 @@ David Qu <dqu@caltech.edu>
 
 >> If you have any preliminary comments on your submission, notes for the
 >> TAs, or extra credit, please give them here.
+    The tests only pass with BOCHS rather than QEMOS.
 
 >> Please cite any offline or online sources you consulted while
 >> preparing your submission, other than the Pintos documentation, course
@@ -55,7 +56,7 @@ which parts.
    Robert: Implemented and debugged process_wait, which was used for
        the wait system call.
    David: Implemented/debugged argument passing and helped implement 
-       process_wait. Debugged many of the  tests.
+       process_wait. Debugged many of the tests.
    
                            ARGUMENT PASSING
                            ================
@@ -156,6 +157,14 @@ which parts.
 
 >> B10: What advantages or disadvantages can you see to your design
 >> for file descriptors?
+    The advantages to our design for file descriptors are that each process
+    can maintain its own set of open files without any knowledge of other
+    processes. The value of the file descriptor is not dependent on the number
+    of other threads.
+    The disadvantages to this design are that two different processes cannot
+    use the same file descriptor to mean the same file. This also adds an
+    additional overhead in the system calls for the file system as the file
+    descriptors have to be managed in the current thread.
 
 >> B11: The default tid_t to pid_t mapping is the identity mapping.
 >> If you changed it, what advantages are there to your approach?
