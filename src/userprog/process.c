@@ -87,7 +87,7 @@ static void start_process(void *file_name_) {
         token = strtok_r(NULL, " ", &saveptr);        
     }
 
-    lock_acquire(&exec_lock);
+    //lock_acquire(&exec_lock);
     if (file_name != NULL)
     {
         struct file * thread_file = filesys_open(file_name);
@@ -152,11 +152,11 @@ static void start_process(void *file_name_) {
 
     }
     else { 
-        load_success = false;
+        //load_success = false;
     }
 
-    cond_signal(&exec_cond, &exec_lock);
-    lock_release(&exec_lock);
+    //cond_signal(&exec_cond, &exec_lock);
+    //lock_release(&exec_lock);
     //printf("Signaled\n");
     
     /* If load failed, quit. */
@@ -164,7 +164,7 @@ static void start_process(void *file_name_) {
     if (!success) {
         struct thread *cur = thread_current(); 
         cur->tid = TID_ERROR;
-        thread_current()->exit_status = -1;
+        // thread_current()->exit_status = -1;
         thread_exit();
     }
 

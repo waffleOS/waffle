@@ -251,9 +251,10 @@ void do_exit(int status)
 pid_t do_exec(const char * cmd_line)
 {
     /* TODO: Implement synchronization */
+    /*
     if (exec_lock.holder != thread_current()) {
         lock_acquire(&exec_lock);
-    }
+    }*/
     load_success = true;
     
     /* For ease, let's say process ids and thread ids line up in a one-to-one
@@ -264,6 +265,7 @@ pid_t do_exec(const char * cmd_line)
     }
 
 
+    /* File system race conditions. */
     bool had_filesys = false;
     if (file_sem.value == 0 ) {
         had_filesys = true;
@@ -286,16 +288,16 @@ pid_t do_exec(const char * cmd_line)
     }
 
     //printf("About to wait.\n");
-    cond_wait(&exec_cond, &exec_lock);
+    //cond_wait(&exec_cond, &exec_lock);
     //printf("End cond_wait\n");
 
     /* Check if the child loaded successfully. */
-    if (load_success) { 
+    //if (load_success) { 
         return child;
-    }
+    /*}
     else { 
         return TID_ERROR;
-    }
+    }*/
 }
 
 int do_wait(pid_t pid)
