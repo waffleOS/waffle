@@ -165,6 +165,16 @@ which parts.
 >> allocated resources (locks, buffers, etc.) are freed?  In a few
 >> paragraphs, describe the strategy or strategies you adopted for
 >> managing these issues.  Give an example.
+    Our approach involved using validate_pointer and sanitize_buffer
+    and having if statements for each case. We did not have time
+    to design a better abstraction layer to manage all the possible
+    exits and simply added statements ad hoc as needed. This makes
+    it difficult to determine we are leaking any resource or 
+    missing any edge cases. In terms of locks for the file system,
+    we eventually added some semaphore statements to some of the
+    calls, but should have done this at the beginning to avoid
+    having to write them everywhere.
+    We tried to avoid dynamically allocated resources where possible.
 
 ---- SYNCHRONIZATION ----
 
