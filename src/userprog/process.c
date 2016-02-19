@@ -8,6 +8,7 @@
 #include "userprog/gdt.h"
 #include "userprog/pagedir.h"
 #include "userprog/tss.h"
+#include "userprog/syscall.h"
 #include "filesys/directory.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
@@ -48,6 +49,7 @@ uint8_t *push_string(uint8_t *stack, char *string) {
     returns.  Returns the new process's thread id, or TID_ERROR if the thread
     cannot be created. */
 tid_t process_execute(const char *file_name) {
+    printf("PROCESSEXECUTE executing %s\n", file_name);
     char *fn_copy;
     tid_t tid;
 
@@ -69,6 +71,7 @@ tid_t process_execute(const char *file_name) {
 
 /*! A thread function that loads a user process and starts it running. */
 static void start_process(void *file_name_) {
+    // printf("AM I EVEN STARTING THE PROCESSS\n");
     char *file_name = file_name_;
     struct intr_frame if_;
     bool success;
@@ -86,6 +89,16 @@ static void start_process(void *file_name_) {
         token = strtok_r(NULL, " ", &saveptr);        
     }
 
+    lock_acquire(&exec_lock);
+    if (file_name != NULL)
+    {
+        struct file * thread_file = filesys_open(file_name);
+        if (thread_file != NULL)
+        {
+            file_deny_write(thread_file);
+        }
+        thread_current()->thread_file = thread_file;
+    }
     /* Initialize interrupt frame and load executable. */
     memset(&if_, 0, sizeof(if_));
     if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
@@ -138,12 +151,24 @@ static void start_process(void *file_name_) {
 
         /* esp should point to the unused return address. */
         if_.esp = stack_argv;
+
     }
+    else { 
+        load_success = false;
+    }
+
+    cond_signal(&exec_cond, &exec_lock);
+    lock_release(&exec_lock);
+    //printf("Signaled\n");
     
     /* If load failed, quit. */
     palloc_free_page(file_name);
-    if (!success) 
+    if (!success) {
+        struct thread *cur = thread_current(); 
+        cur->tid = TID_ERROR;
+        thread_current()->exit_status = -1;
         thread_exit();
+    }
 
     /* Start the user process by simulating a return from an
        interrupt, implemented by intr_exit (in
@@ -164,7 +189,7 @@ static void start_process(void *file_name_) {
     This function will be implemented in problem 2-2.  For now, it does
     nothing. */
 int process_wait(tid_t child_tid UNUSED) {
-
+    printf("PROCESSWAIT waiting on tid = %d\n", child_tid);
     struct thread *child = NULL;
 
     struct thread *cur = thread_current();
@@ -190,6 +215,16 @@ int process_wait(tid_t child_tid UNUSED) {
     // of children.
     list_remove(&child->child_elem);
 
+    printf("In wait, found child tid = %d\n", child->tid);
+    printf("Who am i (current thread)? I am %d\n", cur->tid);
+
+    printf("Child tids array:\n");
+    int j;
+    for(j = 0; j < MAX_CHILDREN; j++) {
+        printf("%d ", cur->child_tids[j]);
+    }
+    printf("\n");
+
     // Run until an interrupt of the child process (return -1) or let it
     // die on its own (return 0). 
 
@@ -200,20 +235,30 @@ int process_wait(tid_t child_tid UNUSED) {
     while (!found_child) {
         enum intr_level old_level;
         old_level = intr_disable();
-
-        for (elem = list_begin(&cur->dead_list); elem != list_end(&cur->dead_list);
-                elem = list_next(elem))
-        {
-            struct thread *t = list_entry(elem, struct thread, dead_elem);
-            if (t->tid == child_tid) {
-                child = t;
+// printf("AM i looking FOREEVER?\n");
+        // Look for the dead child's data in the tid array
+        int i;
+        for(i = 0; i < MAX_CHILDREN; i++) {
+            if(cur->child_tids[i] == child_tid) {
                 found_child = true;
-                list_remove(elem);
-                exit_status = t->exit_status;
-                palloc_free_page(t);
+                exit_status = cur->child_exitstatus[i];
+                cur->child_tids[i] = -1;
                 break;
-            }
+            }            
         }
+        // for (elem = list_begin(&cur->dead_list); elem != list_end(&cur->dead_list);
+        //         elem = list_next(elem))
+        // {
+        //     struct thread *t = list_entry(elem, struct thread, dead_elem);
+        //     if (t->tid == child_tid) {
+        //         child = t;
+        //         found_child = true;
+        //         list_remove(elem);
+        //         exit_status = t->exit_status;
+        //         palloc_free_page(t);
+        //         break;
+        //     }
+        // }
         intr_set_level(old_level);
     }
     return exit_status;

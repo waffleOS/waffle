@@ -106,7 +106,6 @@ int
 main (int argc, char *argv[])
 {
   int n;
-
   n = argc > 1 ? atoi (argv[1]) : 0;
   bool is_at_root = (n == 0);
   if (is_at_root)
@@ -125,15 +124,18 @@ main (int argc, char *argv[])
   for (i = 0; i < howmany; i++)
     {
       pid_t child_pid;
+printf("HELLO????????????????????????????\n");
 
       /* Spawn a child that will be abnormally terminated.
          To speed the test up, do this only for processes
          spawned at a certain depth. */
       if (n > EXPECTED_DEPTH_TO_PASS/2)
         {
+          printf("SPAWN CHILD\n");
           child_pid = spawn_child (n + 1, CRASH);
           if (child_pid != -1)
             {
+              printf("WAIT ON MY CHILD %d\n", child_pid);
               if (wait (child_pid) != -1)
                 fail ("crashed child should return -1.");
             }
@@ -141,6 +143,7 @@ main (int argc, char *argv[])
              the next spawn_child below. */
         }
 
+          printf("SPAWN2 CHILD\n");
       /* Now spawn the child that will recurse. */
       child_pid = spawn_child (n + 1, RECURSE);
 
@@ -148,6 +151,7 @@ main (int argc, char *argv[])
       if (child_pid == -1)
         return n;
 
+              printf("WAIT ON MY CHILD2 %d\n", child_pid);
       /* Else wait for child to report how deeply it was able to recurse. */
       int reached_depth = wait (child_pid);
       if (reached_depth == -1)
