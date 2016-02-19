@@ -86,8 +86,13 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
                 return;
             }
             cmd_line = *((const char **) (f->esp + 4));
-            pid = do_exec(cmd_line);
-            f->eax = pid;
+            if (validate_pointer(cmd_line)) {
+                pid = do_exec(cmd_line);
+                f->eax = pid;
+            }
+            else {
+                f->eax = -1;
+            }
            break;
         case SYS_WAIT:
             // Check stack pointer isn't too far up
@@ -425,17 +430,15 @@ void do_close(int fd)
 
 bool validate_pointer(void *ptr) {
     /* Check if pointer is in correct space. */
-    /*printf("Printing inside validator\n");*/
     if (ptr == NULL || !is_user_vaddr(ptr)) {
         return false;
     }
     
     struct thread *cur = thread_current();
     uint32_t *pd = cur->pagedir;
-
     /* Check if in page directory of the current thread. */
     if (pagedir_get_page(pd, ptr) == NULL) {
-        process_exit();
+        /*process_exit();*/
         return false;
     }
 

@@ -88,6 +88,15 @@ static void start_process(void *file_name_) {
     }
 
     lock_acquire(&exec_lock);
+    if (file_name != NULL)
+    {
+        struct file * thread_file = filesys_open(file_name);
+        if (thread_file != NULL)
+        {
+            file_deny_write(thread_file);
+        }
+        thread_current()->thread_file = thread_file;
+    }
     /* Initialize interrupt frame and load executable. */
     memset(&if_, 0, sizeof(if_));
     if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;

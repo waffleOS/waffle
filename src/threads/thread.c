@@ -302,6 +302,8 @@ void thread_exit(void) {
        when it calls thread_schedule_tail(). */
     intr_disable();
     struct thread *cur = thread_current();
+    file_close(cur->thread_file);
+
     list_push_back(&cur->parent->dead_list, &cur->dead_elem);
 
     list_remove(&thread_current()->allelem);
@@ -461,6 +463,7 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     t->stack = (uint8_t *) t + PGSIZE;
     t->priority = priority;
     t->magic = THREAD_MAGIC;
+    t->thread_file = NULL;
 
     list_init(&t->children);
     list_init(&t->dead_list);
