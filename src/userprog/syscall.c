@@ -326,6 +326,7 @@ bool do_remove(const char * file)
 /* Opens a new file */
 int do_open(const char * file)
 {
+    printf("DOOPEN CALL\n");
     if (file == NULL)
     {
         do_exit(-1);
@@ -422,6 +423,7 @@ unsigned int do_tell(int fd)
     sema_down(&file_sem);
     int position = file_tell(t->files[fd - 2]);
     sema_up(&file_sem);
+    return position;
 }
 
 /* Closes a file */

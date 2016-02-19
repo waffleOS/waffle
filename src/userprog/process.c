@@ -49,6 +49,7 @@ uint8_t *push_string(uint8_t *stack, char *string) {
     returns.  Returns the new process's thread id, or TID_ERROR if the thread
     cannot be created. */
 tid_t process_execute(const char *file_name) {
+    printf("PROCESSEXECUTE executing %s\n", file_name);
     char *fn_copy;
     tid_t tid;
 
@@ -70,6 +71,7 @@ tid_t process_execute(const char *file_name) {
 
 /*! A thread function that loads a user process and starts it running. */
 static void start_process(void *file_name_) {
+    // printf("AM I EVEN STARTING THE PROCESSS\n");
     char *file_name = file_name_;
     struct intr_frame if_;
     bool success;
@@ -187,7 +189,7 @@ static void start_process(void *file_name_) {
     This function will be implemented in problem 2-2.  For now, it does
     nothing. */
 int process_wait(tid_t child_tid UNUSED) {
-
+    printf("PROCESSWAIT waiting on tid = %d\n", child_tid);
     struct thread *child = NULL;
 
     struct thread *cur = thread_current();
@@ -213,6 +215,16 @@ int process_wait(tid_t child_tid UNUSED) {
     // of children.
     list_remove(&child->child_elem);
 
+    printf("In wait, found child tid = %d\n", child->tid);
+    printf("Who am i (current thread)? I am %d\n", cur->tid);
+
+    printf("Child tids array:\n");
+    int j;
+    for(j = 0; j < MAX_CHILDREN; j++) {
+        printf("%d ", cur->child_tids[j]);
+    }
+    printf("\n");
+
     // Run until an interrupt of the child process (return -1) or let it
     // die on its own (return 0). 
 
@@ -223,20 +235,30 @@ int process_wait(tid_t child_tid UNUSED) {
     while (!found_child) {
         enum intr_level old_level;
         old_level = intr_disable();
-
-        for (elem = list_begin(&cur->dead_list); elem != list_end(&cur->dead_list);
-                elem = list_next(elem))
-        {
-            struct thread *t = list_entry(elem, struct thread, dead_elem);
-            if (t->tid == child_tid) {
-                child = t;
+// printf("AM i looking FOREEVER?\n");
+        // Look for the dead child's data in the tid array
+        int i;
+        for(i = 0; i < MAX_CHILDREN; i++) {
+            if(cur->child_tids[i] == child_tid) {
                 found_child = true;
-                list_remove(elem);
-                exit_status = t->exit_status;
-                palloc_free_page(t);
+                exit_status = cur->child_exitstatus[i];
+                cur->child_tids[i] = -1;
                 break;
-            }
+            }            
         }
+        // for (elem = list_begin(&cur->dead_list); elem != list_end(&cur->dead_list);
+        //         elem = list_next(elem))
+        // {
+        //     struct thread *t = list_entry(elem, struct thread, dead_elem);
+        //     if (t->tid == child_tid) {
+        //         child = t;
+        //         found_child = true;
+        //         list_remove(elem);
+        //         exit_status = t->exit_status;
+        //         palloc_free_page(t);
+        //         break;
+        //     }
+        // }
         intr_set_level(old_level);
     }
     return exit_status;
