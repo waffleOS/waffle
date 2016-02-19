@@ -145,6 +145,12 @@ which parts.
 >> B5: Briefly describe your implementation of the "wait" system call
 >> and how it interacts with process termination.
 
+We originally had implemented a zombie method where wait would be the
+only way to reap children, but we realized this leaks the children,
+so instead the parent thread will keep track of all children exit 
+statuses so even when the child dies, the parent knows what the exit
+status was.
+
 >> B6: Any access to user program memory at a user-specified address
 >> can fail due to a bad pointer value.  Such accesses must cause the
 >> process to be terminated.  System calls are fraught with such
