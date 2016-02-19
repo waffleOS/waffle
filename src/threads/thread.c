@@ -218,6 +218,13 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
     /* Add thread as child to current thread. */
     list_push_back(&cur->children, &t->child_elem);
 
+    // set all tids in dead child tid array to -1 to indicate the
+    // element is unused.
+    int i;
+    for(i = 0; i < MAX_CHILDREN; i++) {
+        cur->child_tids[i] = -1;
+    }
+
     /* Add current thread as parent to child. */
     t->parent = cur;
     /* printf("\n Thread %s tid: %d spawned %s tid: %d\n", cur->name, cur->tid, 
@@ -304,7 +311,7 @@ void thread_exit(void) {
     struct thread *cur = thread_current();
     file_close(cur->thread_file);
 
-    list_push_back(&cur->parent->dead_list, &cur->dead_elem);
+    // list_push_back(&cur->parent->dead_list, &cur->dead_elem);
 
     list_remove(&thread_current()->allelem);
     thread_current()->status = THREAD_DYING;
@@ -466,7 +473,7 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     t->thread_file = NULL;
 
     list_init(&t->children);
-    list_init(&t->dead_list);
+    // list_init(&t->dead_list);
 
     old_level = intr_disable();
     list_push_back(&all_list, &t->allelem);
@@ -532,7 +539,31 @@ void thread_schedule_tail(struct thread *prev) {
     if (prev != NULL && prev->status == THREAD_DYING &&
         prev != initial_thread) {
         ASSERT(prev != cur);
-        // palloc_free_page(prev);
+        printf("THREADSCHEDULETAIL prev tid = %d\n", prev->tid);
+        /* CHILD REAPING: before we deallocate the page of the child,
+        we want to store the exit status in the paren't array of children
+        exit statuses and the associated child_tid */
+        int i;
+        for(i = 0; i < MAX_CHILDREN; i++) {
+            if(prev->parent->child_tids[i] == -1) { // unoccupied index
+                printf("Threadscheduletail sticking tid %d into parent of tid %d\n", prev->tid, prev->parent->tid);
+                prev->parent->child_tids[i] = prev->tid;
+                prev->parent->child_exitstatus[i] = prev->exit_status;
+                palloc_free_page(prev);
+                return;
+            }
+        }
+        // if(prev->cur_dead < MAX_CHILDREN) {
+        //     // printf("THREAD SCHEDULE TAIL\n");
+        //     prev->parent->child_tids[prev->cur_dead] = prev->tid;
+        //     prev->parent->child_exitstatus[prev->cur_dead] = prev->exit_status;
+        //     prev->cur_dead++;
+        //     palloc_free_page(prev);
+        // }
+        // Should never be called. This is backup if the array of
+        // dead child tids is full.
+        printf("HIT BACKUP PALLOCFREEPAGE\n");
+        palloc_free_page(prev);
     }
 }
 

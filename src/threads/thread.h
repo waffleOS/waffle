@@ -29,6 +29,8 @@ typedef int tid_t;
 #define PRI_MAX 63                      /*!< Highest priority. */
 #define NUM_FILES 128
 
+/* Maximum allowed number of children */
+#define MAX_CHILDREN 150
 
 /*! A kernel thread or user process.
 
@@ -127,7 +129,13 @@ struct thread {
     /* List of children. */
     struct list children;
     /* List of children which have died already */
-    struct list dead_list;
+    // struct list dead_list;
+
+    /* List of child tids and their exit statuses. This is so
+    children can reap themselves but the parent can keep their 
+    exit statues. */
+    int child_tids[MAX_CHILDREN];
+    int child_exitstatus[MAX_CHILDREN];
 
     /* Parent of thread. */
     struct thread *parent;
