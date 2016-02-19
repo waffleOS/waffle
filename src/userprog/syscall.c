@@ -88,9 +88,9 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             cmd_line = *((const char **) (f->esp + 4));
             if (validate_pointer(cmd_line)) {
                 pid = do_exec(cmd_line);
-                if (pid == TID_ERROR) {
+                /*if (pid == TID_ERROR) {
                     return;
-                }
+                }*/
                 f->eax = pid;
             }
             else {
