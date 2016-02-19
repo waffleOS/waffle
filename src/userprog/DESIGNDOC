@@ -134,6 +134,10 @@ which parts.
 
 >> B3: Describe your code for reading and writing user data from the
 >> kernel.
+    Reading user data is handled with validate_pointer and sanitize_buffer
+    wrapper calls, and is processed mainly in the system call handler .
+    Writing user data occurs in the stack building phase, where the 
+    arguments are written in user pages.
 
 >> B4: Suppose a system call causes a full page (4,096 bytes) of data
 >> to be copied from user space into the kernel.  What is the least
@@ -144,6 +148,9 @@ which parts.
 
 >> B5: Briefly describe your implementation of the "wait" system call
 >> and how it interacts with process termination.
+    The wait system call busy waits the thread until the child signals
+    that it has terminated by adding itself to the parent's dead list.
+    It manages resource collection after process termination.
 
 >> B6: Any access to user program memory at a user-specified address
 >> can fail due to a bad pointer value.  Such accesses must cause the
@@ -165,6 +172,16 @@ which parts.
 >> fails, so it cannot return before the new executable has completed
 >> loading.  How does your code ensure this?  How is the load
 >> success/failure status passed back to the thread that calls "exec"?
+Attempted/commented out implementation:
+    In this submission of the code, there are bugs when loading 
+    the new executable fails. 
+    We tried to use a lock, and cond_wait with a cond to have the
+    parent wait until its child can determine if the load. We
+    were able to create one version of the code where exec-missing
+    passed. However, this caused a deadlock situation for multi-child 
+    and rox-multi tests, which caused them to fail. Thus, we have commented 
+    out our lock implementation because the two tests are worth more
+    than the exec-missing test.
 
 >> B8: Consider parent process P with child process C.  How do you
 >> ensure proper synchronization and avoid race conditions when P
@@ -172,6 +189,19 @@ which parts.
 >> that all resources are freed in each case?  How about when P
 >> terminates without waiting, before C exits?  After C exits?  Are
 >> there any special cases?
+
+Attempted/Commented out implementation:
+    As mentioned above, we have a solution using lock and cond_wait
+    to wait for the child to finish loading and catch any errors in
+    the case when P calls wait(C) before C exits.
+
+Actual Implementation:
+    Each parent has a list of dead children that each child adds itself
+    to when it exits. The child doesn't free its resources and instead
+    depends on its parent to do so. If P terminates without waiting,
+    there is an issue. The current implemention is non-ideal in that 
+    it allows for zombie children, but this is how UNIX is implemented.
+    If P terminates after C exits, P simply cleans up C.
 
 ---- RATIONALE ----
 
