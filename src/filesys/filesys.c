@@ -26,6 +26,7 @@ void filesys_init(bool format) {
         do_format();
 
     free_map_open();
+    sema_init(&filesys_sem, 1);
 }
 
 /*! Shuts down the file system module, writing any unwritten data to disk. */
@@ -54,6 +55,7 @@ bool filesys_create(const char *name, off_t initial_size) {
     or a null pointer otherwise.  Fails if no file named NAME exists,
     or if an internal memory allocation fails. */
 struct file * filesys_open(const char *name) {
+    sema_down(&filesys_sem);
     struct dir *dir = dir_open_root();
     struct inode *inode = NULL;
 
@@ -61,6 +63,7 @@ struct file * filesys_open(const char *name) {
         dir_lookup(dir, name, &inode);
     dir_close(dir);
 
+    sema_up(&filesys_sem);
     return file_open(inode);
 }
 

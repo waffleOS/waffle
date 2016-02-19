@@ -88,6 +88,7 @@ static void start_process(void *file_name_) {
     }
 
     //lock_acquire(&exec_lock);
+    sema_down(&file_sem);
     if (file_name != NULL)
     {
         struct file * thread_file = filesys_open(file_name);
@@ -97,6 +98,7 @@ static void start_process(void *file_name_) {
         }
         thread_current()->thread_file = thread_file;
     }
+    sema_up(&file_sem);
     /* Initialize interrupt frame and load executable. */
     memset(&if_, 0, sizeof(if_));
     if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
