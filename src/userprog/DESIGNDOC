@@ -13,7 +13,7 @@ Robert Eng <reng@caltech.edu>
 David Qu <dqu@caltech.edu>
 
 >> Specify how many late tokens you are using on this assignment:
-0
+1
 
 >> What is the Git repository and commit hash for your submission?
    (You only need to include the commit-hash in the file you submit
@@ -43,9 +43,9 @@ which parts.
 
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
-   Rahul:  25 hours
+   Rahul:  35 hours
    Robert: 20 hours
-   David:  20 hours
+   David:  30 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
@@ -55,7 +55,7 @@ which parts.
    Robert: Implemented and debugged process_wait, which was used for
        the wait system call.
    David: Implemented/debugged argument passing and helped implement 
-       process_wait.
+       process_wait. Debugged many of the  tests.
    
                            ARGUMENT PASSING
                            ================
