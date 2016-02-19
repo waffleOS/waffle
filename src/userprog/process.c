@@ -162,8 +162,8 @@ static void start_process(void *file_name_) {
     /* If load failed, quit. */
     palloc_free_page(file_name);
     if (!success) {
-        struct thread *cur = thread_current(); 
-        cur->tid = TID_ERROR;
+        //struct thread *cur = thread_current(); 
+        //cur->tid = TID_ERROR;
         // thread_current()->exit_status = -1;
         thread_exit();
     }

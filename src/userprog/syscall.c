@@ -88,6 +88,9 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             cmd_line = *((const char **) (f->esp + 4));
             if (validate_pointer(cmd_line)) {
                 pid = do_exec(cmd_line);
+                if (pid == TID_ERROR) {
+                    return;
+                }
                 f->eax = pid;
             }
             else {
@@ -266,24 +269,25 @@ pid_t do_exec(const char * cmd_line)
 
 
     /* File system race conditions. */
-    bool had_filesys = false;
+    /* bool had_filesys = false;
     if (file_sem.value == 0 ) {
         had_filesys = true;
         sema_up(&file_sem);
         //printf("Sema value: %d\n", file_sem.value);
-    }
+    }*/
 
     sema_down(&exec_sem);
     pid_t child = process_execute(cmd_line);
     sema_up(&exec_sem);
     
+    /*
     if (had_filesys) {
         sema_down(&file_sem);
-    }
+    }*/
 
     /* Check if a thread was allocated. */
     if (child == TID_ERROR) {
-        // do_exit(-1);
+        do_exit(-1);
         return TID_ERROR;
     }
 
