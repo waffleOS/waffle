@@ -13,7 +13,7 @@ Robert Eng <reng@caltech.edu>
 David Qu <dqu@caltech.edu>
 
 >> Specify how many late tokens you are using on this assignment:
-0
+1
 
 >> What is the Git repository and commit hash for your submission?
    (You only need to include the commit-hash in the file you submit
@@ -27,6 +27,7 @@ David Qu <dqu@caltech.edu>
 
 >> If you have any preliminary comments on your submission, notes for the
 >> TAs, or extra credit, please give them here.
+    The tests only pass with BOCHS rather than QEMOS.
 
 >> Please cite any offline or online sources you consulted while
 >> preparing your submission, other than the Pintos documentation, course
@@ -43,9 +44,9 @@ which parts.
 
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
-   Rahul:  25 hours
-   Robert: 20 hours
-   David:  20 hours
+   Rahul:  42 hours
+   Robert: 26 hours
+   David:  32 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
@@ -55,7 +56,7 @@ which parts.
    Robert: Implemented and debugged process_wait, which was used for
        the wait system call.
    David: Implemented/debugged argument passing and helped implement 
-       process_wait.
+       process_wait. Debugged many of the tests.
    
                            ARGUMENT PASSING
                            ================
@@ -87,7 +88,12 @@ which parts.
 >> separation.  Identify at least two advantages of the Unix approach.
     1. Allows the shell to pipe commands because the shell can pass arguments 
        to programs.
-    2. 
+    2. It is simplier kernel code because less parsing needs to be done, making
+       the kernel easier to debug and maintain.
+    3. Makes it easier to protect the kernel from argument passing security violations
+       because it can treat the arguments as user space pointers and check the
+       address space.
+
                              SYSTEM CALLS
                              ============
 
@@ -100,7 +106,12 @@ which parts.
 >> B2: Describe how file descriptors are associated with open files.
 >> Are file descriptors unique within the entire OS or just within a
 >> single process?
-
+    File descriptors are unique within a single process. When a file is
+    sucessfully opened, a new file descriptor is created. This is done by
+    iterating through an array of open files for the current process and
+    returning the first index that has a NULL entry. This allows us to
+    close files without creating fragmentation in the array and guarantees
+    that the file descriptor is unused.
 ---- ALGORITHMS ----
 
 >> B3: Describe your code for reading and writing user data from the
@@ -129,6 +140,15 @@ which parts.
 >> allocated resources (locks, buffers, etc.) are freed?  In a few
 >> paragraphs, describe the strategy or strategies you adopted for
 >> managing these issues.  Give an example.
+    We validate all pointers and memory in the syscall_handler using
+    a validation function called validate_pointer(). This checks whether
+    the pointer is not NULL and is not in user space.
+    We use if statements to validate each argument. This allows us to handle
+    errors cleanly.
+    We also do some error handling within system calls. For example, we check
+    whether the file is NULL in do_create and if so, we exit the current thread
+    with a status code of -1. This allow us to encapsulate some error handling
+    within the system call functions, making sure that we do not obscure the code.
 
 ---- SYNCHRONIZATION ----
 
@@ -148,12 +168,25 @@ which parts.
 
 >> B9: Why did you choose to implement access to user memory from the
 >> kernel in the way that you did?
+    We have valid_pointer and sanitize_buffer helper functions that
+    check whether the pointers are in user space, and coming from
+    proper page table entries. This allows us to protect against
+    security violations such as the ones in the tests.
 
 >> B10: What advantages or disadvantages can you see to your design
 >> for file descriptors?
+    The advantages to our design for file descriptors are that each process
+    can maintain its own set of open files without any knowledge of other
+    processes. The value of the file descriptor is not dependent on the number
+    of other threads.
+    The disadvantages to this design are that two different processes cannot
+    use the same file descriptor to mean the same file. This also adds an
+    additional overhead in the system calls for the file system as the file
+    descriptors have to be managed in the current thread.
 
 >> B11: The default tid_t to pid_t mapping is the identity mapping.
 >> If you changed it, what advantages are there to your approach?
+    We kept the identity mapping.
 
 			  SURVEY QUESTIONS
 			  ================
@@ -169,6 +202,9 @@ penalized.  We can't fix things until we know about them.  :-)
 
 >> Did you find that working on a particular part of the assignment gave
 >> you greater insight into some aspect of OS design?
+    Working on the system calls for the file system gave us greater insight
+    into how file descriptors and files work on OSes, although we will see
+    more in the file systems project.
 
 >> Were there any parts of the assignment that you felt were unnecessarily
 >> tedious or pointless?
@@ -182,4 +218,4 @@ penalized.  We can't fix things until we know about them.  :-)
 >> projects?
 
 >> Any other comments?
-
+    Nope.

@@ -100,6 +100,7 @@ struct thread {
     int priority;                       /*!< Priority. */
     struct list_elem allelem;           /*!< List element for all threads list. */
     struct file * files[NUM_FILES];
+    struct file * thread_file;
     /**@}*/
 
     /*! Shared between thread.c and synch.c. */

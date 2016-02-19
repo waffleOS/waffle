@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "userprog/syscall.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -302,6 +303,10 @@ void thread_exit(void) {
        when it calls thread_schedule_tail(). */
     intr_disable();
     struct thread *cur = thread_current();
+    sema_down(&file_sem);
+    file_close(cur->thread_file);
+    sema_up(&file_sem);
+
     list_push_back(&cur->parent->dead_list, &cur->dead_elem);
 
     list_remove(&thread_current()->allelem);
@@ -461,6 +466,7 @@ static void init_thread(struct thread *t, const char *name, int priority) {
     t->stack = (uint8_t *) t + PGSIZE;
     t->priority = priority;
     t->magic = THREAD_MAGIC;
+    t->thread_file = NULL;
 
     list_init(&t->children);
     list_init(&t->dead_list);
