@@ -339,7 +339,10 @@ int do_open(const char * file)
     }
     struct thread * t = thread_current();
     int fd = next_fd(t);
-    t->files[fd - 2] = f;
+    if (fd != -1)
+    {
+        t->files[fd - 2] = f;
+    }
     return fd;
 }
 
