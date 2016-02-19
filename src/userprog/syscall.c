@@ -233,12 +233,13 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
     }
 
 }
-
+/* Halts the systems by shutting down */
 void do_halt(void)
 {
     shutdown_power_off();
 }
 
+/* Exits the current thread and prints a status */
 void do_exit(int status)
 {
     struct thread *cur = thread_current();
@@ -251,6 +252,7 @@ void do_exit(int status)
     thread_exit();
 }
 
+/* Executes a command and spawns a new thread */
 pid_t do_exec(const char * cmd_line)
 {
     /* TODO: Implement synchronization */
@@ -262,6 +264,8 @@ pid_t do_exec(const char * cmd_line)
     
     /* For ease, let's say process ids and thread ids line up in a one-to-one
     mapping */
+
+    // Make sure the command is not NULL
     if (cmd_line == NULL)
     {
         do_exit(-1);
@@ -304,11 +308,13 @@ pid_t do_exec(const char * cmd_line)
     }*/
 }
 
+/* Waits on a process */
 int do_wait(pid_t pid)
 {
     return process_wait(pid);
 }
 
+/* Creates a new file */
 bool do_create(const char * file, unsigned int initial_size)
 {
     if (file == NULL)
@@ -322,6 +328,7 @@ bool do_create(const char * file, unsigned int initial_size)
     return success;
 }
 
+/* Removes a new file */
 bool do_remove(const char * file)
 {
     sema_down(&file_sem);
@@ -331,6 +338,7 @@ bool do_remove(const char * file)
     return success;
 }
 
+/* Opens a new file */
 int do_open(const char * file)
 {
     if (file == NULL)
@@ -351,6 +359,7 @@ int do_open(const char * file)
     return fd;
 }
 
+/* Returns the size of a file */
 int do_filesize(int fd)
 {
     /*printf("Getting filesize of file with fd %d\n", fd);*/
@@ -361,6 +370,7 @@ int do_filesize(int fd)
     return length;
 }
 
+/* Reads from a file */
 int do_read(int fd, void * buffer, unsigned int size)
 {
     /*printf("Reading file with fd %d\n", fd);*/
@@ -385,6 +395,7 @@ int do_read(int fd, void * buffer, unsigned int size)
     return -1;
 }
 
+/* Writes to a file */
 int do_write(int fd, const void * buffer, unsigned int size)
 {
     if (fd == 0)
@@ -410,6 +421,7 @@ int do_write(int fd, const void * buffer, unsigned int size)
     return 0;
 }
 
+/* Seeks in a file */
 void do_seek(int fd, unsigned int position)
 {
     /*printf("Seeking file with fd %d to position %d\n", fd, position);*/
@@ -419,6 +431,7 @@ void do_seek(int fd, unsigned int position)
     sema_up(&file_sem);
 }
 
+/* Returns the position of a file */
 unsigned int do_tell(int fd)
 {
     struct thread * t = thread_current();
@@ -427,6 +440,7 @@ unsigned int do_tell(int fd)
     sema_up(&file_sem);
 }
 
+/* Closes a file */
 void do_close(int fd)
 {
     if (fd < 2)
@@ -446,6 +460,7 @@ void do_close(int fd)
     }
 }
 
+/* Validates pointers */
 bool validate_pointer(void *ptr) {
     /* Check if pointer is in correct space. */
     if (ptr == NULL || !is_user_vaddr(ptr)) {
@@ -463,9 +478,9 @@ bool validate_pointer(void *ptr) {
     return true;
 }
 
+/* Validates pointers and dereferences */
 void * sanitize_buffer(void ** buffer)
 {
-    /*printf("Printing inside sanitizer\n");*/
     if (!validate_pointer(buffer))
     {
         do_exit(-1);
