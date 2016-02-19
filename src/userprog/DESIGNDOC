@@ -44,9 +44,9 @@ which parts.
 
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
-   Rahul:  40 hours
-   Robert: 20 hours
-   David:  30 hours
+   Rahul:  42 hours
+   Robert: 26 hours
+   David:  32 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
@@ -140,6 +140,15 @@ which parts.
 >> allocated resources (locks, buffers, etc.) are freed?  In a few
 >> paragraphs, describe the strategy or strategies you adopted for
 >> managing these issues.  Give an example.
+    We validate all pointers and memory in the syscall_handler using
+    a validation function called validate_pointer(). This checks whether
+    the pointer is not NULL and is not in user space.
+    We use if statements to validate each argument. This allows us to handle
+    errors cleanly.
+    We also do some error handling within system calls. For example, we check
+    whether the file is NULL in do_create and if so, we exit the current thread
+    with a status code of -1. This allow us to encapsulate some error handling
+    within the system call functions, making sure that we do not obscure the code.
 
 ---- SYNCHRONIZATION ----
 
