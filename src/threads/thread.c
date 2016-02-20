@@ -470,6 +470,7 @@ static void init_thread(struct thread *t, const char *name, int priority) {
 
     list_init(&t->children);
     list_init(&t->dead_list);
+    sema_init(&t->load_sem, 1);
 
     old_level = intr_disable();
     list_push_back(&all_list, &t->allelem);

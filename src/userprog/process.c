@@ -80,6 +80,9 @@ static void start_process(void *file_name_) {
     char * tokens[100];
     token = strtok_r(file_name, " ", &saveptr);
     int token_count = 0;
+
+    struct thread *cur = thread_current();
+    
     
     while (token != NULL) {
         tokens[token_count] = token;
@@ -153,11 +156,15 @@ static void start_process(void *file_name_) {
         /* esp should point to the unused return address. */
         if_.esp = stack_argv;
 
+        cur->load_success = true;
     }
     else { 
         //load_success = false;
+        cur->load_success = false;
+        
     }
 
+    sema_up(&cur->parent->load_sem); 
     /* 
      * Signal to parent that load status has been
      * determined.

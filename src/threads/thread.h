@@ -9,6 +9,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "threads/synch.h"
 
 /*! States in a thread's life cycle. */
 enum thread_status {
@@ -131,6 +132,13 @@ struct thread {
 
     /* Parent of thread. */
     struct thread *parent;
+
+    /* Whether the child has loaded successfully. */
+    bool load_success;
+
+    /* Semaphore to communicate when a child has
+     * determined load status. */
+    struct semaphore load_sem;
 
     /* Stores it's own exit status. This is so parent knows the status after
     child death */

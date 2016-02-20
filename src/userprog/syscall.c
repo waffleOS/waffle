@@ -261,6 +261,8 @@ pid_t do_exec(const char * cmd_line)
         lock_acquire(&exec_lock);
     }
     load_success = true; */
+    struct thread *cur = thread_current();
+    sema_down(&cur->load_sem); 
     
     /* For ease, let's say process ids and thread ids line up in a one-to-one
     mapping */
@@ -276,6 +278,7 @@ pid_t do_exec(const char * cmd_line)
     pid_t child = process_execute(cmd_line);
     sema_up(&exec_sem);
 
+    sema_down(&cur->load_sem);
     
     /* Check if a thread was allocated. */
     if (child == TID_ERROR) {
@@ -289,14 +292,12 @@ pid_t do_exec(const char * cmd_line)
     //printf("End cond_wait\n");
 
     /* Check if the child loaded successfully. */
-    /*
-    if (load_success) { */
+    if (load_success) { 
         return child;
-    /*
     }
     else { 
         return TID_ERROR;
-    }*/
+    }
 }
 
 /* Waits on a process */
