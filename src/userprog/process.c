@@ -83,6 +83,7 @@ static void start_process(void *file_name_) {
 
     struct thread *cur = thread_current();
     
+    //sema_down(&cur->parent->load_sem);
     
     while (token != NULL) {
         tokens[token_count] = token;
@@ -156,15 +157,18 @@ static void start_process(void *file_name_) {
         /* esp should point to the unused return address. */
         if_.esp = stack_argv;
 
-        cur->load_success = true;
+        cur->parent->load_success = true;
     }
     else { 
         //load_success = false;
-        cur->load_success = false;
+        cur->parent->load_success = false;
         
     }
 
-    sema_up(&cur->parent->load_sem); 
+    sema_up(&cur->parent->load_sem);
+
+    //printf("done loading child for %10x.\n", cur->parent);
+    //sema_up(&cur->parent->load_sem); 
     /* 
      * Signal to parent that load status has been
      * determined.

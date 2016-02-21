@@ -212,9 +212,6 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
     sf->eip = switch_entry;
     sf->ebp = 0;
 
-    /* Add to run queue. */
-    thread_unblock(t);
-
     struct thread *cur = thread_current();
     /* Add thread as child to current thread. */
     list_push_back(&cur->children, &t->child_elem);
@@ -223,7 +220,10 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
     t->parent = cur;
     /* printf("\n Thread %s tid: %d spawned %s tid: %d\n", cur->name, cur->tid, 
                                                         t->name, t->tid);*/
+    /* Add to run queue. */
+    thread_unblock(t);
 
+    
     /* Set default exit status to 0 */
     t->exit_status = 0;
 
@@ -470,7 +470,9 @@ static void init_thread(struct thread *t, const char *name, int priority) {
 
     list_init(&t->children);
     list_init(&t->dead_list);
-    sema_init(&t->load_sem, 1);
+
+    /* Start so it will block. */
+    sema_init(&t->load_sem, 0);
 
     old_level = intr_disable();
     list_push_back(&all_list, &t->allelem);
