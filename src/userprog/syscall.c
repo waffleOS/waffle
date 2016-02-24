@@ -255,12 +255,6 @@ void do_exit(int status)
 /* Executes a command and spawns a new thread */
 pid_t do_exec(const char * cmd_line)
 {
-    /* Acquire lock to cond_wait for child. */
-    /*
-    if (exec_lock.holder != thread_current()) {
-        lock_acquire(&exec_lock);
-    }
-    load_success = true; */
     struct thread *cur = thread_current();
     
     /* For ease, let's say process ids and thread ids line up in a one-to-one
@@ -285,11 +279,6 @@ pid_t do_exec(const char * cmd_line)
         do_exit(-1);
         return TID_ERROR;
     }
-
-    /* Wait on the child to notify of load status. */
-    //printf("About to wait.\n");
-    //cond_wait(&exec_cond, &exec_lock);
-    //printf("End cond_wait\n");
 
     /* Check if the child loaded successfully. */
     if (cur->load_success) { 
