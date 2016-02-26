@@ -10,7 +10,7 @@ struct frame {
     /* Physical address. */
     void *addr;
     /* Page associated with frame. */
-    page *fpage;
+    struct page *fpage;
 };
 
 
