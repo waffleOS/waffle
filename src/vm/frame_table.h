@@ -5,7 +5,10 @@
 /* General initialization of module. */
 void init_frame_table(void);
 
-/* Eviction strategy */ 
-struct page *evict_frame(void);
+/* Allocate a frame for a page. */
+struct frame *falloc(struct page *p);
+void free_frame(struct page *p);
+
+
 
 #endif /* VM_FRAME_TABLE_H */

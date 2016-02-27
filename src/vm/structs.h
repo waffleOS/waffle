@@ -19,6 +19,8 @@ struct frame {
     void *addr;
     /* Page associated with frame. */
     struct page *fpage;
+    /* Hash elem to store in frame table. */
+    struct hash_elem elem;
 };
 
 
