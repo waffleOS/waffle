@@ -21,6 +21,15 @@ struct frame {
     struct page *fpage;
 };
 
+/* Supplemental page */
+struct page_sup {
+    struct file * file;
+    off_t ofs;
+    uint8_t * upage;
+    uint32_t read_bytes;
+    uint32_t zero_bytes;
+    bool writable;
+}
 
 
 #endif /* VM_STRUCTS_H */
