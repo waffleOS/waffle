@@ -3,8 +3,12 @@
 #include "threads/synch.h"
 #include "vm/frame_table.h"
 
-
-#define NUM_FRAMES 32768 /* = 1 GB / 4096 bytes per page */
+/**
+ * The number of frames is equal to the number of
+ * kernel pages, which is 2^20 / 4 since there is
+ * 1 GB for kernel pages and 3 GB for user pages.
+ */
+#define NUM_FRAMES 262144 
 
 /* Variables */
 static struct semaphore frame_table_sem;
