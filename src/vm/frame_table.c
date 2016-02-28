@@ -45,7 +45,7 @@ void init_frame_table(void) {
  * If one is not available, evicts a frame, and 
  * stores it in swap.
  */
-struct frame *falloc(struct page *p) { 
+struct frame *falloc(struct page_info *p) { 
     /* Try to look for free frame in table */
     struct frame *f = get_free_frame();
     if (f != NULL) { 
@@ -70,12 +70,6 @@ struct frame *get_free_frame() {
  */
 struct frame *evict_frame() { 
 
-}
-
-/**
- * Frees the frame so it can be used
- */
-void free_frame(struct page *p) { 
 }
 
     
