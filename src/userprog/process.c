@@ -546,6 +546,7 @@ static bool load_segment(struct file *file, off_t ofs, uint8_t *upage,
         size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
         /* Get a page of memory. */
+        // TODO: Don't allocate page
         uint8_t *kpage = palloc_get_page(PAL_USER);
         if (kpage == NULL)
             return false;
@@ -580,6 +581,7 @@ static bool setup_stack(void **esp) {
 
     kpage = palloc_get_page(PAL_USER | PAL_ZERO);
     if (kpage != NULL) {
+        // TODO: Use David's API
         success = install_page(((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
         if (success)
             *esp = PHYS_BASE;
