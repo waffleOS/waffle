@@ -1,5 +1,7 @@
 #ifndef VM_STRUCTS_H
 #define VM_STRUCTS_H
+#include "filesys/off_t.h"
+
 /* Page statuses */
 enum page_status {
     LOAD_FILE,
@@ -25,7 +27,7 @@ struct page_info {
     uint32_t zero_bytes;
     bool writable;
     enum page_status status;
-}
+};
 
 
 #endif /* VM_STRUCTS_H */
