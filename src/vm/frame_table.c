@@ -3,18 +3,8 @@
 #include "threads/synch.h"
 #include "vm/frame_table.h"
 
-/**
- * The number of frames is equal to the number of
- * kernel pages, which is 2^20 / 4 since there is
- * 1 GB for kernel pages and 3 GB for user pages.
- */
-#define NUM_FRAMES 262144 
-
 /* Variables */
 static struct semaphore frame_table_sem;
-static struct frame frames[NUM_FRAMES];
-/* Keeps track of statically allocated frame structs. */
-static int frame_index;
 /* Hash table to store active frames. */
 static struct hash frame_table;
 /* List to store free frames (after a process terminates). */
@@ -34,8 +24,6 @@ bool frame_less (const struct hash_elem *a_, const struct hash_elem *b_,
 void init_frame_table(void) { 
     /* Initialize semaphore to control hash table. */
     sema_init(&frame_table_sem, 1);
-    /* Start at beginning of num_frames */
-    frame_index = 0;
 }
 
 /**
