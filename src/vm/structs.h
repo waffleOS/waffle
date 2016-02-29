@@ -1,5 +1,6 @@
 #ifndef VM_STRUCTS_H
 #define VM_STRUCTS_H
+#include <list.h>
 #include "filesys/off_t.h"
 
 /* Page statuses */
@@ -14,9 +15,10 @@ enum page_status {
 struct frame {
     /* Physical address. */
     void *addr;
-    /* Hash elem to store in frame table. */
-    struct hash_elem elem;
-    struct page_info * pinfo;
+    /* List elem to store in frame table. */
+    struct list_elem elem;
+    /* Associated page info. */
+    struct page_info *pinfo;
 };
 
 /* Supplemental page */

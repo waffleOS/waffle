@@ -1,12 +1,12 @@
-#include <hash.h>
 #include <debug.h>
 #include "threads/synch.h"
+#include "threads/palloc.h"
 #include "vm/frame_table.h"
 
 /* Variables */
 static struct semaphore frame_table_sem;
-/* Hash table to store active frames. */
-static struct hash frame_table;
+/* List to store active frames. */
+static struct list frame_table;
 /* List to store free frames (after a process terminates). */
 static struct list free_frames;
 
@@ -14,11 +14,6 @@ static struct list free_frames;
 /* Module helper function prototypes. */
 struct frame *get_free_frame(void);
 struct frame *evict_frame(void); 
-
-/* Hash table functions */
-unsigned frame_hash (const struct hash_elem *p_, void *aux UNUSED);
-bool frame_less (const struct hash_elem *a_, const struct hash_elem *b_,
-                void *aux UNUSED);
 
 /* Module initialization. */
 void init_frame_table(void) { 
@@ -44,6 +39,7 @@ struct frame *falloc(struct page_info *p) {
         /* If addr != NULL, we got the page */
         if (addr != NULL) {
         /* Otherwise we need to try to evict. */
+        }
         else { 
         }
     
@@ -77,19 +73,3 @@ struct frame *evict_frame() {
 
 }
 
-    
-/* Returns a hash value for frame f. */
-unsigned frame_hash (const struct hash_elem *f_, void *aux UNUSED) {
-  const struct frame *f = hash_entry (f_, struct frame, elem);
-  return hash_bytes (&f->addr, sizeof f->addr);
-}
-
-/* Returns true if frame a precedes frame b. */
-bool frame_less(const struct hash_elem *a_, const struct hash_elem *b_,
-                void *aux UNUSED)
-{
-  const struct frame *a = hash_entry (a_, struct frame, elem);
-  const struct frame *b = hash_entry (b_, struct frame, elem);
-
-  return a->addr < b->addr;
-}
