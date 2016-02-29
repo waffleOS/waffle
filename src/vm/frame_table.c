@@ -1,10 +1,14 @@
 #include <debug.h>
+#include "threads/malloc.h"
 #include "threads/synch.h"
 #include "threads/palloc.h"
 #include "vm/frame_table.h"
 
 /* Variables */
+/* Semaphore for frame table. */
 static struct semaphore frame_table_sem;
+/* Semaphore for free list. */
+static struct semaphore free_sem;
 /* List to store active frames. */
 static struct list frame_table;
 /* List to store free frames (after a process terminates). */
@@ -17,8 +21,13 @@ struct frame *evict_frame(void);
 
 /* Module initialization. */
 void init_frame_table(void) { 
-    /* Initialize semaphore to control hash table. */
+    /* Initialize semaphore to control frame table. */
     sema_init(&frame_table_sem, 1);
+    sema_init(&free_sem, 1);
+
+    /* Initialize lists of frames. */
+    list_init(&frame_table);
+    list_init(&free_frames);
 }
 
 /**
@@ -33,20 +42,28 @@ struct frame *falloc(struct page_info *p) {
     struct frame *f = get_free_frame();
     void *addr;
 
+    /* Add to frame_table if there is a free frame. */
+    if (f != NULL) { 
+        /* Synchronously add to frame_table. */
+        sema_down(&frame_table_sem);
+        list_push_back(&frame_table, &f->elem);
+        sema_up(&frame_table_sem);
+    }
     /* If no free frame, try to palloc. */
-    if (f == NULL) { 
+    else { 
         addr = palloc_get_page(PAL_USER);
         /* If addr != NULL, we got the page */
         if (addr != NULL) {
+            f = malloc(sizeof(struct frame));
+            f->addr = addr;
+            f->pinfo = p;
+        }
         /* Otherwise we need to try to evict. */
-        }
         else { 
+            /* If no swap space, kernel panic. */
+            f = evict_frame();
         }
-    
-        /* If no swap space, kernel panic. */
     }
-
-    
 
     return f;
 }
@@ -57,6 +74,16 @@ struct frame *falloc(struct page_info *p) {
  * a frame.
  */
 void free_frame(struct frame *f) { 
+    
+    /* Synchronously remove from frame_table. */
+    sema_down(&frame_table_sem);
+    list_remove(&f->elem);
+    sema_up(&frame_table_sem);
+
+    /* Syncrhonously add to free_frames. */
+    sema_down(&free_sem);
+    list_push_back(&free_frames, &f->elem);
+    sema_up(&free_sem);
 }
 
 /**
@@ -64,12 +91,28 @@ void free_frame(struct frame *f) {
  * Returns NULL if there is no free frame.
  */
 struct frame *get_free_frame() { 
+
+    /* Obtain access to free_list. */
+    sema_down(&free_sem);
+
+    struct frame *f = NULL;
+    /* Return NULL if no free frame. */
+    if (!list_empty(&free_frames)) {
+        f = list_entry(list_pop_front(&free_frames), 
+                struct frame, elem);
+    } 
+
+    /* Give up access to free_list. */
+    sema_up(&free_sem);
+
+    return f;
 }
 
 /**
  * Chooses and evicts a frame.
  */
 struct frame *evict_frame() { 
-
+    PANIC("Frame eviction failed.");
+    return NULL;
 }
 
