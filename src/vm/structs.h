@@ -23,12 +23,13 @@ struct frame {
 
 /* Supplemental page */
 struct page_info {
-    struct file * file;
+    struct file *file;
     off_t ofs;
     uint32_t read_bytes;
     uint32_t zero_bytes;
     bool writable;
     enum page_status status;
+    struct frame *frame;
 };
 
 
