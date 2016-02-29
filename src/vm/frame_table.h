@@ -8,4 +8,7 @@ void init_frame_table(void);
 /* Allocate a frame for a page. */
 struct frame *falloc(struct page_info *p);
 
+/* Free a frame so we know it is available. */
+void free_frame(struct frame *f);
+
 #endif /* VM_FRAME_TABLE_H */

@@ -36,18 +36,35 @@ void init_frame_table(void) {
 struct frame *falloc(struct page_info *p) { 
     /* Try to look for free frame in table */
     struct frame *f = get_free_frame();
-    if (f != NULL) { 
+    void *addr;
 
-        
+    /* If no free frame, try to palloc. */
+    if (f == NULL) { 
+        addr = palloc_get_page(PAL_USER);
+        /* If addr != NULL, we got the page */
+        if (addr != NULL) {
+        /* Otherwise we need to try to evict. */
+        else { 
+        }
+    
+        /* If no swap space, kernel panic. */
     }
-    else { 
-    }
+
+    
 
     return f;
 }
 
 /**
- * Checks the hash table for the first free frame.
+ * Puts the frame in the free_frames list, which is the
+ * first thing we check when calling falloc to allocate
+ * a frame.
+ */
+void free_frame(struct frame *f) { 
+}
+
+/**
+ * Checks the free_frames list for the first free frame.
  * Returns NULL if there is no free frame.
  */
 struct frame *get_free_frame() { 
