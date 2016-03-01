@@ -10,7 +10,8 @@ enum page_status {
     LOAD_FILE,
     MMAP_FILE,
     ANON_FILE,
-    SWAP
+    SWAP,
+    STACK
 };
 
 /* Physical memory frames. */

@@ -13,6 +13,7 @@
 #include "filesys/file.h"
 #include "filesys/filesys.h"
 #include "threads/flags.h"
+#include "vm/page.h"
 #include "threads/init.h"
 #include "threads/interrupt.h"
 #include "threads/palloc.h"
@@ -582,14 +583,16 @@ static bool setup_stack(void **esp) {
     uint8_t *kpage;
     bool success = false;
 
-    kpage = palloc_get_page(PAL_USER | PAL_ZERO);
+    uint8_t * upage = ((uint8_t *) PHYS_BASE) - PGSIZE;
+    success = install_page_info(upage, NULL, NULL, NULL, NULL, NULL, STACK);
+    // kpage = palloc_get_page(PAL_USER | PAL_ZERO);
     if (kpage != NULL) {
         // TODO: Use David's API
-        success = install_page(((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
+        // success = install_page(((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
         if (success)
             *esp = PHYS_BASE;
         else
-            palloc_free_page(kpage);
+            PANIC("Stack initialization failed.");
     }
     return success;
 }
