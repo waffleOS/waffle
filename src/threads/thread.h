@@ -114,7 +114,7 @@ struct thread {
     /*! Owned by userprog/process.c. */
     /**@{*/
     uint32_t *pagedir;                  /*!< Page directory. */
-    struct hash supplemental_page_table;
+    struct hash sup_page_table;
     /**@{*/
 #endif
 

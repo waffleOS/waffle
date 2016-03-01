@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include "vm/page.h"
 #include "threads/malloc.h"
+#include "threads/thread.h"
 #include <hash.h>
 
 /* Macros */
@@ -12,14 +13,17 @@
 /* Installs page info in the supplemental page table */
 bool install_page_info(uint8_t * upage, struct file * file, off_t ofs, uint32_t read_bytes, uint32_t zero_bytes, bool writable, enum page_status status)
 {
-   struct page_info * p_info = malloc(sizeof(struct page_info));
-   p_info->upage = upage;
-   p_info->file = file;
-   p_info->ofs = ofs;
-   p_info->read_bytes = read_bytes;
-   p_info->zero_bytes = zero_bytes;
-   p_info->writable = writable;
-   p_info->status = status;
+    struct page_info * p_info = malloc(sizeof(struct page_info));
+    p_info->upage = upage;
+    p_info->file = file;
+    p_info->ofs = ofs;
+    p_info->read_bytes = read_bytes;
+    p_info->zero_bytes = zero_bytes;
+    p_info->writable = writable;
+    p_info->status = status;
+
+    struct thread * t = thread_current();
+    return hash_insert(&t->sup_page_table, &p_info->elem) == NULL;
 }
 
 unsigned int page_info_hash(const struct hash_elem *p_, void *aux UNUSED)
