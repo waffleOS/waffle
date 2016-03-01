@@ -24,6 +24,7 @@ struct frame {
 
 /* Supplemental page */
 struct page_info {
+    unit8_t * upage;
     struct file *file;
     off_t ofs;
     uint32_t read_bytes;
