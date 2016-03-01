@@ -22,6 +22,8 @@ struct frame {
     struct list_elem elem;
     /* Associated page info. */
     struct page_info *pinfo;
+    /* Age for aging policy. */ 
+    int age;
 };
 
 /* Supplemental page */
