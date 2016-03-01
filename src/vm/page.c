@@ -44,3 +44,14 @@ void init_page_info_hash(struct hash * supplemental_page_table)
 {
     hash_init(supplemental_page_table, page_info_hash, page_info_less, NULL);
 }
+
+
+struct page_info * page_info_lookup(struct hash * sup_page_table, const uint8_t * upage)
+{
+    struct page_info p_info;
+    struct hash_elem * e;
+
+    p_info.upage = upage;
+    e = hash_find(sup_page_table, &p_info.elem);
+    return e != NULL ? hash_entry(e, struct page_info, elem) : NULL;
+}

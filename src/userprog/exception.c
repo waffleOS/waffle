@@ -5,6 +5,10 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "userprog/syscall.h"
+#include "userprog/process.h"
+#include "vm/page.h"
+#include "vm/frame_table.h"
+#include "threads/vaddr.h"
 
 /*! Number of page faults processed. */
 static long long page_fault_cnt;
@@ -144,11 +148,57 @@ static void page_fault(struct intr_frame *f) {
        body, and replace it with code that brings in the page to
        which fault_addr refers. */
     // TODO Rahul
-    printf("Page fault at %p: %s error %s page in %s context.\n",
-           fault_addr,
-           not_present ? "not present" : "rights violation",
-           write ? "writing" : "reading",
-           user ? "user" : "kernel");
-    kill(f);
+    
+    struct thread * t = thread_current(); 
+    struct hash sup_page_table = t->sup_page_table;
+    struct page_info * page_info = page_info_lookup(&t->sup_page_table, (uint8_t *) fault_addr); 
+    if (page_info == NULL)
+    {
+        printf("Page fault at %p: %s error %s page in %s context.\n",
+               fault_addr,
+               not_present ? "not present" : "rights violation",
+               write ? "writing" : "reading",
+               user ? "user" : "kernel");
+        kill(f);
+    }
+    else
+    {
+        enum page_status status = page_info->status;
+        uint8_t * kpage;
+        struct frame * f;
+        switch (status)
+        {
+            case LOAD_FILE:
+                file_seek(page_info->file, page_info->ofs);
+                f = falloc(page_info);
+                kpage = f->addr;
+                if (!install_page(page_info->upage, kpage, page_info->writable))
+                {
+                    free_frame(f);
+                }
+                if (file_read(page_info->file, kpage, page_info->read_bytes) != (int) page_info->read_bytes) {
+                    free_frame(f);
+                    return false;
+                }
+                memset(kpage + page_info->read_bytes, 0, page_info->zero_bytes);
+
+                break;
+            case MMAP_FILE:
+                break;
+            case ANON_FILE:
+                break;
+            case SWAP:
+                break;
+            case STACK:
+                f = falloc(page_info);
+                kpage = f->addr;
+                if(!install_page(((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true))
+                {
+                   free_frame(f); 
+                }
+                break;
+        }
+
+    }
 }
 
