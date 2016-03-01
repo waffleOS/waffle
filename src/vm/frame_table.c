@@ -44,6 +44,9 @@ struct frame *falloc(struct page_info *p) {
 
     /* Add to frame_table if there is a free frame. */
     if (f != NULL) { 
+        f->pinfo = p;
+        f->age = 0;
+
         /* Synchronously add to frame_table. */
         sema_down(&frame_table_sem);
         list_push_back(&frame_table, &f->elem);
@@ -139,6 +142,8 @@ struct frame *evict_frame() {
             f = cur_frame;
         }
     }
+
+    list_remove(&f->elem);
 
     sema_up(&frame_table_sem);
     /* TODO: Remove page from page table. */
