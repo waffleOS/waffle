@@ -84,6 +84,7 @@ static void start_process(void *file_name_) {
     int token_count = 0;
 
     struct thread *cur = thread_current();
+    init_page_info_hash(&cur->sup_page_table);
     
     //sema_down(&cur->parent->load_sem);
     
@@ -583,12 +584,12 @@ static bool setup_stack(void **esp) {
     uint8_t *kpage;
     bool success = false;
 
-    uint8_t * upage = ((uint8_t *) PHYS_BASE) - PGSIZE;
-    success = install_page_info(upage, NULL, NULL, NULL, NULL, NULL, STACK);
-    // kpage = palloc_get_page(PAL_USER | PAL_ZERO);
+    // uint8_t * upage = ((uint8_t *) PHYS_BASE) - PGSIZE;
+    // success = install_page_info(upage, NULL, NULL, NULL, NULL, NULL, STACK);
+    kpage = palloc_get_page(PAL_USER | PAL_ZERO);
     if (kpage != NULL) {
         // TODO: Use David's API
-        // success = install_page(((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
+        success = install_page(((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
         if (success)
             *esp = PHYS_BASE;
         else
