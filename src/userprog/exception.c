@@ -175,9 +175,9 @@ static void page_fault(struct intr_frame *f) {
                 {
                     free_frame(f);
                 }
-                if (file_read(page_info->file, kpage, page_info->read_bytes) != (int) page_info->read_bytes) {
+                if (file_read(page_info->file, page_info->upage, page_info->read_bytes) != (int) page_info->read_bytes) {
                     free_frame(f);
-                    return false;
+                    return;
                 }
                 memset(kpage + page_info->read_bytes, 0, page_info->zero_bytes);
 
