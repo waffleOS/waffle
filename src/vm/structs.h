@@ -3,6 +3,7 @@
 #include <list.h>
 #include "filesys/off_t.h"
 #include <stdbool.h>
+#include <hash.h>
 
 /* Page statuses */
 enum page_status {
@@ -24,7 +25,7 @@ struct frame {
 
 /* Supplemental page */
 struct page_info {
-    unit8_t * upage;
+    uint8_t * upage;
     struct file *file;
     off_t ofs;
     uint32_t read_bytes;
