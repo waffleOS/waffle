@@ -61,6 +61,11 @@ struct frame *falloc(struct page_info *p) {
             f->addr = addr;
             f->pinfo = p;
             f->age = 0;
+            /* Synchronously add to frame_table. */
+            sema_down(&frame_table_sem);
+            list_push_back(&frame_table, &f->elem);
+            sema_up(&frame_table_sem);
+
         }
         /* Otherwise we need to try to evict. */
         else { 

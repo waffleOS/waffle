@@ -13,6 +13,7 @@
 #include "threads/vaddr.h"
 #include "userprog/syscall.h"
 #include "vm/page.h"
+#include "vm/frame_table.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -94,7 +95,8 @@ void thread_init(void) {
     lock_init(&tid_lock);
     list_init(&ready_list);
     list_init(&all_list);
-    /*list_init(&wait_list);*/
+
+    init_frame_table();
 
     /* Set up a thread structure for the running thread. */
     initial_thread = running_thread();
