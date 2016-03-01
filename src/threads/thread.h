@@ -10,6 +10,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/synch.h"
+#include "lib/kernel/hash.h"
 
 /*! States in a thread's life cycle. */
 enum thread_status {
@@ -113,6 +114,7 @@ struct thread {
     /*! Owned by userprog/process.c. */
     /**@{*/
     uint32_t *pagedir;                  /*!< Page directory. */
+    struct hash supplemental_page_table;
     /**@{*/
 #endif
 

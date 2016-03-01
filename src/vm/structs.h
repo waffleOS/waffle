@@ -1,6 +1,7 @@
 #ifndef VM_STRUCTS_H
 #define VM_STRUCTS_H
 #include "filesys/off_t.h"
+#include <stdbool.h>
 
 /* Page statuses */
 enum page_status {
@@ -27,6 +28,7 @@ struct page_info {
     uint32_t zero_bytes;
     bool writable;
     enum page_status status;
+    struct hash_elem elem;
 };
 
 
