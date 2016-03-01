@@ -57,6 +57,7 @@ struct frame *falloc(struct page_info *p) {
             f = malloc(sizeof(struct frame));
             f->addr = addr;
             f->pinfo = p;
+            f->age = 0;
         }
         /* Otherwise we need to try to evict. */
         else { 
@@ -112,7 +113,38 @@ struct frame *get_free_frame() {
  * Chooses and evicts a frame.
  */
 struct frame *evict_frame() { 
-    PANIC("Frame eviction failed.");
-    return NULL;
+    /* Obtain lock before choosing which frame to evict. */
+    sema_down(&frame_table_sem);
+
+    /* Frame table should not be empty if we need to evict. */
+    if (list_empty(&frame_table)) { 
+        PANIC("Frame eviction failed.");
+        return NULL;
+    }
+
+    /** 
+     * Use age policy and find youngest frame, which
+     * is the frame accessed least recently up to the
+     * resolution of age, which is 32 bit.
+     */
+    struct list_elem *cur = list_begin(&frame_table);
+    struct frame *f = list_entry(cur, struct frame, elem);
+    int age = f->age;
+
+    for (cur = list_next(cur); cur != list_end(&frame_table);
+         cur = list_next(cur)) { 
+        struct frame *cur_frame = list_entry(cur, struct frame, elem);
+        if (cur_frame->age < age) { 
+            age = cur_frame->age;
+            f = cur_frame;
+        }
+    }
+
+    sema_up(&frame_table_sem);
+    /* TODO: Remove page from page table. */
+
+    /* TODO: Add page to swap slot. */
+
+    return f;
 }
 
