@@ -3,6 +3,7 @@
 #include <list.h>
 #include "filesys/off_t.h"
 #include <stdbool.h>
+#include <stdint.h>
 #include <hash.h>
 
 /* Page statuses */
@@ -28,6 +29,7 @@ struct frame {
 
 /* Supplemental page */
 struct page_info {
+    uintptr_t page_num;
     uint8_t * upage;
     struct file *file;
     off_t ofs;

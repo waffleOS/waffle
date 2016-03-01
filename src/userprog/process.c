@@ -584,17 +584,17 @@ static bool setup_stack(void **esp) {
     uint8_t *kpage;
     bool success = false;
 
-    // uint8_t * upage = ((uint8_t *) PHYS_BASE) - PGSIZE;
-    // success = install_page_info(upage, NULL, NULL, NULL, NULL, NULL, STACK);
-    kpage = palloc_get_page(PAL_USER | PAL_ZERO);
-    if (kpage != NULL) {
+    uint8_t * upage = ((uint8_t *) PHYS_BASE) - PGSIZE;
+    success = install_page_info(upage, NULL, NULL, NULL, NULL, NULL, STACK);
+    /*kpage = palloc_get_page(PAL_USER | PAL_ZERO);*/
+    /*if (kpage != NULL) {*/
         // TODO: Use David's API
-        success = install_page(((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
+        /*success = install_page(((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);*/
         if (success)
             *esp = PHYS_BASE;
         else
             PANIC("Stack initialization failed.");
-    }
+    /*}*/
     return success;
 }
 

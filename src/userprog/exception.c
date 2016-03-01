@@ -150,7 +150,6 @@ static void page_fault(struct intr_frame *f) {
     // TODO Rahul
     
     struct thread * t = thread_current(); 
-    struct hash sup_page_table = t->sup_page_table;
     struct page_info * page_info = page_info_lookup(&t->sup_page_table, (uint8_t *) fault_addr); 
     if (page_info == NULL)
     {
