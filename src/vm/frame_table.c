@@ -3,6 +3,9 @@
 #include "threads/synch.h"
 #include "threads/palloc.h"
 #include "vm/frame_table.h"
+#include "vm/swap.h"
+
+#define INIT_AGE UINT32_MAX
 
 /* Variables */
 /* Semaphore for frame table. */
@@ -45,7 +48,7 @@ struct frame *falloc(struct page_info *p) {
     /* Add to frame_table if there is a free frame. */
     if (f != NULL) { 
         f->pinfo = p;
-        f->age = 0;
+        f->age = INIT_AGE;
 
         /* Synchronously add to frame_table. */
         sema_down(&frame_table_sem);
@@ -60,7 +63,7 @@ struct frame *falloc(struct page_info *p) {
             f = malloc(sizeof(struct frame));
             f->addr = addr;
             f->pinfo = p;
-            f->age = 0;
+            f->age = INIT_AGE;
             /* Synchronously add to frame_table. */
             sema_down(&frame_table_sem);
             list_push_back(&frame_table, &f->elem);
@@ -71,6 +74,12 @@ struct frame *falloc(struct page_info *p) {
         else { 
             /* If no swap space, kernel panic. */
             f = evict_frame();
+            save_frame_page(f);
+
+            /* Mark frame as free. */
+            sema_down(&free_sem);
+            list_push_back(&free_frames, &f->elem);
+            sema_up(&free_sem);
         }
     }
 
@@ -137,7 +146,7 @@ struct frame *evict_frame() {
      */
     struct list_elem *cur = list_begin(&frame_table);
     struct frame *f = list_entry(cur, struct frame, elem);
-    int age = f->age;
+    uint32_t age = f->age;
 
     for (cur = list_next(cur); cur != list_end(&frame_table);
          cur = list_next(cur)) { 
