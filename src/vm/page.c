@@ -59,3 +59,13 @@ struct page_info * page_info_lookup(struct hash * sup_page_table, const uint8_t 
     e = hash_find(sup_page_table, &p_info.elem);
     return e != NULL ? hash_entry(e, struct page_info, elem) : NULL;
 }
+
+struct page_info * page_info_delete(struct hash * sup_page_table, const uint8_t * upage)
+{
+    struct page_info p_info;
+    struct hash_elem * e;
+
+    p_info.page_num = pg_no(upage);
+    e = hash_delete(sup_page_table, &p_info.elem);
+    return e != NULL ? hash_entry(e, struct page_info, elem) : NULL;
+}

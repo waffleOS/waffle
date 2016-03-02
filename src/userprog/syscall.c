@@ -249,6 +249,14 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             map = do_mmap(fd, addr);
             f->eax = map;
             break;
+        case SYS_MUNMAP:
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
+            map = *((int *) (f->esp + 4));
+            do_munmap(fd);
+            break;
 
     }
 
@@ -367,6 +375,10 @@ int do_filesize(int fd)
 {
     struct thread * t = thread_current();
     sema_down(&file_sem);
+    if (!is_valid_fd(t, fd))
+    {
+        return 0;
+    }
     int length = file_length(t->files[fd - 2]);
     sema_up(&file_sem);
     return length;
@@ -478,7 +490,7 @@ mapid_t do_mmap(int fd, void *addr)
 
     int ofs = 0;
     bool writable = true;
-    int num_pages;
+    unsigned int num_pages = 0;
     uint8_t * upage = addr;
     
     do_seek(fd, 0);
@@ -506,7 +518,7 @@ mapid_t do_mmap(int fd, void *addr)
              palloc_free_page(kpage);
              return -1; 
          }
-        /*install_page_info(addr, f, ofs, page_read_bytes, page_zero_bytes, writable, MMAP_FILE);*/
+        install_page_info(addr, f, ofs, page_read_bytes, page_zero_bytes, writable, MMAP_FILE);
 
 
         /* Advance. */
@@ -518,6 +530,7 @@ mapid_t do_mmap(int fd, void *addr)
 
     struct mapping * m = (struct mapping *) malloc(sizeof(struct mapping));
     m->upage = upage;
+    m->fd = fd;
     m->num_pages = num_pages;
     int map = next_map(t);     
     t->mappings[map] = m; 
@@ -525,7 +538,34 @@ mapid_t do_mmap(int fd, void *addr)
 
 void do_munmap(mapid_t mapping)
 {
+    struct thread * t = thread_current();
+    if (!is_valid_map(t, mapping))
+    {
+       return; 
+    }
 
+    struct mapping * m = t->mappings[mapping];
+    uint8_t * upage = m->upage;
+    int fd = m->fd;
+    int filesize = do_filesize(fd);
+    int ofs = 0;
+    int i;
+    for (i = 0; i < m->num_pages; i++)
+    {
+        size_t page_write_bytes = filesize - ofs < PGSIZE ? filesize - ofs : PGSIZE;
+        if (pagedir_is_dirty(t->pagedir, upage))
+        {
+            do_write(fd, upage, page_write_bytes);
+        }
+
+        page_info_delete(&t->sup_page_table, upage);
+        pagedir_clear_page(t->pagedir, upage);
+
+        upage += PGSIZE;
+        ofs += PGSIZE;
+    }
+
+    t->mappings[mapping] = NULL;
 }
 
 /* Validates pointers */
