@@ -21,7 +21,7 @@ void init_swap() {
 /* Moves a frame's page into a swap slot. */
 void save_frame_page(struct frame *f) {
     size_t index;
-    struct page_info pinfo = f->pinfo;
+    struct page_info *pinfo = f->pinfo;
     
     /* Obtain index of swap slot to use. */
     sema_down(&bm_sem);
