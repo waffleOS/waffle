@@ -1,14 +1,17 @@
 #include "userprog/syscall.h"
 #include "userprog/pagedir.h"
 #include <stdio.h>
+#include <string.h>
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+#include "threads/palloc.h"
 #include "devices/shutdown.h"
 #include "lib/user/syscall.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
+#include "userprog/process.h"
 #include "vm/page.h"
 #include "vm/structs.h"
 #include "threads/malloc.h"
@@ -242,7 +245,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
                 return;
             }
             fd = *((int *) (f->esp + 4));
-            addr = *((uint8_t *) (f->esp + 8));
+            addr = *((uint8_t **) (f->esp + 8));
             map = do_mmap(fd, addr);
             f->eax = map;
             break;
@@ -468,7 +471,6 @@ mapid_t do_mmap(int fd, void *addr)
     struct thread * t = thread_current();
     struct file * f = t->files[fd - 2];
     int read_bytes = do_filesize(fd);
-
     if (read_bytes == 0)
     {
         return -1;
@@ -479,6 +481,7 @@ mapid_t do_mmap(int fd, void *addr)
     int num_pages;
     uint8_t * upage = addr;
     
+    do_seek(fd, 0);
     while (read_bytes > 0) {
         /* Calculate how to fill this page.
            We will read PAGE_READ_BYTES bytes from FILE
@@ -486,7 +489,24 @@ mapid_t do_mmap(int fd, void *addr)
         size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
         size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
-        install_page_info(addr, f, ofs, page_read_bytes, page_zero_bytes, writable, MMAP_FILE);
+        uint8_t *kpage = palloc_get_page(PAL_USER);
+        if (kpage == NULL)
+        {
+            return -1;
+        }
+         /* Load this page. */
+         if (file_read(f, kpage, page_read_bytes) != (int) page_read_bytes) {
+             palloc_free_page(kpage);
+             return -1;
+         }
+         memset(kpage + page_read_bytes, 0, page_zero_bytes);
+ 
+         /* Add the page to the process's address space. */
+         if (!install_page(addr, kpage, writable)) {
+             palloc_free_page(kpage);
+             return -1; 
+         }
+        /*install_page_info(addr, f, ofs, page_read_bytes, page_zero_bytes, writable, MMAP_FILE);*/
 
 
         /* Advance. */
