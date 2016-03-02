@@ -481,7 +481,13 @@ mapid_t do_mmap(int fd, void *addr)
     }
 
     struct thread * t = thread_current();
-    struct file * f = t->files[fd - 2];
+
+    if (!is_valid_fd(t, fd))
+    {
+        return -1;
+    }
+
+    struct file * f = file_reopen(t->files[fd - 2]);
     int read_bytes = do_filesize(fd);
     if (read_bytes == 0)
     {
@@ -492,7 +498,7 @@ mapid_t do_mmap(int fd, void *addr)
     bool writable = true;
     unsigned int num_pages = 0;
     uint8_t * upage = addr;
-    
+
     do_seek(fd, 0);
     while (read_bytes > 0) {
         /* Calculate how to fill this page.
@@ -501,25 +507,16 @@ mapid_t do_mmap(int fd, void *addr)
         size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
         size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
-        uint8_t *kpage = palloc_get_page(PAL_USER);
-        if (kpage == NULL)
+        struct page_info * p_info = install_page_info(addr, f, ofs, page_read_bytes, page_zero_bytes, writable, MMAP_FILE);
+        if (p_info == NULL)
         {
+            while (num_pages > 0)
+            {
+                page_info_delete(&t->sup_page_table, upage);
+                upage += PGSIZE;
+            }
             return -1;
         }
-         /* Load this page. */
-         if (file_read(f, kpage, page_read_bytes) != (int) page_read_bytes) {
-             palloc_free_page(kpage);
-             return -1;
-         }
-         memset(kpage + page_read_bytes, 0, page_zero_bytes);
- 
-         /* Add the page to the process's address space. */
-         if (!install_page(addr, kpage, writable)) {
-             palloc_free_page(kpage);
-             return -1; 
-         }
-        install_page_info(addr, f, ofs, page_read_bytes, page_zero_bytes, writable, MMAP_FILE);
-
 
         /* Advance. */
         read_bytes -= page_read_bytes;
@@ -530,7 +527,7 @@ mapid_t do_mmap(int fd, void *addr)
 
     struct mapping * m = (struct mapping *) malloc(sizeof(struct mapping));
     m->upage = upage;
-    m->fd = fd;
+    m->file = f;
     m->num_pages = num_pages;
     int map = next_map(t);     
     t->mappings[map] = m; 
@@ -546,8 +543,7 @@ void do_munmap(mapid_t mapping)
 
     struct mapping * m = t->mappings[mapping];
     uint8_t * upage = m->upage;
-    int fd = m->fd;
-    int filesize = do_filesize(fd);
+    int filesize = file_length(m->file);
     int ofs = 0;
     int i;
     for (i = 0; i < m->num_pages; i++)
@@ -555,7 +551,7 @@ void do_munmap(mapid_t mapping)
         size_t page_write_bytes = filesize - ofs < PGSIZE ? filesize - ofs : PGSIZE;
         if (pagedir_is_dirty(t->pagedir, upage))
         {
-            do_write(fd, upage, page_write_bytes);
+            file_write(m->file, upage, page_write_bytes);
         }
 
         page_info_delete(&t->sup_page_table, upage);
@@ -566,6 +562,7 @@ void do_munmap(mapid_t mapping)
     }
 
     t->mappings[mapping] = NULL;
+    file_close(m->file);
 }
 
 /* Validates pointers */

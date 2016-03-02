@@ -183,22 +183,24 @@ static void page_fault(struct intr_frame *f) {
     {
         enum page_status status = page_info->status;
         uint8_t * kpage;
-        struct frame * f;
+        struct frame * frame;
         int read_bytes;
+        struct file * file;
         switch (status)
         {
             case LOAD_FILE:
                 file_seek(page_info->file, page_info->ofs);
-                f = falloc(page_info);
-                kpage = f->addr;
+                frame = falloc(page_info);
+                kpage = frame->addr;
                 if (!install_page(page_info->upage, kpage, page_info->writable))
                 {
-                    free_frame(f);
+                    free_frame(frame);
+                    kill(f);
                     return;
                 }
                 read_bytes = file_read(page_info->file, kpage, page_info->read_bytes);
                 if (read_bytes != (int) page_info->read_bytes) {
-                    free_frame(f);
+                    free_frame(frame);
                     return;
                 }
                 /*if (file_read(page_info->file, page_info->upage, page_info->read_bytes) != (int) page_info->read_bytes) {*/
@@ -209,17 +211,19 @@ static void page_fault(struct intr_frame *f) {
 
                 break;
             case MMAP_FILE:
-                file_seek(page_info->file, page_info->ofs);
-                f = falloc(page_info);
-                kpage = f->addr;
+                file = file_reopen(page_info->file);
+                file_seek(file, page_info->ofs);
+                frame = falloc(page_info);
+                kpage = frame->addr;
                 if (!install_page(page_info->upage, kpage, page_info->writable))
                 {
-                    free_frame(f);
+                    free_frame(frame);
+                    kill(f);
                     return;
                 }
-                read_bytes = file_read(page_info->file, kpage, page_info->read_bytes);
+                read_bytes = file_read(file, kpage, page_info->read_bytes);
                 if (read_bytes != (int) page_info->read_bytes) {
-                    free_frame(f);
+                    free_frame(frame);
                     return;
                 }
                 /*if (file_read(page_info->file, page_info->upage, page_info->read_bytes) != (int) page_info->read_bytes) {*/
@@ -227,17 +231,19 @@ static void page_fault(struct intr_frame *f) {
                     /*return;*/
                 /*}*/
                 memset(kpage + page_info->read_bytes, 0, page_info->zero_bytes);
+                file_close(file);
                 break;
             case ANON_FILE:
                 break;
             case SWAP:
                 break;
             case STACK:
-                f = falloc(page_info);
-                kpage = f->addr;
+                frame = falloc(page_info);
+                kpage = frame->addr;
                 if(!install_page(((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true))
                 {
-                   free_frame(f); 
+                   free_frame(frame); 
+                   kill(f);
                 }
                 break;
         }

@@ -44,7 +44,7 @@ struct page_info {
 /* Mapping */
 struct mapping {
     uint8_t * upage;
-    int fd;
+    struct file * file;
     unsigned int num_pages;
 };
 

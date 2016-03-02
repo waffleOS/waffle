@@ -26,8 +26,8 @@ struct page_info * install_page_info(uint8_t * upage, struct file * file, off_t 
     p_info->status = status;
 
     struct thread * t = thread_current();
-    hash_insert(&t->sup_page_table, &p_info->elem);
-    return p_info == NULL ? NULL : p_info;
+    bool success = hash_insert(&t->sup_page_table, &p_info->elem) == NULL;
+    return success ? p_info : NULL;
 }
 
 unsigned int page_info_hash(const struct hash_elem *p_, void *aux UNUSED)
