@@ -13,7 +13,7 @@
 
 
 /* Installs page info in the supplemental page table */
-bool install_page_info(uint8_t * upage, struct file * file, off_t ofs, uint32_t read_bytes, uint32_t zero_bytes, bool writable, enum page_status status)
+struct page_info * install_page_info(uint8_t * upage, struct file * file, off_t ofs, uint32_t read_bytes, uint32_t zero_bytes, bool writable, enum page_status status)
 {
     struct page_info * p_info = malloc(sizeof(struct page_info));
     p_info->page_num = pg_no(upage);
@@ -26,7 +26,8 @@ bool install_page_info(uint8_t * upage, struct file * file, off_t ofs, uint32_t 
     p_info->status = status;
 
     struct thread * t = thread_current();
-    return hash_insert(&t->sup_page_table, &p_info->elem) == NULL;
+    hash_insert(&t->sup_page_table, &p_info->elem);
+    return p_info == NULL ? NULL : p_info;
 }
 
 unsigned int page_info_hash(const struct hash_elem *p_, void *aux UNUSED)

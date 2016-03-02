@@ -1,11 +1,15 @@
 #include "userprog/exception.h"
 #include <inttypes.h>
 #include <stdio.h>
+#include <string.h>
 #include "userprog/gdt.h"
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "userprog/syscall.h"
 #include "userprog/process.h"
+#include "filesys/directory.h"
+#include "filesys/file.h"
+#include "filesys/filesys.h"
 #include "vm/page.h"
 #include "vm/frame_table.h"
 #include "threads/vaddr.h"
@@ -153,12 +157,27 @@ static void page_fault(struct intr_frame *f) {
     struct page_info * page_info = page_info_lookup(&t->sup_page_table, (uint8_t *) fault_addr); 
     if (page_info == NULL)
     {
-        printf("Page fault at %p: %s error %s page in %s context.\n",
-               fault_addr,
-               not_present ? "not present" : "rights violation",
-               write ? "writing" : "reading",
-               user ? "user" : "kernel");
-        kill(f);
+        uint8_t * esp = (uint8_t *) f->esp;
+        if ((uint8_t *) fault_addr >= esp - 64 && (uint8_t *) fault_addr < (uint8_t *) PHYS_BASE)
+        {
+                struct page_info * page_info = install_page_info(fault_addr, NULL, 0, 0, 0, false, STACK);
+                struct frame * frame = falloc(page_info);
+                uint8_t * kpage = frame->addr;
+                if(!install_page(pg_round_down(fault_addr), kpage, true))
+                {
+                   free_frame(frame); 
+                }
+
+        }
+        else
+        {
+            printf("Page fault at %p: %s error %s page in %s context.\n",
+                   fault_addr,
+                   not_present ? "not present" : "rights violation",
+                   write ? "writing" : "reading",
+                   user ? "user" : "kernel");
+            kill(f);
+        }
     }
     else
     {
