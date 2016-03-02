@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include "threads/synch.h"
 #include "lib/kernel/hash.h"
+#include "vm/structs.h"
 
 /*! States in a thread's life cycle. */
 enum thread_status {
@@ -104,6 +105,7 @@ struct thread {
     struct list_elem allelem;           /*!< List element for all threads list. */
     struct file * files[NUM_FILES];
     struct file * thread_file;
+    struct mapping * mappings[NUM_FILES];
     /**@}*/
 
     /*! Shared between thread.c and synch.c. */
@@ -162,6 +164,8 @@ void thread_tick(void);
 void thread_print_stats(void);
 int next_fd(struct thread * t);
 bool is_valid_fd(struct thread * t, int fd);
+int next_map(struct thread * t);
+bool is_valid_map(struct thread * t, int map);
 
 typedef void thread_func(void *aux);
 tid_t thread_create(const char *name, int priority, thread_func *, void *);

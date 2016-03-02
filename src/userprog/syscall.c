@@ -9,6 +9,9 @@
 #include "lib/user/syscall.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
+#include "vm/page.h"
+#include "vm/structs.h"
+#include "threads/malloc.h"
 
 /* Module specific function prototypes. */
 static void syscall_handler(struct intr_frame *);
@@ -27,6 +30,8 @@ unsigned int do_tell(int fd);
 void do_close(int fd);
 bool validate_pointer(void *ptr);
 void * sanitize_buffer(void ** buffer);
+mapid_t do_mmap(int fd, void *addr);
+void do_munmap(mapid_t mapping);
 
 void syscall_init(void) {
     intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
@@ -63,7 +68,8 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
     int size;
     int fd;
     bool success;
-
+    uint8_t * addr;
+    mapid_t map;
 
     switch (syscall_num)
     {
@@ -230,6 +236,17 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             fd = *((int *) (f->esp + 4));
             do_close(fd);
             break;
+        case SYS_MMAP:
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
+            fd = *((int *) (f->esp + 4));
+            addr = *((uint8_t *) (f->esp + 8));
+            map = do_mmap(fd, addr);
+            f->eax = map;
+            break;
+
     }
 
 }
@@ -418,6 +435,7 @@ unsigned int do_tell(int fd)
     sema_down(&file_sem);
     int position = file_tell(t->files[fd - 2]);
     sema_up(&file_sem);
+    return position;
 }
 
 /* Closes a file */
@@ -433,6 +451,61 @@ void do_close(int fd)
             t->files[fd - 2] = NULL;
         }
     }
+}
+
+mapid_t do_mmap(int fd, void *addr)
+{
+    if (fd == 0 || fd == 1)
+    {
+        return -1;
+    }
+
+    if (addr == 0 || pg_ofs(addr) != 0)
+    {
+        return -1;
+    }
+
+    struct thread * t = thread_current();
+    struct file * f = t->files[fd - 2];
+    int read_bytes = do_filesize(fd);
+
+    if (read_bytes == 0)
+    {
+        return -1;
+    }
+
+    int ofs = 0;
+    bool writable = true;
+    int num_pages;
+    uint8_t * upage = addr;
+    
+    while (read_bytes > 0) {
+        /* Calculate how to fill this page.
+           We will read PAGE_READ_BYTES bytes from FILE
+           and zero the final PAGE_ZERO_BYTES bytes. */
+        size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
+        size_t page_zero_bytes = PGSIZE - page_read_bytes;
+
+        install_page_info(addr, f, ofs, page_read_bytes, page_zero_bytes, writable, MMAP_FILE);
+
+
+        /* Advance. */
+        read_bytes -= page_read_bytes;
+        addr += PGSIZE;
+        ofs += page_read_bytes;
+        num_pages++;
+    }
+
+    struct mapping * m = (struct mapping *) malloc(sizeof(struct mapping));
+    m->upage = upage;
+    m->num_pages = num_pages;
+    int map = next_map(t);     
+    t->mappings[map] = m; 
+}
+
+void do_munmap(mapid_t mapping)
+{
+
 }
 
 /* Validates pointers */

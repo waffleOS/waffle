@@ -41,5 +41,11 @@ struct page_info {
     struct frame *frame;
 };
 
+/* Mapping */
+struct mapping {
+    uint8_t * upage;
+    int num_pages;
+};
+
 
 #endif /* VM_STRUCTS_H */

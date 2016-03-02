@@ -167,6 +167,27 @@ bool is_valid_fd(struct thread * t, int fd) {
    return false;
 }
 
+int next_map(struct thread * t) {
+    int i;
+    for (i = 0; i < NUM_FILES; i++)
+    {
+        if (t->mappings[i] == NULL)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+bool is_valid_map(struct thread * t, int map) {
+   if (map >= 0 && map < NUM_FILES && t->mappings[map] != NULL)
+   {
+       return true;
+   }
+
+   return false;
+}
+
 /*! Creates a new kernel thread named NAME with the given initial PRIORITY,
     which executes FUNCTION passing AUX as the argument, and adds it to the
     ready queue.  Returns the thread identifier for the new thread, or

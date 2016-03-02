@@ -209,6 +209,24 @@ static void page_fault(struct intr_frame *f) {
 
                 break;
             case MMAP_FILE:
+                file_seek(page_info->file, page_info->ofs);
+                f = falloc(page_info);
+                kpage = f->addr;
+                if (!install_page(page_info->upage, kpage, page_info->writable))
+                {
+                    free_frame(f);
+                    return;
+                }
+                read_bytes = file_read(page_info->file, kpage, page_info->read_bytes);
+                if (read_bytes != (int) page_info->read_bytes) {
+                    free_frame(f);
+                    return;
+                }
+                /*if (file_read(page_info->file, page_info->upage, page_info->read_bytes) != (int) page_info->read_bytes) {*/
+                    /*free_frame(f);*/
+                    /*return;*/
+                /*}*/
+                memset(kpage + page_info->read_bytes, 0, page_info->zero_bytes);
                 break;
             case ANON_FILE:
                 break;
