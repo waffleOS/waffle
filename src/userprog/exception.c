@@ -165,6 +165,7 @@ static void page_fault(struct intr_frame *f) {
         enum page_status status = page_info->status;
         uint8_t * kpage;
         struct frame * f;
+        int read_bytes;
         switch (status)
         {
             case LOAD_FILE:
@@ -174,11 +175,17 @@ static void page_fault(struct intr_frame *f) {
                 if (!install_page(page_info->upage, kpage, page_info->writable))
                 {
                     free_frame(f);
+                    return;
                 }
-                if (file_read(page_info->file, page_info->upage, page_info->read_bytes) != (int) page_info->read_bytes) {
+                read_bytes = file_read(page_info->file, kpage, page_info->read_bytes);
+                if (read_bytes != (int) page_info->read_bytes) {
                     free_frame(f);
                     return;
                 }
+                /*if (file_read(page_info->file, page_info->upage, page_info->read_bytes) != (int) page_info->read_bytes) {*/
+                    /*free_frame(f);*/
+                    /*return;*/
+                /*}*/
                 memset(kpage + page_info->read_bytes, 0, page_info->zero_bytes);
 
                 break;
