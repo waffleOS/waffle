@@ -24,7 +24,7 @@ struct frame {
     /* Associated page info. */
     struct page_info *pinfo;
     /* Age for aging policy. */ 
-    int age;
+    uint32_t age;
 };
 
 /* Supplemental page */
