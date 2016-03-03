@@ -158,7 +158,7 @@ struct frame *evict_frame() {
     for (cur = list_next(cur); cur != list_end(&frame_table);
          cur = list_next(cur)) { 
         struct frame *cur_frame = list_entry(cur, struct frame, elem);
-        if (cur_frame->age < age) { 
+        if (cur_frame->age <= age) { 
             age = cur_frame->age;
             f = cur_frame;
         }
@@ -172,5 +172,9 @@ struct frame *evict_frame() {
     /* TODO: Add page to swap slot. */
 
     return f;
+}
+
+/* Update all frame ages. */
+void update_frame_ages() { 
 }
 

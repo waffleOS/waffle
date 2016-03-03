@@ -204,6 +204,7 @@ static void page_fault(struct intr_frame *f) {
                     free_frame(frame);
                     return;
                 }
+                // printf("Data loaded upage %p \n", page_info->upage);
                 /*if (file_read(page_info->file, page_info->upage, page_info->read_bytes) != (int) page_info->read_bytes) {*/
                     /*free_frame(f);*/
                     /*return;*/
