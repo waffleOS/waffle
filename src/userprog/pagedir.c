@@ -33,6 +33,7 @@ void pagedir_destroy(uint32_t *pd) {
         return;
 
     ASSERT(pd != init_page_dir);
+    /*
     for (pde = pd; pde < pd + pd_no(PHYS_BASE); pde++)
     if (*pde & PTE_P) {
         uint32_t *pt = pde_get_pt(*pde);
@@ -43,7 +44,7 @@ void pagedir_destroy(uint32_t *pd) {
                 palloc_free_page(pte_get_page(*pte));
         }
         palloc_free_page(pt);
-    }
+    } */
     palloc_free_page(pd);
 }
 
