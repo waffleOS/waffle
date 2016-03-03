@@ -72,9 +72,16 @@ struct frame *falloc(struct page_info *p) {
         }
         /* Otherwise we need to try to evict. */
         else { 
-            /* If no swap space, kernel panic. */
             f = evict_frame();
-            save_frame_page(f);
+            
+            /* If not mmaped file, add to swap.  */
+            if (p->status != MMAP_FILE) { 
+                /* If no swap space, kernel panic. */
+                save_frame_page(f);
+            }
+            else {
+                /* TODO: write back to mmaped file. */
+            }
 
             /* Mark frame as free. */
             sema_down(&free_sem);
