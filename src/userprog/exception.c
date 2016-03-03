@@ -12,6 +12,7 @@
 #include "filesys/filesys.h"
 #include "vm/page.h"
 #include "vm/frame_table.h"
+#include "vm/swap.h"
 #include "threads/vaddr.h"
 
 /*! Number of page faults processed. */
@@ -236,6 +237,19 @@ static void page_fault(struct intr_frame *f) {
             case ANON_FILE:
                 break;
             case SWAP:
+                printf("Restoring from swap\n");
+                frame = falloc(page_info);
+                kpage = frame->addr;
+                if (!install_page(page_info->upage, kpage, page_info->writable))
+                {
+                    printf("Install page failed.\n");
+                    free_frame(frame);
+                    kill(f);
+                    return;
+                }
+                else {
+                    restore_page(page_info);
+                }
                 break;
             case STACK:
                 frame = falloc(page_info);

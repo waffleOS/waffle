@@ -3,6 +3,8 @@
 #include "devices/block.h"
 #include "vm/swap.h"
 #include "threads/synch.h"
+#include "threads/thread.h"
+#include "userprog/pagedir.h"
 
 /* Static variables */
 static struct bitmap *swap_bitmap;
@@ -36,14 +38,28 @@ void save_frame_page(struct frame *f) {
     else { 
         pinfo->status = SWAP;
         f->pinfo = NULL;
+        pinfo->swap_index = index;
+        struct thread *t = thread_current();
 
         /* Atomically write to block. */
         sema_down(&swap_sem);
         block_write(swap, index, pinfo->upage);
         sema_up(&swap_sem);
+        
+        pagedir_clear_page(&t->pagedir, pinfo->upage);
     }
 }
 
 /* Restores a page from a swap slot. */
 void restore_page(struct page_info *p) {
+    size_t index = p->swap_index;
+
+    sema_down(&swap_sem);
+    block_read(swap, index, p->upage);
+    sema_up(&swap_sem);
+    
+    /* Allow to be used by other frames. */
+    sema_down(&bm_sem);
+    bitmap_reset(swap_bitmap, index);
+    sema_up(&bm_sem);
 }
