@@ -24,6 +24,8 @@ void init_swap() {
 void save_frame_page(struct frame *f) {
     size_t index;
     struct page_info *pinfo = f->pinfo;
+
+    //printf("Saving data at kpage %p upage %p to swap\n", f->addr, pinfo->upage);
     
     /* Obtain index of swap slot to use. */
     sema_down(&bm_sem);
@@ -54,6 +56,7 @@ void save_frame_page(struct frame *f) {
 void restore_page(struct page_info *p) {
     size_t index = p->swap_index;
 
+    //printf("Restoring data at upage %p from swap\n", p->upage);
     sema_down(&swap_sem);
     block_read(swap, index, p->upage);
     sema_up(&swap_sem);
