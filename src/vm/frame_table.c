@@ -169,7 +169,7 @@ struct frame *evict_frame() {
         }
     }
 
-    printf("Evicting kpage: %p, upage %p\n", f->addr, f->pinfo->upage);
+    //printf("Evicting kpage: %p, upage %p\n", f->addr, f->pinfo->upage);
     list_remove(&f->elem);
     list_push_front(&frame_table, &f->elem);
 
