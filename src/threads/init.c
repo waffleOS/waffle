@@ -22,6 +22,7 @@
 #include "threads/palloc.h"
 #include "threads/pte.h"
 #include "threads/thread.h"
+#include "vm/swap.h"
 
 #ifdef USERPROG
 
@@ -104,6 +105,9 @@ int main(void) {
     palloc_init(user_page_limit);
     malloc_init();
     paging_init();
+
+    /* Initialize virtual memory. */
+    init_swap();
 
     /* Segmentation. */
 #ifdef USERPROG
