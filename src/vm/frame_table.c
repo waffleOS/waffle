@@ -2,6 +2,7 @@
 #include "threads/malloc.h"
 #include "threads/synch.h"
 #include "threads/palloc.h"
+#include "threads/thread.h"
 #include "vm/frame_table.h"
 #include "vm/swap.h"
 
@@ -83,10 +84,14 @@ struct frame *falloc(struct page_info *p) {
                 /* TODO: write back to mmaped file. */
             }
 
+            f->pinfo = p;
+            f->age = INIT_AGE;
+
             /* Mark frame as free. */
+            /*
             sema_down(&free_sem);
             list_push_back(&free_frames, &f->elem);
-            sema_up(&free_sem);
+            sema_up(&free_sem); */
         }
     }
 
@@ -164,17 +169,27 @@ struct frame *evict_frame() {
         }
     }
 
+    printf("Evicting kpage: %p, upage %p\n", f->addr, f->pinfo->upage);
     list_remove(&f->elem);
+    list_push_front(&frame_table, &f->elem);
 
     sema_up(&frame_table_sem);
-    /* TODO: Remove page from page table. */
-
-    /* TODO: Add page to swap slot. */
 
     return f;
 }
 
 /* Update all frame ages. */
 void update_frame_ages() { 
+    struct list_elem *cur;
+
+    /*
+    for (cur = list_begin(&frame_table); cur != list_end(&frame_table);
+         cur = list_next(cur)) { 
+        struct frame *f = list_entry(cur, struct frame, elem);
+        struct thread *t = thread_current();
+        f->age = (f->age >> 1) & 
+            (pagedir_is_accessed(&t->pagedir, f->pinfo->upage) << 31);
+        pagedir_set_accessed(&t->pagedir, f->pinfo->upage, false);
+    }*/
 }
 

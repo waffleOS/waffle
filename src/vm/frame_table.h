@@ -12,5 +12,6 @@ struct frame *falloc(struct page_info *p);
 void free_frame(struct frame *f);
 
 /* */
+void update_frame_ages(void);
 
 #endif /* VM_FRAME_TABLE_H */

@@ -12,6 +12,7 @@
 #include "threads/interrupt.h"
 #include "threads/synch.h"
 #include "threads/thread.h"
+#include "vm/frame_table.h"
   
 #if TIMER_FREQ < 19
 #error 8254 timer requires TIMER_FREQ >= 19
@@ -19,6 +20,8 @@
 #if TIMER_FREQ > 1000
 #error TIMER_FREQ <= 1000 recommended
 #endif
+
+#define EVICTION_AGING_COUNT 4
 
 /*! Number of timer ticks since OS booted. */
 static int64_t ticks;
@@ -140,6 +143,9 @@ void timer_print_stats(void) {
 /*! Timer interrupt handler. */
 static void timer_interrupt(struct intr_frame *args UNUSED) {
     ticks++;
+    if (ticks % EVICTION_AGING_COUNT == 0) { 
+        update_frame_ages();
+    }
     thread_tick();
 }
 
