@@ -39,6 +39,7 @@ struct page_info {
     enum page_status status;
     struct hash_elem elem;
     struct frame *frame;
+    size_t swap_index;
 };
 
 /* Mapping */
