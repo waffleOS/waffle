@@ -159,6 +159,8 @@ static void page_fault(struct intr_frame *f) {
     if (page_info == NULL)
     {
         uint8_t * esp = (uint8_t *) f->esp;
+        printf("Fault addr %p\n", fault_addr);
+        printf("ESP: %p\n", esp);
         if ((uint8_t *) fault_addr >= esp - 64 && (uint8_t *) fault_addr < (uint8_t *) PHYS_BASE)
         {
                 struct page_info * page_info = install_page_info(fault_addr, NULL, 0, 0, 0, false, STACK);

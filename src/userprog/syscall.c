@@ -398,6 +398,11 @@ int do_read(int fd, void * buffer, unsigned int size)
     }
 
     struct thread * t = thread_current();
+    struct page_info * p_info = page_info_lookup(&t->sup_page_table, buffer);
+    if (p_info == NULL || !p_info->writable)
+    {
+        do_exit(-1);
+    }
     if (is_valid_fd(t, fd)) {
         sema_down(&file_sem);
         int length = file_read(t->files[fd - 2], buffer, size); 
