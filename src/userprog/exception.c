@@ -152,13 +152,19 @@ static void page_fault(struct intr_frame *f) {
     /* To implement virtual memory, delete the rest of the function
        body, and replace it with code that brings in the page to
        which fault_addr refers. */
-    // TODO Rahul
     
+    /* First, check if fault_addr corresponds to a page_info in the
+     * sup_page_table. If it does, then the process is demanding that
+     * page and we need to falloc it. */
     struct thread * t = thread_current(); 
     struct page_info * page_info = page_info_lookup(&t->sup_page_table, (uint8_t *) fault_addr); 
+    
+    /* If no page_info, we check to see if it's a stack access. */
     if (page_info == NULL)
     {
+        /* Look at the frame's esp. */
         uint8_t * esp = (uint8_t *) f->esp;
+        /* This is a heuristic for determining a stack access. */
         if ((uint8_t *) fault_addr >= esp - 64 && (uint8_t *) fault_addr < (uint8_t *) PHYS_BASE)
         {
                 struct page_info * page_info = install_page_info(fault_addr, NULL, 0, 0, 0, false, STACK);
@@ -170,6 +176,7 @@ static void page_fault(struct intr_frame *f) {
                 }
 
         }
+        /* Otherwise, this is a "real" page fault. */
         else
         {
             printf("Page fault at %p: %s error %s page in %s context.\n",
@@ -180,6 +187,7 @@ static void page_fault(struct intr_frame *f) {
             kill(f);
         }
     }
+    /* Otherwise, the process is demanding a frame. */
     else
     {
         enum page_status status = page_info->status;
@@ -187,12 +195,18 @@ static void page_fault(struct intr_frame *f) {
         struct frame * frame;
         int read_bytes;
         struct file * file;
+
+        /* page_info->status gives the reason for the fault. */
         switch (status)
         {
+            /* Loading executable memory. */
             case LOAD_FILE:
+                /* Go to location in file. */
                 file_seek(page_info->file, page_info->ofs);
+                /* Get a frame for the address. */
                 frame = falloc(page_info);
                 kpage = frame->addr;
+                /* Associate the frame and page in the page table. */
                 if (!install_page(page_info->upage, kpage, page_info->writable))
                 {
                     free_frame(frame);
@@ -209,9 +223,11 @@ static void page_fault(struct intr_frame *f) {
                     /*free_frame(f);*/
                     /*return;*/
                 /*}*/
+                /* Clear out the remaining memory to avoid leaking previous data. */
                 memset(kpage + page_info->read_bytes, 0, page_info->zero_bytes);
 
                 break;
+            /* mmap access of a file. */
             case MMAP_FILE:
                 file = file_reopen(page_info->file);
                 file_seek(file, page_info->ofs);
@@ -235,15 +251,19 @@ static void page_fault(struct intr_frame *f) {
                 memset(kpage + page_info->read_bytes, 0, page_info->zero_bytes);
                 file_close(file);
                 break;
+            /* Anonymous file. */
             case ANON_FILE:
                 break;
+            /* Accessing data stored in swap. */
             case SWAP:
-                printf("Restoring from swap\n");
+                //printf("Restoring from swap\n");
+                
+                /* Get frame and install in page table. */
                 frame = falloc(page_info);
                 kpage = frame->addr;
                 if (!install_page(page_info->upage, kpage, page_info->writable))
                 {
-                    printf("Install page failed.\n");
+                    //printf("Install page failed.\n");
                     free_frame(frame);
                     kill(f);
                     return;
@@ -252,7 +272,9 @@ static void page_fault(struct intr_frame *f) {
                     restore_page(page_info);
                 }
                 break;
+            /* Accessing the stack. */
             case STACK:
+                /* Get frame and install in page table. */
                 frame = falloc(page_info);
                 kpage = frame->addr;
                 if(!install_page(((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true))
