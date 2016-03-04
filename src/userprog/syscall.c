@@ -582,7 +582,7 @@ bool validate_pointer(void *ptr) {
     struct page_info * page_info = page_info_lookup(&cur->sup_page_table, 
                                                     (uint8_t *) ptr); 
     if (page_info == NULL) {
-        return true;
+        return false;
     }
     else {
         return true;
