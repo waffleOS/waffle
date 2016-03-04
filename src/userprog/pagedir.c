@@ -11,6 +11,7 @@
 #include "threads/init.h"
 #include "threads/pte.h"
 #include "threads/palloc.h"
+#include "vm/page.h"
 
 static uint32_t *active_pd(void);
 static void invalidate_pagedir(uint32_t *);
@@ -45,6 +46,7 @@ void pagedir_destroy(uint32_t *pd) {
         }
         palloc_free_page(pt);
     } */
+    clean_up_sup_page_table();
     palloc_free_page(pd);
 }
 

@@ -9,7 +9,14 @@
 /* Macros */
 #define NUM_PAGES = 1048576 /* = 2 ^ 20 bits per page number */
 
-/* Variables */
+/* Static variables */
+
+/* Module Internal functions. */
+unsigned int page_info_hash(const struct hash_elem *p_, void *aux UNUSED);
+bool page_info_less(const struct hash_elem * a_, const struct hash_elem * b_, void * aux UNUSED);
+void clean_up_elem(struct hash_elem *e, void *aux UNUSED);
+
+
 
 
 /* Installs page info in the supplemental page table */
@@ -68,4 +75,21 @@ struct page_info * page_info_delete(struct hash * sup_page_table, const uint8_t 
     p_info.page_num = pg_no(upage);
     e = hash_delete(sup_page_table, &p_info.elem);
     return e != NULL ? hash_entry(e, struct page_info, elem) : NULL;
+}
+
+/**
+ * Cleans up supplemental page table of current thread.
+ * Should be called when a process is being cleaned up 
+ * in pagedir_destroy().
+ */
+void clean_up_sup_page_table(void) {
+    struct thread *t = thread_current();
+    struct hash *spt = &t->sup_page_table;
+    hash_destroy(spt, clean_up_elem);
+    
+}     
+
+void clean_up_elem(struct hash_elem *e, void *aux UNUSED) {
+    struct page_info *p = hash_entry(e, struct page_info, elem);
+    free(p);
 }
