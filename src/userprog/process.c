@@ -268,6 +268,16 @@ void process_exit(void) {
     struct thread *cur = thread_current();
     uint32_t *pd;
 
+    int i;
+    for (i = 0; i < NUM_FILES; i++)
+    {
+        struct mapping * map = cur->mappings[i];
+        if (map != NULL)
+        {
+            do_munmap(i);
+        }
+    }
+
     /* Destroy the current process's page directory and switch back
        to the kernel-only page directory. */
     pd = cur->pagedir;

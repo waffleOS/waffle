@@ -538,7 +538,7 @@ void do_munmap(mapid_t mapping)
     struct thread * t = thread_current();
     if (!is_valid_map(t, mapping))
     {
-       return; 
+        return; 
     }
 
     struct mapping * m = t->mappings[mapping];
