@@ -36,3 +36,6 @@ src/shell/test_execute
 
 # Debug files
 *.dSYM/
+
+# GDB Macros
+src/utils/pintos-gdb

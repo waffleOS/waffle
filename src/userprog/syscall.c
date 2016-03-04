@@ -561,8 +561,9 @@ void do_munmap(mapid_t mapping)
         ofs += PGSIZE;
     }
 
-    t->mappings[mapping] = NULL;
     file_close(m->file);
+    free(t->mappings[mapping]);
+    t->mappings[mapping] = NULL;
 }
 
 /* Validates pointers */
@@ -576,7 +577,7 @@ bool validate_pointer(void *ptr) {
     struct page_info * page_info = page_info_lookup(&cur->sup_page_table, 
                                                     (uint8_t *) ptr); 
     if (page_info == NULL) {
-        return false;
+        return true;
     }
     else {
         return true;
