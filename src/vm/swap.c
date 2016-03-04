@@ -7,9 +7,13 @@
 #include "userprog/pagedir.h"
 
 /* Static variables */
+/* Bitmap to manage free slots. */
 static struct bitmap *swap_bitmap;
+/* Actual swap device. */
 static struct block *swap;
+/* Mutex to control swap device. */
 static struct semaphore swap_sem;
+/* Mutex to control bitmap. */
 static struct semaphore bm_sem;
 
 /* Initialize swap module */
