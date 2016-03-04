@@ -61,10 +61,12 @@ struct frame *falloc(struct page_info *p) {
         addr = palloc_get_page(PAL_USER);
         /* If addr != NULL, we got the page */
         if (addr != NULL) {
+            /* Allocate new frame struct. */ 
             f = malloc(sizeof(struct frame));
             f->addr = addr;
             f->pinfo = p;
             f->age = INIT_AGE;
+
             /* Synchronously add to frame_table. */
             sema_down(&frame_table_sem);
             list_push_back(&frame_table, &f->elem);
@@ -86,12 +88,6 @@ struct frame *falloc(struct page_info *p) {
 
             f->pinfo = p;
             f->age = INIT_AGE;
-
-            /* Mark frame as free. */
-            /*
-            sema_down(&free_sem);
-            list_push_back(&free_frames, &f->elem);
-            sema_up(&free_sem); */
         }
     }
 
@@ -139,7 +135,9 @@ struct frame *get_free_frame() {
 }
 
 /**
- * Chooses and evicts a frame.
+ * Chooses a frame to evict. Sets up the frame table, and
+ * frame so the new page can be added. The old page should
+ * be saved before setting the new page.
  */
 struct frame *evict_frame() { 
     /* Obtain lock before choosing which frame to evict. */
@@ -170,6 +168,12 @@ struct frame *evict_frame() {
     }
 
     //printf("Evicting kpage: %p, upage %p\n", f->addr, f->pinfo->upage);
+    
+    /** 
+     * Currently removes the selected frame, and puts it back to the
+     * front because the aging implementation is broken. This will
+     * be unnecessary when aging is debugged.
+     */
     list_remove(&f->elem);
     list_push_front(&frame_table, &f->elem);
 
