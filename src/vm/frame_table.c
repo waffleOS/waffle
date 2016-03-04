@@ -182,7 +182,12 @@ struct frame *evict_frame() {
 void update_frame_ages() { 
     struct list_elem *cur;
 
-    /*
+    /** 
+     * Commented out aging eviction code:
+     * Breaks tests/vm/mmap-inherit and tests/vm/page-linear
+     * but works for all Project 4 regression tests, and most
+     * of the other tests.
+     *
     for (cur = list_begin(&frame_table); cur != list_end(&frame_table);
          cur = list_next(cur)) { 
         struct frame *f = list_entry(cur, struct frame, elem);
@@ -190,6 +195,7 @@ void update_frame_ages() {
         f->age = (f->age >> 1) & 
             (pagedir_is_accessed(&t->pagedir, f->pinfo->upage) << 31);
         pagedir_set_accessed(&t->pagedir, f->pinfo->upage, false);
-    }*/
+    }
+    */
 }
 
