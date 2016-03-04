@@ -374,11 +374,11 @@ int do_open(const char * file)
 int do_filesize(int fd)
 {
     struct thread * t = thread_current();
-    sema_down(&file_sem);
     if (!is_valid_fd(t, fd))
     {
         return 0;
     }
+    sema_down(&file_sem);
     int length = file_length(t->files[fd - 2]);
     sema_up(&file_sem);
     return length;
@@ -399,10 +399,10 @@ int do_read(int fd, void * buffer, unsigned int size)
 
     struct thread * t = thread_current();
     struct page_info * p_info = page_info_lookup(&t->sup_page_table, buffer);
-    if (p_info == NULL || !p_info->writable)
-    {
-        do_exit(-1);
-    }
+    /*if (p_info != NULL && p_info->status == LOAD_FILE)*/
+    /*{*/
+        /*do_exit(-1);*/
+    /*}*/
     if (is_valid_fd(t, fd)) {
         sema_down(&file_sem);
         int length = file_read(t->files[fd - 2], buffer, size); 
@@ -548,6 +548,7 @@ void do_munmap(mapid_t mapping)
 
     struct mapping * m = t->mappings[mapping];
     uint8_t * upage = m->upage;
+    struct file * f = file_reopen(m->file);
     int filesize = file_length(m->file);
     int ofs = 0;
     int i;
