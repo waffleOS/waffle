@@ -573,13 +573,14 @@ bool validate_pointer(void *ptr) {
     }
     
     struct thread *cur = thread_current();
-    uint32_t *pd = cur->pagedir;
-    /* Check if in page directory of the current thread. */
-    if (pagedir_get_page(pd, ptr) == NULL) {
+    struct page_info * page_info = page_info_lookup(&cur->sup_page_table, 
+                                                    (uint8_t *) ptr); 
+    if (page_info == NULL) {
         return false;
     }
-
-    return true;
+    else {
+        return true;
+    }
 }
 
 /* Validates pointers and dereferences */
