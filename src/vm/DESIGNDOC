@@ -8,17 +8,19 @@
 
 >> Fill in the names and email addresses of your group members.
 
-FirstName LastName <email@domain.example>
-FirstName LastName <email@domain.example>
-FirstName LastName <email@domain.example>
+Rahul Bachal <rbachal@caltech.edu>
+Robert Eng   <reng@caltech.edu>
+David Qu     <dqu@caltech.edu>
 
 >> Specify how many late tokens you are using on this assignment:  
+2
 
 >> What is the Git repository and commit hash for your submission?
    (You only need to include the commit-hash in the file you submit
    on Moodle.)
 
-   Repository URL:  
+   Repository URL: login.cms.caltech.edu:/cs/courses/cs124/teams/waffle.git
+                   https://github.com/waffleOS/waffle.git
    commit ...
 
 ---- PRELIMINARIES ----
@@ -39,8 +41,22 @@ which parts.
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
 
+   Rahul: 50 hours
+   David: 45 hours
+   Robert:
+
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
+
+   Rahul: Implemented supplemental page table, mmap system call, and 
+          page fault handler for the virtual memory system. Debugged
+          and got most of the mmap tests working. Implemented stack
+          heuristic and other edge cases in distinguishing page faults 
+          from 
+   David: Implemented frame_table module, helped debug and think about
+          the general framework for virtual memory and different paging issues
+          implemented the swap module, and eviction policy.
+   Robert:
 
 Note that this design document is a bit long.  Most of the questions can be
 answered pretty briefly.  Don't feel a need to write a long answer if it is
@@ -54,25 +70,87 @@ not required by the question.
 >> A1: Copy here the declaration of each new or changed `struct' or
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
+Modified struct thread
+    Added struct mapping *mappings to track the mmapped files.
+    Added struct hash sup_page_table, the supplemental page table
+        to track page information for demand paging.
+
+NEW STRUCTS/VARIABLES:
+/* Physical memory frames. */
+Tracks the frames and their ages for eviction,
+as well as the associated page_info entries in the
+sup_page_table.
+struct frame {
+    /* Physical address. */
+    void *addr;
+    /* List elem to store in frame table. */
+    struct list_elem elem;
+    /* Associated page info. */
+    struct page_info *pinfo;
+    /* Age for aging policy. */ 
+    uint32_t age;
+};
+
+/* Supplemental page */
+Holds information to load pages when they are needed
+by demand paging.
+struct page_info {
+    uintptr_t page_num;
+    uint8_t * upage;
+    struct file *file;
+    off_t ofs;
+    uint32_t read_bytes;
+    uint32_t zero_bytes;
+    bool writable;
+    enum page_status status;
+    struct hash_elem elem;
+    struct frame *frame;
+    size_t swap_index;
+};
+
+
+/* frame_table.c static variables */
+/* Semaphore for frame table. */
+static struct semaphore frame_table_sem;
+/* Semaphore for free list. */
+static struct semaphore free_sem;
+/* List to store active frames. */
+static struct list frame_table;
+/* List to store free frames (after a process terminates). */
+static struct list free_frames;
+
+
 
 ---- ALGORITHMS ----
 
 >> A2: In a few paragraphs, describe your code for locating the frame,
 >> if any, that contains the data of a given page.
+We check for a page_info in the sup_page_table. If that doesn't exist
+then no frame exists. If it does, we check the page_info->frame.
+If that is not NULL, then its frame->addr gives the physical address
+of the frame.
 
 >> A3: How does your code coordinate accessed and dirty bits between
 >> kernel and user virtual addresses that alias a single frame, or
 >> alternatively how do you avoid the issue?
+We use the user virtual address's bits for eviction purposes, and reset
+the age when a frame mapping is changed by an eviction.
 
 ---- SYNCHRONIZATION ----
 
 >> A4: When two user processes both need a new frame at the same time,
 >> how are races avoided?
+Eviction is synchronized with a global semaphore for accessing the
+frame table.
 
 ---- RATIONALE ----
 
 >> A5: Why did you choose the data structure(s) that you did for
 >> representing virtual-to-physical mappings?
+Our frames and page_info structs have references to each other
+to easily go from one to the other. This lets us handle different
+cases that are important for virtual memory, such as saving 
+page data to a swap slot, given which frame we want to evict.
 
 		       PAGING TO AND FROM DISK
 		       =======================
@@ -83,18 +161,36 @@ not required by the question.
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+/* swap.c static variables */
+/* Bitmap to manage free slots. */
+static struct bitmap *swap_bitmap;
+/* Actual swap device. */
+static struct block *swap;
+/* Mutex to control swap device. */
+static struct semaphore swap_sem;
+/* Mutex to control bitmap. */
+static struct semaphore bm_sem;
+
 ---- ALGORITHMS ----
 
 >> B2: When a frame is required but none is free, some frame must be
 >> evicted.  Describe your code for choosing a frame to evict.
+The frame with the lowest age is selected.
 
 >> B3: When a process P obtains a frame that was previously used by a
 >> process Q, how do you adjust the page table (and any other data
 >> structures) to reflect the frame Q no longer has?
+The page table mapping is removed, and the SWAP status is given to
+the page_info to indicate that a new frame needs to be obtained
+and loaded with the desired data.
 
 >> B4: Explain your heuristic for deciding whether a page fault for an
 >> invalid virtual address should cause the stack to be extended into
 >> the page that faulted.
+We checked that the address was between esp - 64 and PHYS_BASE, which 
+was the heuristic suggested by Donnie on Piazza. 
+Thank you Donnie for all your advice on Piazza and in class, especially 
+for the detailed depiction of Virtual Memory for this project!
 
 ---- SYNCHRONIZATION ----
 
@@ -102,22 +198,36 @@ not required by the question.
 >> particular, explain how it prevents deadlock.  (Refer to the
 >> textbook for an explanation of the necessary conditions for
 >> deadlock.)
+Semaphores control access to critical data structures such as
+the frame_table and the swap bitmap/ block.
 
 >> B6: A page fault in process P can cause another process Q's frame
 >> to be evicted.  How do you ensure that Q cannot access or modify
 >> the page during the eviction process?  How do you avoid a race
 >> between P evicting Q's frame and Q faulting the page back in?
+Ideally we would have locks for each page_info, and obtain the lock
+for the page_info before unmapping the page from the page directory.
+That way the page fault handler would have to obtain the lock and
+wait for us to finish the eviction before getting a new frame and
+loading the swap data into it. However, we didn't have time to
+implement this.
+
 
 >> B7: Suppose a page fault in process P causes a page to be read from
 >> the file system or swap.  How do you ensure that a second process Q
 >> cannot interfere by e.g. attempting to evict the frame while it is
 >> still being read in?
+Again, a per page_info lock would be helpful to avoid this problem 
+and would force Q to wait until the page is free to evict.
 
 >> B8: Explain how you handle access to paged-out pages that occur
 >> during system calls.  Do you use page faults to bring in pages (as
 >> in user programs), or do you have a mechanism for "locking" frames
 >> into physical memory, or do you use some other design?  How do you
 >> gracefully handle attempted accesses to invalid virtual addresses?
+Page faults bring in pages. We check to see if a page_info exists
+in the sup_page_table for basic virtual memory validation. If it doesn't
+we go through the stack checks before exiting on an invalid address.
 
 ---- RATIONALE ----
 
@@ -126,6 +236,10 @@ not required by the question.
 >> complicates synchronization and raises the possibility for deadlock
 >> but allows for high parallelism.  Explain where your design falls
 >> along this continuum and why you chose to design it this way.
+Currently there are single locks for the frame_table, and swap modules
+because it is easier to implement. None of our team members have had
+extensive synchronization implementation, so we made the choice to
+avoid bugs.
 
 			 MEMORY MAPPED FILES
 			 ===================
@@ -135,6 +249,12 @@ not required by the question.
 >> C1: Copy here the declaration of each new or changed `struct' or
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
+/* Describes an mmap mapping */
+struct mapping {
+    uint8_t * upage;
+    struct file * file;
+    unsigned int num_pages;
+};
 
 ---- ALGORITHMS ----
 
@@ -165,9 +285,17 @@ penalized.  We can't fix things until we know about them.  :-)
 
 >> In your opinion, was this assignment, or any of the parts of it, too
 >> easy or too hard?  Did it take too long or too little time?
+This assignment was very challenging to debug. The large number of tests
+make each change take a long time to assess (especially changes that
+break some regression tests). The amount of code (and building from a
+imperfect project 4) made it difficult to isolate which part of the
+codebase needed to be changed to fix a given test.
 
 >> Did you find that working on a particular part of the assignment gave
 >> you greater insight into some aspect of OS design?
+This whole assignment gave a lot of insight into concurrency challenges,
+and how virtual memory works, even though we couldn't get it working
+perfectly. 
 
 >> Were there any parts of the assignment that you felt were unnecessarily
 >> tedious or pointless?
@@ -175,6 +303,7 @@ penalized.  We can't fix things until we know about them.  :-)
 >> Is there some particular fact or hint we should give students in
 >> future quarters to help them solve the problems?  Conversely, did you
 >> find any of our guidance to be misleading?
+TA guidance would be appreciated, especially when debugging.
 
 >> Do you have any suggestions for the instructor and/or TAs to more
 >> effectively assist students, either for future quarters or the remaining
