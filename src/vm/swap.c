@@ -42,17 +42,18 @@ void save_frame_page(struct frame *f) {
     }
     /* Otherwise move page to swap slot. */
     else { 
+        struct thread *t = thread_current();
+        pagedir_clear_page(&t->pagedir, pinfo->upage);
+
         pinfo->status = SWAP;
         f->pinfo = NULL;
         pinfo->swap_index = index;
-        struct thread *t = thread_current();
 
         /* Atomically write to block. */
         sema_down(&swap_sem);
         block_write(swap, index, pinfo->upage);
         sema_up(&swap_sem);
         
-        pagedir_clear_page(&t->pagedir, pinfo->upage);
     }
 }
 
