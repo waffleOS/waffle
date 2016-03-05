@@ -15,7 +15,12 @@ enum page_status {
     STACK
 };
 
-/* Physical memory frames. */
+/** 
+ * Physical memory frames. 
+ * This struct lets a frame be put in the frame table list,
+ * tracks its physical address, associated page_info, and
+ * age for eviction.
+ */
 struct frame {
     /* Physical address. */
     void *addr;
@@ -27,7 +32,11 @@ struct frame {
     uint32_t age;
 };
 
-/* Supplemental page */
+/** 
+ * Supplemental page 
+ * Holds information to load pages when they are needed
+ * by demand paging.
+ */
 struct page_info {
     uintptr_t page_num;
     uint8_t * upage;
@@ -42,7 +51,7 @@ struct page_info {
     size_t swap_index;
 };
 
-/* Mapping */
+/* Describes an mmap mapping */
 struct mapping {
     uint8_t * upage;
     struct file * file;
