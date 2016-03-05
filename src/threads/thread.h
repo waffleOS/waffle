@@ -106,6 +106,7 @@ struct thread {
     struct file * files[NUM_FILES];
     struct file * thread_file;
     struct mapping * mappings[NUM_FILES];
+    uint8_t * esp;
     /**@}*/
 
     /*! Shared between thread.c and synch.c. */

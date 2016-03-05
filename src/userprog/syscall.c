@@ -57,6 +57,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
 
 
     syscall_num = *((int *) f->esp);
+    thread_current()->esp = (uint8_t *) f->esp;
     /*printf("system call %d\n", syscall_num);*/
     
     // Declarations of arguments
@@ -583,7 +584,7 @@ bool validate_pointer(void *ptr) {
     struct page_info * page_info = page_info_lookup(&cur->sup_page_table, 
                                                     (uint8_t *) ptr); 
     if (page_info == NULL) {
-        return false;
+        return true;
     }
     else {
         return true;

@@ -164,6 +164,13 @@ static void page_fault(struct intr_frame *f) {
     {
         /* Look at the frame's esp. */
         uint8_t * esp = (uint8_t *) f->esp;
+        if (f->cs == SEL_KCSEG)
+        {
+            printf("Old ESP: %p\n", esp);
+            printf("New ESP: %p\n", t->esp);
+            printf("Fault addr: %p\n", fault_addr);
+            esp = t->esp;
+        }
         /* This is a heuristic for determining a stack access. */
         if ((uint8_t *) fault_addr >= esp - 64 && (uint8_t *) fault_addr < (uint8_t *) PHYS_BASE)
         {
