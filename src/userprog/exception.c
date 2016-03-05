@@ -166,9 +166,9 @@ static void page_fault(struct intr_frame *f) {
         uint8_t * esp = (uint8_t *) f->esp;
         if (f->cs == SEL_KCSEG)
         {
-            printf("Old ESP: %p\n", esp);
-            printf("New ESP: %p\n", t->esp);
-            printf("Fault addr: %p\n", fault_addr);
+            /*printf("Old ESP: %p\n", esp);*/
+            /*printf("New ESP: %p\n", t->esp);*/
+            /*printf("Fault addr: %p\n", fault_addr);*/
             esp = t->esp;
         }
         /* This is a heuristic for determining a stack access. */
@@ -181,17 +181,22 @@ static void page_fault(struct intr_frame *f) {
                 {
                    free_frame(frame); 
                 }
+                t->esp = fault_addr;
 
         }
         /* Otherwise, this is a "real" page fault. */
         else
         {
-            printf("Page fault at %p: %s error %s page in %s context.\n",
-                   fault_addr,
-                   not_present ? "not present" : "rights violation",
-                   write ? "writing" : "reading",
-                   user ? "user" : "kernel");
-            kill(f);
+            /*printf("Page fault at %p: %s error %s page in %s context.\n",*/
+                   /*fault_addr,*/
+                   /*not_present ? "not present" : "rights violation",*/
+                   /*write ? "writing" : "reading",*/
+                   /*user ? "user" : "kernel");*/
+            if (lock_held_by_current_thread(&file_lock))
+            {
+                lock_release(&file_lock);
+            }
+            do_exit(-1);
         }
     }
     /* Otherwise, the process is demanding a frame. */
@@ -217,7 +222,11 @@ static void page_fault(struct intr_frame *f) {
                 if (!install_page(page_info->upage, kpage, page_info->writable))
                 {
                     free_frame(frame);
-                    kill(f);
+                    if (lock_held_by_current_thread(&file_lock))
+                    {
+                        lock_release(&file_lock);
+                    }
+                    do_exit(-1);
                     return;
                 }
                 read_bytes = file_read(page_info->file, kpage, page_info->read_bytes);

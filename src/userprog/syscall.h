@@ -2,7 +2,7 @@
 #define USERPROG_SYSCALL_H
 #include "threads/synch.h"
 
-struct semaphore file_sem;
+struct lock file_lock;
 struct semaphore exec_sem;
 struct lock exec_lock;
 struct condition exec_cond;
