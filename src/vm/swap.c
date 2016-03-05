@@ -28,6 +28,11 @@ void init_swap() {
 void save_frame_page(struct frame *f) {
     size_t index;
     struct page_info *pinfo = f->pinfo;
+    if (pinfo == NULL)
+    {
+        /*printf("I am here\n");*/
+        return;
+    }
 
     //printf("Saving data at kpage %p upage %p to swap\n", f->addr, pinfo->upage);
     
@@ -43,16 +48,25 @@ void save_frame_page(struct frame *f) {
     /* Otherwise move page to swap slot. */
     else { 
         struct thread *t = thread_current();
-        pagedir_clear_page(&t->pagedir, pinfo->upage);
+        /*printf("Writing page to swap\n");*/
 
         pinfo->status = SWAP;
         f->pinfo = NULL;
         pinfo->swap_index = index;
 
         /* Atomically write to block. */
-        sema_down(&swap_sem);
-        block_write(swap, index, pinfo->upage);
-        sema_up(&swap_sem);
+        if (pagedir_is_dirty(&t->pagedir, pinfo->upage))
+        {
+            /*printf("Page is dirty\n");*/
+            sema_down(&swap_sem);
+            /*printf("Sema down swap\n");*/
+            /*printf("Upage: %p\n", pinfo->upage);*/
+            block_write(swap, index, pinfo->upage);
+            /*printf("Wrote page to swap\n");*/
+            sema_up(&swap_sem);
+
+        }
+        pagedir_clear_page(&t->pagedir, pinfo->upage);
         
     }
 }

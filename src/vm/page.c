@@ -91,5 +91,8 @@ void clean_up_sup_page_table(void) {
 
 void clean_up_elem(struct hash_elem *e, void *aux UNUSED) {
     struct page_info *p = hash_entry(e, struct page_info, elem);
+    /*printf("Setting page to dirty\n");*/
+    pagedir_set_dirty(&thread_current()->pagedir, p->upage, false);
+    /*p->frame->pinfo = NULL;*/
     free(p);
 }

@@ -45,6 +45,7 @@ struct frame *falloc(struct page_info *p) {
     /* Try to look for free frame in table */
     struct frame *f = get_free_frame();
     void *addr;
+    /*printf("Trying to get frame for: %p\n", p->upage);*/
 
     /* Add to frame_table if there is a free frame. */
     if (f != NULL) { 
@@ -78,18 +79,19 @@ struct frame *falloc(struct page_info *p) {
             f = evict_frame();
             
             /* If not mmaped file, add to swap.  */
-            if (p->status != MMAP_FILE) { 
+            /*if (f->pinfo != NULL && f->pinfo->status != MMAP_FILE) { */
                 /* If no swap space, kernel panic. */
                 save_frame_page(f);
-            }
-            else {
+            /*}*/
+            /*else {*/
                 /* TODO: write back to mmaped file. */
-            }
+            /*}*/
 
             f->pinfo = p;
             f->age = INIT_AGE;
         }
     }
+    /*printf("Got frame!\n");*/
 
     return f;
 }

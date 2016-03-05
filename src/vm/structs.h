@@ -30,6 +30,7 @@ struct frame {
     struct page_info *pinfo;
     /* Age for aging policy. */ 
     uint32_t age;
+    bool in_use;
 };
 
 /** 

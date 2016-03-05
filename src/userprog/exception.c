@@ -272,7 +272,7 @@ static void page_fault(struct intr_frame *f) {
                 break;
             /* Accessing data stored in swap. */
             case SWAP:
-                //printf("Restoring from swap\n");
+                /*printf("Restoring from swap\n");*/
                 
                 /* Get frame and install in page table. */
                 frame = falloc(page_info);
