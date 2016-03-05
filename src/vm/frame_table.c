@@ -5,6 +5,7 @@
 #include "threads/thread.h"
 #include "vm/frame_table.h"
 #include "vm/swap.h"
+#include "threads/vaddr.h"
 
 #define INIT_AGE UINT32_MAX
 
@@ -84,10 +85,21 @@ struct frame *falloc(struct page_info *p) {
             }
             else {
                 /* TODO: write back to mmaped file. */
+                struct thread * t = thread_current();
+                uint8_t * upage = p->upage;
+                struct file * f = file_reopen(p->file);
+                size_t page_write_bytes = PGSIZE;
+                if (pagedir_is_dirty(t->pagedir, upage))
+                {
+                    file_write(f, upage, page_write_bytes);
+                }
+                p->status = MMAP_FILE;
+                file_close(p->file);
             }
 
             f->pinfo = p;
             f->age = INIT_AGE;
+                
         }
     }
 

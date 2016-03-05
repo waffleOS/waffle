@@ -187,11 +187,15 @@ static void page_fault(struct intr_frame *f) {
         /* Otherwise, this is a "real" page fault. */
         else
         {
-            /*printf("Page fault at %p: %s error %s page in %s context.\n",*/
-                   /*fault_addr,*/
-                   /*not_present ? "not present" : "rights violation",*/
-                   /*write ? "writing" : "reading",*/
-                   /*user ? "user" : "kernel");*/
+            if(f->cs != SEL_KCSEG)
+            {
+                printf("Page fault at %p: %s error %s page in %s context.\n",
+                       fault_addr,
+                       not_present ? "not present" : "rights violation",
+                       write ? "writing" : "reading",
+                       user ? "user" : "kernel");
+            }
+
             if (lock_held_by_current_thread(&file_lock))
             {
                 lock_release(&file_lock);
