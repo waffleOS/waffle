@@ -36,6 +36,7 @@ void * sanitize_buffer(void ** buffer);
 mapid_t do_mmap(int fd, void *addr);
 void do_munmap(mapid_t mapping);
 
+/* Initializes syscall module, including synchronization mutexes. */
 void syscall_init(void) {
     intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
     lock_init(&file_lock);
@@ -44,6 +45,7 @@ void syscall_init(void) {
     cond_init(&exec_cond);
 }
 
+/* Kernel code for dispatching system calls. */
 static void syscall_handler(struct intr_frame *f UNUSED) {
     int syscall_num;
 
