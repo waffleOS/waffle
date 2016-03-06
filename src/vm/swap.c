@@ -85,7 +85,14 @@ void restore_page(struct page_info *p) {
 
     /*printf("Restoring data at upage %p from swap\n", p->upage);*/
     sema_down(&swap_sem);
-    block_read(swap, index, p->frame->addr);
+    int i;
+    void * addr = p->frame->addr;
+    for (i = 0; i < PGSIZE / BLOCK_SECTOR_SIZE; i++)
+    {
+        /*printf("Writing to swap, iter %d\n", i);*/
+        block_read(swap, index + i, addr);
+        addr += BLOCK_SECTOR_SIZE;
+    }
     sema_up(&swap_sem);
     
     /* Allow to be used by other frames. */
