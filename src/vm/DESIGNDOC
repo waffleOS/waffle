@@ -13,7 +13,7 @@ Robert Eng   <reng@caltech.edu>
 David Qu     <dqu@caltech.edu>
 
 >> Specify how many late tokens you are using on this assignment:  
-2
+3
 
 >> What is the Git repository and commit hash for your submission?
    (You only need to include the commit-hash in the file you submit
@@ -41,8 +41,8 @@ which parts.
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
 
-   Rahul: 50 hours
-   David: 45 hours
+   Rahul: 55 hours
+   David: 50 hours
    Robert:
 
 >> L2: What did each team member focus on for this assignment?  Keep
@@ -70,12 +70,14 @@ not required by the question.
 >> A1: Copy here the declaration of each new or changed `struct' or
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
+
 Modified struct thread
     Added struct mapping *mappings to track the mmapped files.
     Added struct hash sup_page_table, the supplemental page table
         to track page information for demand paging.
 
 NEW STRUCTS/VARIABLES:
+
 /* Physical memory frames. */
 Tracks the frames and their ages for eviction,
 as well as the associated page_info entries in the
@@ -125,6 +127,7 @@ static struct list free_frames;
 
 >> A2: In a few paragraphs, describe your code for locating the frame,
 >> if any, that contains the data of a given page.
+
 We check for a page_info in the sup_page_table. If that doesn't exist
 then no frame exists. If it does, we check the page_info->frame.
 If that is not NULL, then its frame->addr gives the physical address
@@ -133,6 +136,7 @@ of the frame.
 >> A3: How does your code coordinate accessed and dirty bits between
 >> kernel and user virtual addresses that alias a single frame, or
 >> alternatively how do you avoid the issue?
+
 We use the user virtual address's bits for eviction purposes, and reset
 the age when a frame mapping is changed by an eviction.
 
@@ -140,6 +144,7 @@ the age when a frame mapping is changed by an eviction.
 
 >> A4: When two user processes both need a new frame at the same time,
 >> how are races avoided?
+
 Eviction is synchronized with a global semaphore for accessing the
 frame table.
 
@@ -147,6 +152,7 @@ frame table.
 
 >> A5: Why did you choose the data structure(s) that you did for
 >> representing virtual-to-physical mappings?
+
 Our frames and page_info structs have references to each other
 to easily go from one to the other. This lets us handle different
 cases that are important for virtual memory, such as saving 
@@ -175,11 +181,13 @@ static struct semaphore bm_sem;
 
 >> B2: When a frame is required but none is free, some frame must be
 >> evicted.  Describe your code for choosing a frame to evict.
+
 The frame with the lowest age is selected.
 
 >> B3: When a process P obtains a frame that was previously used by a
 >> process Q, how do you adjust the page table (and any other data
 >> structures) to reflect the frame Q no longer has?
+
 The page table mapping is removed, and the SWAP status is given to
 the page_info to indicate that a new frame needs to be obtained
 and loaded with the desired data.
@@ -187,6 +195,7 @@ and loaded with the desired data.
 >> B4: Explain your heuristic for deciding whether a page fault for an
 >> invalid virtual address should cause the stack to be extended into
 >> the page that faulted.
+
 We checked that the address was between esp - 64 and PHYS_BASE, which 
 was the heuristic suggested by Donnie on Piazza. 
 Thank you Donnie for all your advice on Piazza and in class, especially 
@@ -198,6 +207,7 @@ for the detailed depiction of Virtual Memory for this project!
 >> particular, explain how it prevents deadlock.  (Refer to the
 >> textbook for an explanation of the necessary conditions for
 >> deadlock.)
+
 Semaphores control access to critical data structures such as
 the frame_table and the swap bitmap/ block.
 
