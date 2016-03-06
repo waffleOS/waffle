@@ -146,7 +146,11 @@ void thread_print_stats(void) {
            idle_ticks, kernel_ticks, user_ticks);
 }
 
+/* Returns the next file descriptor available */
 int next_fd(struct thread * t) {
+
+    /* Iterate through all file descriptors and return the first one that
+     * is NULL */
     int i;
     for (i = 0; i < NUM_FILES; i++)
     {
@@ -155,19 +159,27 @@ int next_fd(struct thread * t) {
             return i + 2;
         }
     }
+
+    /* There are no file descriptors available */
     return -1;
 }
 
+/* Checks if a given file descriptor is valid */
 bool is_valid_fd(struct thread * t, int fd) {
-   if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
-   {
-       return true;
-   }
 
-   return false;
+    /* Check if the file descriptor is in range and is not NULL */
+    if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+    {
+       return true;
+    }
+
+    return false;
 }
 
+/* Returns the next mapping id available */
 int next_map(struct thread * t) {
+
+    /* Iterate through all mapping ids and return the first one that is NULL */
     int i;
     for (i = 0; i < NUM_FILES; i++)
     {
@@ -176,16 +188,21 @@ int next_map(struct thread * t) {
             return i;
         }
     }
+
+    /* There are no mapping ids available */
     return -1;
 }
 
+/* Checks if a given mapping id is valid */
 bool is_valid_map(struct thread * t, int map) {
-   if (map >= 0 && map < NUM_FILES && t->mappings[map] != NULL)
-   {
-       return true;
-   }
 
-   return false;
+    /* Check if the mapping id is in range and is not NULL */
+    if (map >= 0 && map < NUM_FILES && t->mappings[map] != NULL)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 /*! Creates a new kernel thread named NAME with the given initial PRIORITY,
