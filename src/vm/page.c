@@ -31,8 +31,10 @@ struct page_info * install_page_info(uint8_t * upage, struct file * file, off_t 
     p_info->zero_bytes = zero_bytes;
     p_info->writable = writable;
     p_info->status = status;
+    p_info->frame = NULL;
 
     struct thread * t = thread_current();
+    p_info->pagedir = t->pagedir;
     bool success = hash_insert(&t->sup_page_table, &p_info->elem) == NULL;
     return success ? p_info : NULL;
 }
@@ -92,7 +94,12 @@ void clean_up_sup_page_table(void) {
 void clean_up_elem(struct hash_elem *e, void *aux UNUSED) {
     struct page_info *p = hash_entry(e, struct page_info, elem);
     /*printf("Setting page to dirty\n");*/
-    pagedir_set_dirty(&thread_current()->pagedir, p->upage, false);
+    /*pagedir_set_dirty(&thread_current()->pagedir, p->upage, false);*/
     /*p->frame->pinfo = NULL;*/
+    if(p->frame != NULL)
+    {
+        /*printf("Clearing frame: %p\n", p->frame);*/
+        free_frame(p->frame);
+    }
     free(p);
 }

@@ -50,6 +50,7 @@ struct page_info {
     struct hash_elem elem;
     struct frame *frame;
     size_t swap_index;
+    uint32_t * pagedir;
 };
 
 /* Describes an mmap mapping */

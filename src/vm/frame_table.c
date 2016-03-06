@@ -51,6 +51,7 @@ struct frame *falloc(struct page_info *p) {
     if (f != NULL) { 
         f->pinfo = p;
         f->age = INIT_AGE;
+        p->frame = f;
 
         /* Synchronously add to frame_table. */
         sema_down(&frame_table_sem);
@@ -67,6 +68,7 @@ struct frame *falloc(struct page_info *p) {
             f->addr = addr;
             f->pinfo = p;
             f->age = INIT_AGE;
+            p->frame = f;
 
             /* Synchronously add to frame_table. */
             sema_down(&frame_table_sem);
@@ -79,16 +81,20 @@ struct frame *falloc(struct page_info *p) {
             f = evict_frame();
             
             /* If not mmaped file, add to swap.  */
-            /*if (f->pinfo != NULL && f->pinfo->status != MMAP_FILE) { */
+            if (f->pinfo->status != MMAP_FILE) { 
                 /* If no swap space, kernel panic. */
+                /*printf("Saving frame\n");*/
                 save_frame_page(f);
-            /*}*/
-            /*else {*/
+                /*printf("Frame saved!\n");*/
+                
+            }
+            else {
                 /* TODO: write back to mmaped file. */
-            /*}*/
+            }
 
             f->pinfo = p;
             f->age = INIT_AGE;
+            p->frame = f;
         }
     }
     /*printf("Got frame!\n");*/
