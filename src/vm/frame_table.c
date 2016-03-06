@@ -46,12 +46,15 @@ struct frame *falloc(struct page_info *p) {
     /* Try to look for free frame in table */
     struct frame *f = get_free_frame();
     void *addr;
-    /*printf("Trying to get frame for: %p\n", p->upage);*/
 
     /* Add to frame_table if there is a free frame. */
     if (f != NULL) { 
+
+        /* Set the frame page_info */
         f->pinfo = p;
         f->age = INIT_AGE;
+
+        /* Set the frame of the given page_info to the new frame */
         p->frame = f;
 
         /* Synchronously add to frame_table. */
@@ -67,8 +70,12 @@ struct frame *falloc(struct page_info *p) {
             /* Allocate new frame struct. */ 
             f = malloc(sizeof(struct frame));
             f->addr = addr;
+
+            /* Set the frame page_info */
             f->pinfo = p;
             f->age = INIT_AGE;
+            
+            /* Set the frame of the given page_info to the new frame */
             p->frame = f;
 
             /* Synchronously add to frame_table. */
@@ -84,31 +91,35 @@ struct frame *falloc(struct page_info *p) {
             /* If not mmaped file, add to swap.  */
             if (f->pinfo->status != MMAP_FILE) { 
                 /* If no swap space, kernel panic. */
-                /*printf("Saving frame\n");*/
                 save_frame_page(f);
-                /*printf("Frame saved!\n");*/
                 
             }
+
+            /* Mapped file, write to file */
             else if (f->pinfo->status == MMAP_FILE) {
-                /* TODO: write back to mmaped file. */
                 uint8_t * upage = f->pinfo->upage;
+
+                /* Open the mapped file */
                 struct file * file = file_reopen(f->pinfo->file);
-                /*file_seek(file, f->pinfo->ofs);*/
                 size_t page_write_bytes = PGSIZE;
+
+                /* Write the page to the file if the page is dirty */
                 if (pagedir_is_dirty(p->pagedir, upage))
                 {
                     file_write(file, f->addr, page_write_bytes);
                 }
-                /*f->pinfo->status = MMAP_FILE;*/
+
                 file_close(f->pinfo->file);
             }
 
+            /* Set the frame page_info */
             f->pinfo = p;
             f->age = INIT_AGE;
+
+            /* Set the frame of the given page_info to the new frame */
             p->frame = f;
         }
     }
-    /*printf("Got frame!\n");*/
 
     return f;
 }
