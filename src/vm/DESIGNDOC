@@ -43,7 +43,7 @@ which parts.
 
    Rahul: 60 hours
    David: 53 hours
-   Robert:
+   Robert: 5 hours
 
 >> L2: What did each team member focus on for this assignment?  Keep
    descriptions to 25-30 words or less.
@@ -57,7 +57,14 @@ which parts.
           the general framework for virtual memory and different paging issues
           implemented the swap module, and eviction policy. Implemented
           clean-up of supplemental page table.
-   Robert:
+   Robert:I spent most of these past 4 months on preparing for Hacktech,
+          Caltech's major hackathon, which happened this past weekend. Beyond
+          bouncing ideas off of my teammates and getting to know the codebase,
+          I didn't have time until we were into the debugging phase at which
+          point is was a more productive use of time to work on the next week's
+          assignment than try and dig through code and debug. As such, I've
+          been working on the filesystem and will make the time up on the
+          last lab. Sorry Donnie :(
 
 Note that this design document is a bit long.  Most of the questions can be
 answered pretty briefly.  Don't feel a need to write a long answer if it is
@@ -94,9 +101,11 @@ struct frame {
     uint32_t age;
 };
 
-/* Supplemental page */
-Holds information to load pages when they are needed
-by demand paging.
+/** 
+ * Supplemental page 
+ * Holds information to load pages when they are needed
+ * by demand paging.
+ */
 struct page_info {
     uintptr_t page_num;
     uint8_t * upage;
@@ -109,8 +118,8 @@ struct page_info {
     struct hash_elem elem;
     struct frame *frame;
     size_t swap_index;
+    uint32_t * pagedir;
 };
-
 
 /* frame_table.c static variables */
 /* Semaphore for frame table. */
