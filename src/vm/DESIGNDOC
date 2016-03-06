@@ -278,8 +278,18 @@ struct mapping {
 >> memory subsystem.  Explain how the page fault and eviction
 >> processes differ between swap pages and other pages.
 
+Memory mapped files are stored in a frame like other pages. The supplemental
+page table entry for the mmap file has a status MMAP_FILE. This lets us
+handle it differently for eviction and restoring in the page_fault handler.
+When a mmap file is evicted, it is written to the file if the page is dirty.
+When a mmap file is restored, it is restored from disk rather than swap.
+
 >> C3: Explain how you determine whether a new file mapping overlaps
 >> any existing segment.
+
+When we mmap a file, we check if the virtual address where we are installing
+the page is already used. If so, then we free the frames that we have allocated
+so far and return.
 
 ---- RATIONALE ----
 
@@ -289,6 +299,11 @@ struct mapping {
 >> that much of their implementation can be shared.  Explain why your
 >> implementation either does or does not share much of the code for
 >> the two situations.
+
+Our code does share much of the same implementation for both the situations.
+The only difference between data from executables and mmap files is in the
+eviction and restoring policies. The same logic is used for allocating and
+installing new frames in the page_fault handler.
 
 			   SURVEY QUESTIONS
 			   ================
@@ -321,6 +336,7 @@ perfectly.
 >> Is there some particular fact or hint we should give students in
 >> future quarters to help them solve the problems?  Conversely, did you
 >> find any of our guidance to be misleading?
+
 TA guidance would be appreciated, especially when debugging.
 
 >> Do you have any suggestions for the instructor and/or TAs to more
