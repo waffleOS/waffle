@@ -474,13 +474,16 @@ void do_close(int fd)
     }
 }
 
+/* Maps a file to a address */
 mapid_t do_mmap(int fd, void *addr)
 {
+    /* We cannot map stdin or stdout */
     if (fd == 0 || fd == 1)
     {
         return -1;
     }
 
+    /* We cannot map anything to the 0 address or to the middle of a page */
     if (addr == 0 || pg_ofs(addr) != 0)
     {
         return -1;
@@ -488,13 +491,18 @@ mapid_t do_mmap(int fd, void *addr)
 
     struct thread * t = thread_current();
 
+    /* Check if the file descriptor we are mapping is valid */
     if (!is_valid_fd(t, fd))
     {
         return -1;
     }
 
+    /* Open the mmap file since it may be closed */
     struct file * f = file_reopen(t->files[fd - 2]);
+
     int read_bytes = do_filesize(fd);
+
+    /* We cannot map a file with empty length */
     if (read_bytes == 0)
     {
         return -1;
@@ -505,6 +513,7 @@ mapid_t do_mmap(int fd, void *addr)
     unsigned int num_pages = 0;
     uint8_t * upage = addr;
 
+    /* Seek to the start of the file */
     do_seek(fd, 0);
     while (read_bytes > 0) {
         /* Calculate how to fill this page.
@@ -513,9 +522,15 @@ mapid_t do_mmap(int fd, void *addr)
         size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
         size_t page_zero_bytes = PGSIZE - page_read_bytes;
 
+        /* Install the page info for the current page */
         struct page_info * p_info = install_page_info(addr, f, ofs, page_read_bytes, page_zero_bytes, writable, MMAP_FILE);
+        
+        /* Check if we were able to install the page info */
         if (p_info == NULL)
         {
+
+            /* Installing the page info failed so we delete all page infos
+             * installed so far */
             while (num_pages > 0)
             {
                 page_info_delete(&t->sup_page_table, upage);
@@ -531,43 +546,63 @@ mapid_t do_mmap(int fd, void *addr)
         num_pages++;
     }
 
+    /* Allocate a mapping */
     struct mapping * m = (struct mapping *) malloc(sizeof(struct mapping));
+
+    /* Update the information of the mapping */
     m->upage = upage;
     m->file = f;
     m->num_pages = num_pages;
+
+    /* Get an available mapping id */
     int map = next_map(t);     
     t->mappings[map] = m; 
 }
 
+/* Unmaps a mapping */
 void do_munmap(mapid_t mapping)
 {
     struct thread * t = thread_current();
+
+    /* Check if the given mapping id is valid */
     if (!is_valid_map(t, mapping))
     {
         return; 
     }
 
+    /* Get the mapping */
     struct mapping * m = t->mappings[mapping];
     uint8_t * upage = m->upage;
+
+    /* Reopen the mmap file since it may be closed */
     struct file * f = file_reopen(m->file);
     int filesize = file_length(m->file);
     int ofs = 0;
+
+    /* Iterate through the number of pages mapped */
     int i;
     for (i = 0; i < m->num_pages; i++)
     {
+        /* Write the minimum of filesize - ofs and PGSIZE */
         size_t page_write_bytes = filesize - ofs < PGSIZE ? filesize - ofs : PGSIZE;
+
+        /* If the page has been written to, write it to file */
         if (pagedir_is_dirty(t->pagedir, upage))
         {
             file_write(m->file, upage, page_write_bytes);
         }
 
+        /* Remove the page info */
         page_info_delete(&t->sup_page_table, upage);
+
+        /* Remove the page from the current thread's pagedir */
         pagedir_clear_page(t->pagedir, upage);
 
         upage += PGSIZE;
         ofs += PGSIZE;
     }
 
+    /* Clean up */
     file_close(m->file);
     free(t->mappings[mapping]);
     t->mappings[mapping] = NULL;
@@ -581,8 +616,11 @@ bool validate_pointer(void *ptr) {
     }
     
     struct thread *cur = thread_current();
+    
+    /* Get the page info for the address */
     struct page_info * page_info = page_info_lookup(&cur->sup_page_table, 
                                                     (uint8_t *) ptr); 
+    /* Check if the address has been mapped */
     if (page_info == NULL) {
         return true;
     }
