@@ -5,6 +5,7 @@
 #include "threads/synch.h"
 #include "threads/thread.h"
 #include "userprog/pagedir.h"
+#include "threads/vaddr.h"
 
 /* Static variables */
 /* Bitmap to manage free slots. */
@@ -34,11 +35,11 @@ void save_frame_page(struct frame *f) {
         return;
     }
 
-    //printf("Saving data at kpage %p upage %p to swap\n", f->addr, pinfo->upage);
+    /*printf("Saving data at kpage %p upage %p to swap\n", f->addr, pinfo->upage);*/
     
     /* Obtain index of swap slot to use. */
     sema_down(&bm_sem);
-    index = bitmap_scan_and_flip(swap_bitmap, 0, 1, false);
+    index = bitmap_scan_and_flip(swap_bitmap, 0, 8, false);
     sema_up(&bm_sem);
 
     /* Panic if no space available. */
@@ -55,18 +56,25 @@ void save_frame_page(struct frame *f) {
         pinfo->swap_index = index;
 
         /* Atomically write to block. */
-        if (pagedir_is_dirty(&t->pagedir, pinfo->upage))
+        if (pagedir_is_dirty(pinfo->pagedir, pinfo->upage))
         {
             /*printf("Page is dirty\n");*/
             sema_down(&swap_sem);
             /*printf("Sema down swap\n");*/
             /*printf("Upage: %p\n", pinfo->upage);*/
-            block_write(swap, index, pinfo->upage);
+            int i;
+            void * addr = f->addr;
+            for (i = 0; i < PGSIZE / BLOCK_SECTOR_SIZE; i++)
+            {
+                /*printf("Writing to swap, iter %d\n", i);*/
+                block_write(swap, index + i, addr);
+                addr += BLOCK_SECTOR_SIZE;
+            }
             /*printf("Wrote page to swap\n");*/
             sema_up(&swap_sem);
 
         }
-        pagedir_clear_page(&t->pagedir, pinfo->upage);
+        pagedir_clear_page(pinfo->pagedir, pinfo->upage);
         
     }
 }
@@ -75,9 +83,9 @@ void save_frame_page(struct frame *f) {
 void restore_page(struct page_info *p) {
     size_t index = p->swap_index;
 
-    //printf("Restoring data at upage %p from swap\n", p->upage);
+    /*printf("Restoring data at upage %p from swap\n", p->upage);*/
     sema_down(&swap_sem);
-    block_read(swap, index, p->upage);
+    block_read(swap, index, p->frame->addr);
     sema_up(&swap_sem);
     
     /* Allow to be used by other frames. */
