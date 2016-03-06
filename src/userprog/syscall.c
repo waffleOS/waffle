@@ -615,18 +615,7 @@ bool validate_pointer(void *ptr) {
         return false;
     }
     
-    struct thread *cur = thread_current();
-    
-    /* Get the page info for the address */
-    struct page_info * page_info = page_info_lookup(&cur->sup_page_table, 
-                                                    (uint8_t *) ptr); 
-    /* Check if the address has been mapped */
-    if (page_info == NULL) {
-        return true;
-    }
-    else {
-        return true;
-    }
+    return true;
 }
 
 /* Validates pointers and dereferences */
