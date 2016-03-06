@@ -5,6 +5,7 @@
 #include "threads/thread.h"
 #include "vm/frame_table.h"
 #include "vm/swap.h"
+#include "threads/vaddr.h"
 
 #define INIT_AGE UINT32_MAX
 
@@ -51,6 +52,7 @@ struct frame *falloc(struct page_info *p) {
     if (f != NULL) { 
         f->pinfo = p;
         f->age = INIT_AGE;
+        p->frame = f;
 
         /* Synchronously add to frame_table. */
         sema_down(&frame_table_sem);
@@ -67,6 +69,7 @@ struct frame *falloc(struct page_info *p) {
             f->addr = addr;
             f->pinfo = p;
             f->age = INIT_AGE;
+            p->frame = f;
 
             /* Synchronously add to frame_table. */
             sema_down(&frame_table_sem);
@@ -79,16 +82,29 @@ struct frame *falloc(struct page_info *p) {
             f = evict_frame();
             
             /* If not mmaped file, add to swap.  */
-            /*if (f->pinfo != NULL && f->pinfo->status != MMAP_FILE) { */
+            if (f->pinfo->status != MMAP_FILE) { 
                 /* If no swap space, kernel panic. */
+                /*printf("Saving frame\n");*/
                 save_frame_page(f);
-            /*}*/
-            /*else {*/
+                /*printf("Frame saved!\n");*/
+                
+            }
+            else if (f->pinfo->status == MMAP_FILE) {
                 /* TODO: write back to mmaped file. */
-            /*}*/
+                uint8_t * upage = f->pinfo->upage;
+                struct file * file = file_reopen(f->pinfo->file);
+                size_t page_write_bytes = PGSIZE;
+                if (pagedir_is_dirty(p->pagedir, upage))
+                {
+                    file_write(file, f->addr, page_write_bytes);
+                }
+                f->pinfo->status = MMAP_FILE;
+                file_close(f->pinfo->file);
+            }
 
             f->pinfo = p;
             f->age = INIT_AGE;
+            p->frame = f;
         }
     }
     /*printf("Got frame!\n");*/

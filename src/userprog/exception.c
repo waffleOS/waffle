@@ -279,12 +279,13 @@ static void page_fault(struct intr_frame *f) {
                 kpage = frame->addr;
                 if (!install_page(page_info->upage, kpage, page_info->writable))
                 {
-                    //printf("Install page failed.\n");
+                    /*printf("Install page failed.\n");*/
                     free_frame(frame);
                     kill(f);
                     return;
                 }
                 else {
+                    page_info->frame = frame;
                     restore_page(page_info);
                 }
                 break;
