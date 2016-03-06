@@ -164,38 +164,52 @@ static void page_fault(struct intr_frame *f) {
     {
         /* Look at the frame's esp. */
         uint8_t * esp = (uint8_t *) f->esp;
+
+        /* Check if the page fault is in kernel context. If so, we need to load
+         * the esp from the thread since f->esp is the kernel esp */
         if (f->cs == SEL_KCSEG)
         {
-            /*printf("Old ESP: %p\n", esp);*/
-            /*printf("New ESP: %p\n", t->esp);*/
-            /*printf("Fault addr: %p\n", fault_addr);*/
             esp = t->esp;
         }
         /* This is a heuristic for determining a stack access. */
         if ((uint8_t *) fault_addr >= esp - 64 && (uint8_t *) fault_addr < (uint8_t *) PHYS_BASE)
         {
+                /* Install a new page for the stack */
                 struct page_info * page_info = install_page_info(fault_addr, NULL, 0, 0, 0, false, STACK);
                 struct frame * frame = falloc(page_info);
                 uint8_t * kpage = frame->addr;
+
+                /* Free the frame if we were not able to install the page */
                 if(!install_page(pg_round_down(fault_addr), kpage, true))
                 {
                    free_frame(frame); 
                 }
+
+                /* Update the esp of the current thread */
                 t->esp = fault_addr;
 
         }
         /* Otherwise, this is a "real" page fault. */
         else
         {
+            /* Printing this causes some tests to fail but does not change
+             * any functionality */
+
             /*printf("Page fault at %p: %s error %s page in %s context.\n",*/
                    /*fault_addr,*/
                    /*not_present ? "not present" : "rights violation",*/
                    /*write ? "writing" : "reading",*/
                    /*user ? "user" : "kernel");*/
+
+            /* Check if the file_lock defined in syscall.h is held by the
+             * current thread. If so, then release it so we can reacquire it
+             * when closing the file for the thread to exit */
             if (lock_held_by_current_thread(&file_lock))
             {
                 lock_release(&file_lock);
             }
+
+            /* Exit the thread */
             do_exit(-1);
         }
     }
@@ -222,73 +236,99 @@ static void page_fault(struct intr_frame *f) {
                 if (!install_page(page_info->upage, kpage, page_info->writable))
                 {
                     free_frame(frame);
+
+                    /* Check if the file_lock defined in syscall.h is held by the
+                     * current thread. If so, then release it so we can reacquire it
+                     * when closing the file for the thread to exit */
                     if (lock_held_by_current_thread(&file_lock))
                     {
                         lock_release(&file_lock);
                     }
+
+                    /* Exit the thread */
                     do_exit(-1);
                     return;
                 }
+
+                /* Load data from the file */
                 read_bytes = file_read(page_info->file, kpage, page_info->read_bytes);
+
+                /* If we did not read all the data, free the frame */
                 if (read_bytes != (int) page_info->read_bytes) {
                     free_frame(frame);
                     return;
                 }
-                // printf("Data loaded upage %p \n", page_info->upage);
-                /*if (file_read(page_info->file, page_info->upage, page_info->read_bytes) != (int) page_info->read_bytes) {*/
-                    /*free_frame(f);*/
-                    /*return;*/
-                /*}*/
+
                 /* Clear out the remaining memory to avoid leaking previous data. */
                 memset(kpage + page_info->read_bytes, 0, page_info->zero_bytes);
 
                 break;
+
             /* mmap access of a file. */
             case MMAP_FILE:
+
+                /* Reopen the mmap file since it may be closed */
                 file = file_reopen(page_info->file);
+
+                /* Seek to the correct position in the file */
                 file_seek(file, page_info->ofs);
+
                 frame = falloc(page_info);
                 kpage = frame->addr;
+
+                /* Install the page for the mmap file */
                 if (!install_page(page_info->upage, kpage, page_info->writable))
                 {
                     free_frame(frame);
                     kill(f);
                     return;
                 }
+
+                /* Load data from the file */
                 read_bytes = file_read(file, kpage, page_info->read_bytes);
+
+                /* If we did not read all the data, free the frame */
                 if (read_bytes != (int) page_info->read_bytes) {
                     free_frame(frame);
                     return;
                 }
-                /*if (file_read(page_info->file, page_info->upage, page_info->read_bytes) != (int) page_info->read_bytes) {*/
-                    /*free_frame(f);*/
-                    /*return;*/
-                /*}*/
+
+                /* Clear out the remaining memory to avoid leaking previous
+                 * data */
                 memset(kpage + page_info->read_bytes, 0, page_info->zero_bytes);
+
                 file_close(file);
                 break;
+
             /* Anonymous file. */
             case ANON_FILE:
                 break;
+
             /* Accessing data stored in swap. */
             case SWAP:
-                /*printf("Restoring from swap\n");*/
-                
                 /* Get frame and install in page table. */
                 frame = falloc(page_info);
                 kpage = frame->addr;
+
+                /* Install the page for swap */
                 if (!install_page(page_info->upage, kpage, page_info->writable))
                 {
-                    /*printf("Install page failed.\n");*/
                     free_frame(frame);
                     kill(f);
                     return;
                 }
-                else {
+
+                /* If we successfully installed the page, update page_info */
+                else
+                {
+                    /* Set the frame of page_info to the new frame */
                     page_info->frame = frame;
+
+                    /* Load the data from swap */
                     restore_page(page_info);
                 }
                 break;
+
             /* Accessing the stack. */
             case STACK:
                 /* Get frame and install in page table. */
