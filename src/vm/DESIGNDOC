@@ -41,8 +41,8 @@ which parts.
 >> L1: How many hours did each team member spend on this assignment?
    Make sure that each member's total time is listed.
 
-   Rahul: 55 hours
-   David: 50 hours
+   Rahul: 60 hours
+   David: 53 hours
    Robert:
 
 >> L2: What did each team member focus on for this assignment?  Keep
@@ -52,10 +52,11 @@ which parts.
           page fault handler for the virtual memory system. Debugged
           and got most of the mmap tests working. Implemented stack
           heuristic and other edge cases in distinguishing page faults 
-          from 
+          from real page faults. Debugged and fixed eviction for swap. 
    David: Implemented frame_table module, helped debug and think about
           the general framework for virtual memory and different paging issues
-          implemented the swap module, and eviction policy.
+          implemented the swap module, and eviction policy. Implemented
+          clean-up of supplemental page table.
    Robert:
 
 Note that this design document is a bit long.  Most of the questions can be
@@ -128,7 +129,7 @@ static struct list free_frames;
 >> A2: In a few paragraphs, describe your code for locating the frame,
 >> if any, that contains the data of a given page.
 
-We check for a page_info in the sup_page_table. If that doesn't exist
+We check for a page_info in the sup_page_table. If that doesn't exist,
 then no frame exists. If it does, we check the page_info->frame.
 If that is not NULL, then its frame->addr gives the physical address
 of the frame.
@@ -215,6 +216,7 @@ the frame_table and the swap bitmap/ block.
 >> to be evicted.  How do you ensure that Q cannot access or modify
 >> the page during the eviction process?  How do you avoid a race
 >> between P evicting Q's frame and Q faulting the page back in?
+
 Ideally we would have locks for each page_info, and obtain the lock
 for the page_info before unmapping the page from the page directory.
 That way the page fault handler would have to obtain the lock and
@@ -227,6 +229,7 @@ implement this.
 >> the file system or swap.  How do you ensure that a second process Q
 >> cannot interfere by e.g. attempting to evict the frame while it is
 >> still being read in?
+
 Again, a per page_info lock would be helpful to avoid this problem 
 and would force Q to wait until the page is free to evict.
 
@@ -235,6 +238,7 @@ and would force Q to wait until the page is free to evict.
 >> in user programs), or do you have a mechanism for "locking" frames
 >> into physical memory, or do you use some other design?  How do you
 >> gracefully handle attempted accesses to invalid virtual addresses?
+
 Page faults bring in pages. We check to see if a page_info exists
 in the sup_page_table for basic virtual memory validation. If it doesn't
 we go through the stack checks before exiting on an invalid address.
@@ -246,6 +250,7 @@ we go through the stack checks before exiting on an invalid address.
 >> complicates synchronization and raises the possibility for deadlock
 >> but allows for high parallelism.  Explain where your design falls
 >> along this continuum and why you chose to design it this way.
+
 Currently there are single locks for the frame_table, and swap modules
 because it is easier to implement. None of our team members have had
 extensive synchronization implementation, so we made the choice to
@@ -259,6 +264,7 @@ avoid bugs.
 >> C1: Copy here the declaration of each new or changed `struct' or
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
+
 /* Describes an mmap mapping */
 struct mapping {
     uint8_t * upage;
@@ -295,6 +301,7 @@ penalized.  We can't fix things until we know about them.  :-)
 
 >> In your opinion, was this assignment, or any of the parts of it, too
 >> easy or too hard?  Did it take too long or too little time?
+
 This assignment was very challenging to debug. The large number of tests
 make each change take a long time to assess (especially changes that
 break some regression tests). The amount of code (and building from a
@@ -303,6 +310,7 @@ codebase needed to be changed to fix a given test.
 
 >> Did you find that working on a particular part of the assignment gave
 >> you greater insight into some aspect of OS design?
+
 This whole assignment gave a lot of insight into concurrency challenges,
 and how virtual memory works, even though we couldn't get it working
 perfectly. 
