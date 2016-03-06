@@ -96,6 +96,7 @@ void thread_init(void) {
     list_init(&ready_list);
     list_init(&all_list);
 
+    /* Initialize the frame table */
     init_frame_table();
 
     /* Set up a thread structure for the running thread. */
@@ -344,6 +345,8 @@ void thread_exit(void) {
        when it calls thread_schedule_tail(). */
     intr_disable();
     struct thread *cur = thread_current();
+
+    /* Close the executable file for this thread */
     lock_acquire(&file_lock);
     file_close(cur->thread_file);
     lock_release(&file_lock);
