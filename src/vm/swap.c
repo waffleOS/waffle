@@ -29,13 +29,14 @@ void init_swap() {
 void save_frame_page(struct frame *f) {
     size_t index;
     struct page_info *pinfo = f->pinfo;
+
+    /* Check if the page_info for the current frame is NULL. This should never
+     * happen since we only evict frames with active threads */
     if (pinfo == NULL)
     {
-        /*printf("I am here\n");*/
         return;
     }
 
-    /*printf("Saving data at kpage %p upage %p to swap\n", f->addr, pinfo->upage);*/
     
     /* Obtain index of swap slot to use. */
     sema_down(&bm_sem);
@@ -49,31 +50,31 @@ void save_frame_page(struct frame *f) {
     /* Otherwise move page to swap slot. */
     else { 
         struct thread *t = thread_current();
-        /*printf("Writing page to swap\n");*/
 
+        /* Update the status of the page_info */
         pinfo->status = SWAP;
         f->pinfo = NULL;
         pinfo->swap_index = index;
 
-        /* Atomically write to block. */
+        /* Atomically write to block if the page is dirty. */
         if (pagedir_is_dirty(pinfo->pagedir, pinfo->upage))
         {
-            /*printf("Page is dirty\n");*/
             sema_down(&swap_sem);
-            /*printf("Sema down swap\n");*/
-            /*printf("Upage: %p\n", pinfo->upage);*/
+
+            /* Iterate through the page and write BLOCK_SECTOR_SIZE bytes to
+             * swap each time */
             int i;
             void * addr = f->addr;
             for (i = 0; i < PGSIZE / BLOCK_SECTOR_SIZE; i++)
             {
-                /*printf("Writing to swap, iter %d\n", i);*/
                 block_write(swap, index + i, addr);
                 addr += BLOCK_SECTOR_SIZE;
             }
-            /*printf("Wrote page to swap\n");*/
             sema_up(&swap_sem);
 
         }
+
+        /* Clear the page in the pagedir of the thread owning the page */
         pagedir_clear_page(pinfo->pagedir, pinfo->upage);
         
     }
@@ -83,13 +84,14 @@ void save_frame_page(struct frame *f) {
 void restore_page(struct page_info *p) {
     size_t index = p->swap_index;
 
-    /*printf("Restoring data at upage %p from swap\n", p->upage);*/
     sema_down(&swap_sem);
+
+    /* Iterate through the page and read BLOCK_SECTOR_SIZE bytes to
+     * swap each time */
     int i;
     void * addr = p->frame->addr;
     for (i = 0; i < PGSIZE / BLOCK_SECTOR_SIZE; i++)
     {
-        /*printf("Writing to swap, iter %d\n", i);*/
         block_read(swap, index + i, addr);
         addr += BLOCK_SECTOR_SIZE;
     }
