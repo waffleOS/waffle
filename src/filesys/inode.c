@@ -6,6 +6,7 @@
 #include "filesys/filesys.h"
 #include "filesys/free-map.h"
 #include "threads/malloc.h"
+#include "filesys/cache.h"
 
 /*! Identifies an inode. */
 #define INODE_MAGIC 0x494e4f44
@@ -190,6 +191,12 @@ off_t inode_read_at(struct inode *inode, void *buffer_, off_t size, off_t offset
         if (chunk_size <= 0)
             break;
 
+        /* If there are things to read, let's get it into our cache. */
+/*        int cache_ind = cache_get_sector(sector_idx);
+*/
+        /* Read from cache into the buffer */
+/*        memcpy(buffer + bytes_read, cache[cache_ind].data + sector_ofs, chunk_size);
+*/
         if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) {
             /* Read full sector directly into caller's buffer. */
             block_read (fs_device, sector_idx, buffer + bytes_read);
