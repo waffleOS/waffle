@@ -332,7 +332,7 @@ void rw_lock_init(struct rw_lock *rw) {
 void wait_read(struct rw_lock *rw) {
     ASSERT(rw != NULL);
 
-    /* Acquire monitor.  */
+    /* Acquire access to rw->num_read and rw->state. */
     lock_acquire(&rw->lock);
 
     /* If there is a writer, note that there is a 
@@ -348,13 +348,16 @@ void wait_read(struct rw_lock *rw) {
     while (rw->state != READ && rw->state != UNLOCKED) { 
         cond_wait(&rw->read_cond, &rw->lock);
     }
+
+    /* Release access to rw->num_read and rw->state. */
+    lock_release(&rw->lock);
 }
 
 /*! Waits until a writer is allowed to write. */
 void wait_write(struct rw_lock *rw) { 
     ASSERT(rw != NULL);
 
-    /* Acquire monitor. */
+    /* Acquire access to rw->num_read and rw->state. */
     lock_acquire(&rw->lock);
 
     /* If there are readers, note that there is a
@@ -369,10 +372,16 @@ void wait_write(struct rw_lock *rw) {
         cond_wait(&rw->write_cond, &rw->lock);
     }
 
+    /* Release access to rw->num_read and rw->state. */
+    lock_release(&rw->lock);
 }
 
 /*! Indicate that you are done reading  */
 void done_read(struct rw_lock *rw) { 
+
+    /* Acquire access to rw->num_read and rw->state. */
+    lock_acquire(&rw->lock);
+
     /* Only the last reader should signal
      * to the next writer or waiting */
     rw->num_read--;
@@ -395,12 +404,16 @@ void done_read(struct rw_lock *rw) {
         }
     }
 
-    /* Release monitor. */
+    /* Release access to rw->num_read and rw->state. */
     lock_release(&rw->lock);
 }
 
 /*! Indicate that you are done writing. */
 void done_write(struct rw_lock *rw) { 
+    
+    /* Aquire access to rw->num_read and rw->state. */
+    lock_acquire(&rw->lock);
+
     /* Prioritize waking up readers to be fair and
      * avoid writers teaming up to deadlock. */
     if (rw->state == READER_WAITING) { 
@@ -418,6 +431,6 @@ void done_write(struct rw_lock *rw) {
         rw->state = UNLOCKED;
     }
 
-    /* Release monitor. */
+    /* Release access to rw->num_read and rw->state. */
     lock_release(&rw->lock);
 }
