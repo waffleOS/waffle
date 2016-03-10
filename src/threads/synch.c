@@ -310,3 +310,127 @@ void cond_broadcast(struct condition *cond, struct lock *lock) {
         cond_signal(cond, lock);
 }
 
+/*! Initializes rw_lock by initializing its lock,
+ * read_cond, and write_cond.
+ */
+void rw_lock_init(struct rw_lock *rw) {
+    ASSERT(rw != NULL);
+
+    /* We must initialize the lock, which controls
+     * access to rw->state and rw->num_read,
+     * initialize the conditions that signal readers
+     * and writers to wake up, and set up the rw_lock to
+     * be UNLOCKED with no readers.*/
+    rw->state = UNLOCKED;      
+    lock_init(&rw->lock);
+    cond_init(&rw->read_cond);
+    cond_init(&rw->write_cond);
+    rw->num_read = 0;
+}
+
+/*! Waits until readers are allowed to read. */
+void wait_read(struct rw_lock *rw) {
+    ASSERT(rw != NULL);
+
+    /* Acquire access to rw->num_read and rw->state. */
+    lock_acquire(&rw->lock);
+
+    /* If there is a writer, note that there is a 
+     * waiting reader. */
+    if (rw->state == WRITE) { 
+        rw->state = READER_WAITING;
+    }
+
+    /* Wait until we are not writing.
+     * We can read if other people are reading, so
+     * we only need to check if someone is writing or
+     * waiting to write.*/
+    while (rw->state != READ && rw->state != UNLOCKED) { 
+        cond_wait(&rw->read_cond, &rw->lock);
+    }
+
+    /* Release access to rw->num_read and rw->state. */
+    lock_release(&rw->lock);
+}
+
+/*! Waits until a writer is allowed to write. */
+void wait_write(struct rw_lock *rw) { 
+    ASSERT(rw != NULL);
+
+    /* Acquire access to rw->num_read and rw->state. */
+    lock_acquire(&rw->lock);
+
+    /* If there are readers, note that there is a
+     * waiting writer. */
+    if (rw->state == READ) {
+        rw->state = WRITER_WAITING;
+    }
+
+    /* We can't write if someone is already writing
+     * or reading, so wait until the lock is unlocked. */
+    while (rw->state != UNLOCKED) { 
+        cond_wait(&rw->write_cond, &rw->lock);
+    }
+
+    /* Release access to rw->num_read and rw->state. */
+    lock_release(&rw->lock);
+}
+
+/*! Indicate that you are done reading  */
+void done_read(struct rw_lock *rw) { 
+
+    /* Acquire access to rw->num_read and rw->state. */
+    lock_acquire(&rw->lock);
+
+    /* Only the last reader should signal
+     * to the next writer or waiting */
+    rw->num_read--;
+    if (rw->num_read == 0) {
+
+        /* Prioritize signaling writers to be fair. */
+        if (rw->state == WRITER_WAITING) {
+            rw->state = WRITE;
+            cond_signal(&rw->write_cond, &rw->lock);
+        }
+        /* Signal readers if there are any. */
+        else if (!list_empty(&rw->read_cond.waiters)) { 
+            rw->state = READ;
+            rw->num_read = list_size(&rw->read_cond.waiters);
+            cond_broadcast(&rw->read_cond, &rw->lock);
+        }
+        /* Otherwise there is no one waiting. */
+        else { 
+            rw->state = UNLOCKED;
+        }
+    }
+
+    /* Release access to rw->num_read and rw->state. */
+    lock_release(&rw->lock);
+}
+
+/*! Indicate that you are done writing. */
+void done_write(struct rw_lock *rw) { 
+    
+    /* Aquire access to rw->num_read and rw->state. */
+    lock_acquire(&rw->lock);
+
+    /* Prioritize waking up readers to be fair and
+     * avoid writers teaming up to deadlock. */
+    if (rw->state == READER_WAITING) { 
+        rw->state = READ;
+        rw->num_read = list_size(&rw->read_cond.waiters);
+        cond_broadcast(&rw->read_cond, &rw->lock);
+    }
+    /* Signal the next writer if there is one. */
+    else if (!list_empty(&rw->write_cond.waiters)) { 
+        rw->state = WRITE;
+        cond_signal(&rw->write_cond, &rw->lock);
+    }
+    /* Otherwise there is no one waiting. */
+    else { 
+        rw->state = UNLOCKED;
+    }
+
+    /* Release access to rw->num_read and rw->state. */
+    lock_release(&rw->lock);
+}

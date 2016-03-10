@@ -44,6 +44,31 @@ void cond_wait(struct condition *, struct lock *);
 void cond_signal(struct condition *, struct lock *);
 void cond_broadcast(struct condition *, struct lock *);
 
+/*! Possible states of the read-write lock. */
+enum rw_state { 
+    UNLOCKED, 
+    READ,
+    WRITE,
+    WRITER_WAITING,
+    READER_WAITING,
+};
+
+/*! Read write lock. */
+struct rw_lock { 
+    enum rw_state state;         /*!< State of the read-write lock. */
+    struct lock lock;            /*!< Lock to share reading and writing. */
+    struct condition read_cond;  /*!< Condition to wake up waiting readers. */
+    struct condition write_cond; /*!< Condition to wake up a writer. */
+    int num_read;                /*!< Number of "active" readers. */
+};
+
+
+void rw_lock_init(struct rw_lock *); 
+void wait_read(struct rw_lock *);
+void wait_write(struct rw_lock *);
+void done_read(struct rw_lock *);
+void done_write(struct rw_lock *);
+
 /*! Optimization barrier.
 
    The compiler will not reorder operations across an
