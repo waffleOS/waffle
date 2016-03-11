@@ -1,4 +1,5 @@
 #include "filesys/cache.h"
+#include <stdio.h>
 
 /**
  * cache.c
@@ -91,6 +92,8 @@ int cache_get_sector(block_sector_t block_id) {
 	int i;
 	for(i = 0; i < CACHE_SIZE; i++) {
 		if(cache[i].used && cache[i].block_id == block_id) {
+			cache[i].accessed = true;
+			printf("cache_get_sector: found in cache at index %d\n", i);
 			return i;
 		}
 	}
@@ -101,5 +104,8 @@ int cache_get_sector(block_sector_t block_id) {
     block_read(fs_device, cache[insert_ind].block_id, cache[insert_ind].data);
     cache[insert_ind].used = true;
     cache[insert_ind].dirty = false;
+    cache[insert_ind].accessed = true;
+	printf("cache_get_sector: read into cache at index %d\n", insert_ind);
+
     return insert_ind;
 }

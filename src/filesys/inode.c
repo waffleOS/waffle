@@ -192,33 +192,37 @@ off_t inode_read_at(struct inode *inode, void *buffer_, off_t size, off_t offset
             break;
 
         /* If there are things to read, let's get it into our cache. */
-/*        int cache_ind = cache_get_sector(sector_idx);
-*/
+        int cache_ind = cache_get_sector(sector_idx);
+
         /* Read from cache into the buffer */
-/*        memcpy(buffer + bytes_read, cache[cache_ind].data + sector_ofs, chunk_size);
-*/
-        if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) {
+        memcpy(buffer + bytes_read, cache[cache_ind].data + sector_ofs, chunk_size);
+
+        /* if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) { */
             /* Read full sector directly into caller's buffer. */
-            block_read (fs_device, sector_idx, buffer + bytes_read);
+        /*     block_read (fs_device, sector_idx, buffer + bytes_read);
         }
-        else {
+        else { */
             /* Read sector into bounce buffer, then partially copy
                into caller's buffer. */
-            if (bounce == NULL) {
+        /*    if (bounce == NULL) {
                 bounce = malloc(BLOCK_SECTOR_SIZE);
                 if (bounce == NULL)
                     break;
             }
             block_read(fs_device, sector_idx, bounce);
             memcpy(buffer + bytes_read, bounce + sector_ofs, chunk_size);
-        }
+        } */
       
         /* Advance. */
         size -= chunk_size;
         offset += chunk_size;
         bytes_read += chunk_size;
+
+        printf("%d bytes left to read in\n", size);
     }
-    free(bounce);
+/*    free(bounce);*/
+
+    /* TODO: Possibly do read ahead here. */
 
     return bytes_read;
 }
