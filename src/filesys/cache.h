@@ -8,9 +8,9 @@
 #include <stdbool.h>
 #include "devices/block.h"
 #include "filesys/filesys.h"
- 
 
-#define CACHE_SIZE 64
+
+#define CACHE_SIZE 63
 #define CACHE_REFRESH_LIMIT 1000
 
 typedef struct cache_sector {
