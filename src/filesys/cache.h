@@ -11,7 +11,7 @@
 
 
 #define CACHE_SIZE 63
-#define CACHE_REFRESH_LIMIT 1000
+#define CACHE_REFRESH_LIMIT 100
 
 typedef struct cache_sector {
 	block_sector_t block_id;         /* Sector index contained in cache */
@@ -47,3 +47,5 @@ int cache_evict(void);
 /* Fetches sector from disk to cache and inserts into cache. Evicts another
  * sector if needed. */
 int cache_get_sector(block_sector_t block_id);
+
+void cache_refresh(void);

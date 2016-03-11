@@ -266,7 +266,7 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
 
         /* Read from cache into the buffer */
         memcpy(cache[cache_ind].data + sector_ofs, buffer + bytes_written, chunk_size);
-
+        cache[cache_ind].dirty = true;
 
 /*        if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) {
 */            /* Write full sector directly to disk. */

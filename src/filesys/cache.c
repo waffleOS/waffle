@@ -50,6 +50,7 @@ void cache_write_all_dirty(void) {
 		if(cache[i].dirty) {
             block_write(fs_device, cache[i].block_id, cache[i].data);
 		}
+		cache[i].dirty = false;
 	}
 }
 
@@ -81,6 +82,8 @@ int cache_evict(void) {
 	/* Evict the sector at evict_ind */
     block_write(fs_device, cache[evict_ind].block_id, cache[evict_ind].data);
 	cache[evict_ind].used = false;
+
+	printf("evict_ind = %d\n", evict_ind);
 	return evict_ind;
 }
 
@@ -90,12 +93,13 @@ int cache_evict(void) {
 int cache_get_sector(block_sector_t block_id) {
 	/* Check if we already have it in the cache */
 /*	printf("cache_get_sector: get sector %d\n", block_id);
-*/	int i;
+*/	
+	cache_refresh();
+	int i;
 	for(i = 0; i < CACHE_SIZE; i++) {
 /*		printf("cache_get_sector ind %d blockid = %d\n", i, cache[i].block_id);*/
 		if(cache[i].used && cache[i].block_id == block_id) {
 			cache[i].accessed = true;
-			cache[i].used = true;
 /*			printf("cache_get_sector: found in cache at index %d\n", i);
 */			return i;
 		}
@@ -109,7 +113,29 @@ int cache_get_sector(block_sector_t block_id) {
     cache[insert_ind].dirty = false;
     cache[insert_ind].accessed = true;
     cache[insert_ind].block_id = block_id;
+    cache_access_count[insert_ind] = 0;
 /*	printf("cache_get_sector: read into cache at index %d\n", insert_ind);
 */
     return insert_ind;
+}
+
+/* Part of keeping track of eviction policies. */
+void cache_refresh(void) {
+	cache_refresh_count++;
+	if(cache_refresh_count > CACHE_REFRESH_LIMIT) {
+		int i;
+		cache_refresh_count = 0;
+		/* Take all accessed bits and set them back to false. If it was
+		accessed recently, add that fact to our counter. */
+		for(i = 0; i < CACHE_SIZE; i++) {
+			/* Add decay so things accessed long ago will not stay around
+			in the cache */
+			cache_access_count[i] /= 2;
+
+			if(cache[i].used && cache[i].accessed) {
+				cache_access_count[i]++;
+				cache[i].accessed = false;
+			}
+		}
+	}
 }
