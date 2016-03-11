@@ -83,7 +83,7 @@ int cache_evict(void) {
     block_write(fs_device, cache[evict_ind].block_id, cache[evict_ind].data);
 	cache[evict_ind].used = false;
 
-	printf("evict_ind = %d\n", evict_ind);
+	/*printf("evict_ind = %d\n", evict_ind);*/
 	return evict_ind;
 }
 
