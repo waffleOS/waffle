@@ -108,7 +108,7 @@ int cache_get_sector(block_sector_t block_id) {
 	/* If we don't have it in the cache, then we have to read it in from
 	disk */
 	int insert_ind = cache_evict();
-    block_read(fs_device, cache[insert_ind].block_id, cache[insert_ind].data);
+    block_read(fs_device, block_id, cache[insert_ind].data);
     cache[insert_ind].used = true;
     cache[insert_ind].dirty = false;
     cache[insert_ind].accessed = true;
