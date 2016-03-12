@@ -70,7 +70,7 @@ int cache_evict(void) {
 	/* Current eviction policy: Least frequently used. Will update this
 	later if time to something better. */
 	int i, evict_ind = 0;
-	for(i = 1; i < CACHE_SIZE; i++) {
+	for(i = 0; i < CACHE_SIZE; i++) {
 		if(cache[i].used == false) { /* If sector is unused, use it */
 			return i;
 		}
@@ -80,11 +80,13 @@ int cache_evict(void) {
 	}
 
 	/* Evict the sector at evict_ind */
-    block_write(fs_device, cache[evict_ind].block_id, cache[evict_ind].data);
+	if(cache[evict_ind].dirty) {
+	    block_write(fs_device, cache[evict_ind].block_id, cache[evict_ind].data);
+	}
 	cache[evict_ind].used = false;
 
-	printf("evict_ind = %d\n", evict_ind);
-	return evict_ind;
+/*	printf("evict_ind = %d\n", evict_ind);
+*/	return evict_ind;
 }
 
 /* Gets the index of the cache of the requested sector. If it is not in the 
@@ -108,7 +110,7 @@ int cache_get_sector(block_sector_t block_id) {
 	/* If we don't have it in the cache, then we have to read it in from
 	disk */
 	int insert_ind = cache_evict();
-    block_read(fs_device, cache[insert_ind].block_id, cache[insert_ind].data);
+    block_read(fs_device, block_id, cache[insert_ind].data);
     cache[insert_ind].used = true;
     cache[insert_ind].dirty = false;
     cache[insert_ind].accessed = true;
@@ -130,7 +132,7 @@ void cache_refresh(void) {
 		for(i = 0; i < CACHE_SIZE; i++) {
 			/* Add decay so things accessed long ago will not stay around
 			in the cache */
-			cache_access_count[i] /= 2;
+			cache_access_count[i] -= 1;
 
 			if(cache[i].used && cache[i].accessed) {
 				cache_access_count[i]++;
