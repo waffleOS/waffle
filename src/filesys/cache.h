@@ -11,7 +11,9 @@
 
 
 #define CACHE_SIZE 63
-#define CACHE_REFRESH_LIMIT 100
+#define CACHE_REFRESH_LIMIT 50
+#define CACHE_DELAY_MULTIPLIER 10 /* Multiply by CACHE_REFRESH_LIMIT to get how
+                                  long we wait until we decay the access count */
 
 typedef struct cache_sector {
 	block_sector_t block_id;         /* Sector index contained in cache */
