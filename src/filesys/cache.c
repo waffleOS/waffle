@@ -85,8 +85,8 @@ int cache_evict(void) {
 	}
 	cache[evict_ind].used = false;
 
-/*	printf("evict_ind = %d\n", evict_ind);
-*/	return evict_ind;
+	/*printf("evict_ind = %d\n", evict_ind);*/
+	return evict_ind;
 }
 
 /* Gets the index of the cache of the requested sector. If it is not in the 
