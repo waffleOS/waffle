@@ -12,13 +12,25 @@
 /*! Identifies an inode. */
 #define INODE_MAGIC 0x494e4f44
 
+/* Constants for number of entries */
+#define NUM_DIRECT 107 
+#define NUM_INDIRECT 17
+#define NUM_DOUBLE_INDIRECT 1
+#define NUM_ENTRIES (NUM_DIRECT + NUM_INDIRECT + NUM_DOUBLE_INDIRECT)
+
 /*! On-disk inode.
     Must be exactly BLOCK_SECTOR_SIZE bytes long. */
 struct inode_disk {
     block_sector_t start;               /*!< First data sector. */
     off_t length;                       /*!< File size in bytes. */
     unsigned magic;                     /*!< Magic number. */
-    uint32_t unused[125];               /*!< Not used. */
+    block_sector_t direct[NUM_DIRECT];
+    block_sector_t indirect[NUM_INDIRECT];
+    block_sector_t double_indirect[NUM_DOUBLE_INDIRECT];
+};
+
+struct indirect_inode_disk {
+    block_sector_t sectors[NUM_ENTRIES];
 };
 
 /*! Returns the number of sectors to allocate for an inode SIZE
@@ -48,7 +60,50 @@ static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
     struct inode_disk *data = (struct inode_disk *) cache[cache_ind].data;
 
     if (pos < data->length)
-        return data->start + pos / BLOCK_SECTOR_SIZE;
+    {
+       int block_index = pos / 512;
+       if (block_index < NUM_DIRECT)
+       {
+           return data->direct[block_index];
+       }
+
+       else
+       {
+            int indirect_index = (block_index - NUM_DIRECT) / NUM_ENTRIES;
+            if (indirect_index < NUM_INDIRECT)
+            {
+                int indirect_block_sector = data->indirect[indirect_index];
+                int indirect_block_sector_cache_ind = cache_get_sector(indirect_block_sector);
+                block_index = (block_index - NUM_DIRECT) % NUM_ENTRIES;
+                struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) cache[indirect_block_sector_cache_ind].data;
+                return indirect_data->sectors[block_index];
+            }
+
+            else
+            {
+               int double_indirect_index = (indirect_index - NUM_INDIRECT) / NUM_ENTRIES;
+               if (double_indirect_index < NUM_DOUBLE_INDIRECT)
+               {
+                   int double_indirect_block_sector = data->double_indirect[double_indirect_index];
+                   int double_indirect_block_sector_cache_ind = cache_get_sector(double_indirect_block_sector);
+                   indirect_index = (indirect_index - NUM_INDIRECT) % NUM_ENTRIES;
+                   struct indirect_inode_disk * double_indirect_data = (struct indirect_inode_disk *) cache[double_indirect_block_sector_cache_ind].data;
+                   int indirect_block_sector = double_indirect_data->sectors[indirect_index];
+                   int indirect_block_sector_cache_ind = cache_get_sector(indirect_block_sector);
+                   block_index = block_index - (NUM_DIRECT + NUM_INDIRECT * NUM_ENTRIES + indirect_index * NUM_ENTRIES);
+                   struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) cache[indirect_block_sector_cache_ind].data;
+                   return indirect_data->sectors[block_index];
+               }
+
+               else
+               {
+                   return -1;
+               }
+            }
+
+       }
+    }
+
     else
         return -1;
 }
