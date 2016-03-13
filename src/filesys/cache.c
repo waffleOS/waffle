@@ -1,6 +1,7 @@
 #include "filesys/cache.h"
 #include <stdio.h>
 #include "devices/timer.h"
+#include "threads/synch.h"
 
 /**
  * cache.c
@@ -9,13 +10,21 @@
  * write data.
  */
 
+/* Cache static variables. */
+/* Guards access to the cache array. */
+static struct semaphore cache_sem;
+
 void cache_init(void) {
 	int i;
+    
+    sema_init(&cache_sem, 1);
+
 	for(i = 0; i < CACHE_SIZE; i++) {
 		cache[i].used = false;
 		cache[i].dirty = false;
 		cache[i].accessed = false;
 		cache[i].block_id = 0;
+        rw_lock_init(&cache[i].rw);
 		cache_access_count[i] = 0;
 	}
 	cache_refresh_count = 0;

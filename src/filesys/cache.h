@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include "devices/block.h"
 #include "filesys/filesys.h"
-
+#include "threads/synch.h"
 
 #define CACHE_SIZE 63
 #define CACHE_REFRESH_LIMIT 50
@@ -20,6 +20,7 @@ typedef struct cache_sector {
 	bool used;                       /* Has this sector been used yet */
 	bool dirty;                      /* Has this sector been written to */
 	bool accessed;                   /* Has this sector been accessed recently */
+    struct rw_lock rw;               /* Synchronizes reads and writes. */
 	uint8_t data[BLOCK_SECTOR_SIZE]; /* Holds up to BLOCK_SECTOR_SIZE bytes */
 } cache_sector;
 
