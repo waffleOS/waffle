@@ -10,10 +10,6 @@
  * write data.
  */
 
-/* Cache static variables. */
-/* Guards access to the cache array. */
-static struct semaphore cache_sem;
-
 void cache_init(void) {
 	int i;
     

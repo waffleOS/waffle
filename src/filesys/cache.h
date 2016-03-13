@@ -25,6 +25,9 @@ typedef struct cache_sector {
 } cache_sector;
 
 cache_sector cache[CACHE_SIZE];
+/* Guards access to the cache array. */
+struct semaphore cache_sem;
+
 
 /* This array keeps track of the number of times a cache_sector is accessed
  * so we can implement an eviction policy (least frequently used). This must
