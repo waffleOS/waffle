@@ -16,7 +16,7 @@
 #define NUM_DIRECT 107 
 #define NUM_INDIRECT 17
 #define NUM_DOUBLE_INDIRECT 1
-#define NUM_ENTRIES (NUM_DIRECT + NUM_INDIRECT + NUM_DOUBLE_INDIRECT)
+#define NUM_ENTRIES 512 / 4
 
 /*! On-disk inode.
     Must be exactly BLOCK_SECTOR_SIZE bytes long. */
