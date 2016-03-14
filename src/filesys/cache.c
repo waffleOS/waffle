@@ -206,7 +206,7 @@ int cache_read_sector(block_sector_t block_id) {
 }
 
 int cache_write_sector(block_sector_t block_id) {
-    return cache_write_sector(block_id, true);
+    return cache_sync_sector(block_id, true);
 }
 
 /* Part of keeping track of eviction policies. */
