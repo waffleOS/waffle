@@ -30,7 +30,6 @@ void * sanitize_buffer(void ** buffer);
 
 void syscall_init(void) {
     intr_register_int(0x30, 3, INTR_ON, syscall_handler, "syscall");
-    sema_init(&file_sem, 1);
     sema_init(&exec_sem, 1);
     lock_init(&exec_lock);
     cond_init(&exec_cond);
@@ -304,11 +303,7 @@ bool do_create(const char * file, unsigned int initial_size)
         do_exit(-1);
     }
 
-    // Entering critical code
-    sema_down(&file_sem);
     bool success = filesys_create(file, initial_size);
-    sema_up(&file_sem);
-    // Left critical code
     
     return success;
 }
@@ -316,9 +311,7 @@ bool do_create(const char * file, unsigned int initial_size)
 /* Removes a new file */
 bool do_remove(const char * file)
 {
-    sema_down(&file_sem);
     bool success = filesys_remove(file);
-    sema_up(&file_sem);
     return success;
 }
 
@@ -329,9 +322,7 @@ int do_open(const char * file)
     {
         do_exit(-1);
     }
-    sema_down(&file_sem);
     struct file * f = filesys_open(file);
-    sema_up(&file_sem);
     if (f == NULL)
     {
         return -1;
@@ -346,9 +337,7 @@ int do_open(const char * file)
 int do_filesize(int fd)
 {
     struct thread * t = thread_current();
-    sema_down(&file_sem);
     int length = file_length(t->files[fd - 2]);
-    sema_up(&file_sem);
     return length;
 }
 
@@ -367,9 +356,7 @@ int do_read(int fd, void * buffer, unsigned int size)
 
     struct thread * t = thread_current();
     if (is_valid_fd(t, fd)) {
-        sema_down(&file_sem);
         int length = file_read(t->files[fd - 2], buffer, size); 
-        sema_up(&file_sem);
         return length;
     }
 
@@ -393,9 +380,7 @@ int do_write(int fd, const void * buffer, unsigned int size)
     struct thread * t = thread_current();
     if (is_valid_fd(t, fd))
     {
-        sema_down(&file_sem);
         int length = file_write(t->files[fd - 2], buffer, size);
-        sema_up(&file_sem);
         return length;
     }
 
@@ -406,18 +391,14 @@ int do_write(int fd, const void * buffer, unsigned int size)
 void do_seek(int fd, unsigned int position)
 {
     struct thread * t = thread_current();
-    sema_down(&file_sem);
     file_seek(t->files[fd - 2], position);
-    sema_up(&file_sem);
 }
 
 /* Returns the position of a file */
 unsigned int do_tell(int fd)
 {
     struct thread * t = thread_current();
-    sema_down(&file_sem);
     int position = file_tell(t->files[fd - 2]);
-    sema_up(&file_sem);
     return position;
 }
 
@@ -428,9 +409,7 @@ void do_close(int fd)
     {
         struct thread * t = thread_current();
         if (is_valid_fd(t, fd)) {
-            sema_down(&file_sem);
             file_close(t->files[fd - 2]);
-            sema_up(&file_sem);
             t->files[fd - 2] = NULL;
         }
     }

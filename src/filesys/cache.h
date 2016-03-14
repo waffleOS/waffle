@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include "devices/block.h"
 #include "filesys/filesys.h"
-
+#include "threads/synch.h"
 
 #define CACHE_SIZE 63
 #define CACHE_REFRESH_LIMIT 50
@@ -20,10 +20,14 @@ typedef struct cache_sector {
 	bool used;                       /* Has this sector been used yet */
 	bool dirty;                      /* Has this sector been written to */
 	bool accessed;                   /* Has this sector been accessed recently */
+    struct rw_lock rw;               /* Synchronizes reads and writes. */
 	uint8_t data[BLOCK_SECTOR_SIZE]; /* Holds up to BLOCK_SECTOR_SIZE bytes */
 } cache_sector;
 
 cache_sector cache[CACHE_SIZE];
+/* Guards access to the cache array. */
+struct semaphore cache_sem;
+
 
 /* This array keeps track of the number of times a cache_sector is accessed
  * so we can implement an eviction policy (least frequently used). This must
@@ -48,6 +52,7 @@ int cache_evict(void);
 
 /* Fetches sector from disk to cache and inserts into cache. Evicts another
  * sector if needed. */
-int cache_get_sector(block_sector_t block_id);
+int cache_read_sector(block_sector_t block_id); 
+int cache_write_sector(block_sector_t block_id);
 
 void cache_refresh(void);

@@ -303,9 +303,7 @@ void thread_exit(void) {
        when it calls thread_schedule_tail(). */
     intr_disable();
     struct thread *cur = thread_current();
-    sema_down(&file_sem);
     file_close(cur->thread_file);
-    sema_up(&file_sem);
 
     list_push_back(&cur->parent->dead_list, &cur->dead_elem);
 
