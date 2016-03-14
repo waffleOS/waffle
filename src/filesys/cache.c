@@ -11,8 +11,8 @@
  */
 
 /* Cache module internal function prototypes. */
-int cache_get_sector(block_sector_t block_id);
-int cache_sync_sector(block_sector_t block_id, bool write);
+static int cache_get_sector(block_sector_t block_id);
+static int cache_sync_sector(block_sector_t block_id, bool write);
 
 void cache_init(void) {
 	int i;
@@ -176,7 +176,7 @@ int cache_sync_sector(block_sector_t block_id, bool write) {
     int cache_ind;
     while (true) { 
         cache_ind = cache_get_sector(block_id);
-        cache_sector = cache[cache_ind];
+        cache_sector sector = cache[cache_ind];
         sema_up(&cache_sem);
         
         /* Synchronously acquire sector for reading */
