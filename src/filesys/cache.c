@@ -201,12 +201,15 @@ int cache_sync_sector(block_sector_t block_id, bool write) {
     }
 }
 
-int cache_read_sector(block_sector_t block_id) {
-    return cache_sync_sector(block_id, false);
+/* Gets the cache sector synchronously. Takes care of
+ * double checking the sector. Caller must call done_read*/
+cache_sector cache_read_sector(block_sector_t block_id) {
+    return cache[cache_sync_sector(block_id, false)];
 }
 
-int cache_write_sector(block_sector_t block_id) {
-    return cache_sync_sector(block_id, true);
+/* */
+cache_sector cache_write_sector(block_sector_t block_id) {
+    return cache[cache_sync_sector(block_id, true)];
 }
 
 /* Part of keeping track of eviction policies. */
