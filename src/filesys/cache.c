@@ -133,6 +133,49 @@ int cache_get_sector(block_sector_t block_id) {
     return insert_ind;
 }
 
+/* Synchronously gets a sector for reading/writing.
+ * Reading blocks if there is a writer already waiting. 
+ * Writer blocks unless there is no one using the lock, but
+ * gets priority over readers that block after it does. 
+ * When the thread is done reading/writing, 
+ * it must signal to others using done_read()/done_write() respectively. */
+int cache_sync_sector(block_sector_t block_id, bool write) { 
+    int cache_ind;
+    while (true) { 
+        cache_ind = cache_get_sector(block_id);
+        cache_sector = cache[cache_ind];
+        sema_up(&cache_sem);
+        
+        /* Synchronously acquire sector for reading */
+        if (write) { 
+            wait_write(&sector.rw);
+        }
+        else {
+            wait_read(&sector.rw);
+        }
+
+        if (sector.block_id == block_id) { 
+            return cache_ind;
+        }
+
+        /* Give up rw_lock if the block changed. */
+        if (write) { 
+            done_write(&sector.rw);
+        }
+        else { 
+            done_read(&sector.rw);
+        }
+    }
+}
+
+int cache_read_sector(block_sector_t block_id) {
+    return cache_sync_sector(block_id, false);
+}
+
+int cache_write_sector(block_sector_t block_id) {
+    return cache_sync_sector(block_id, true);
+}
+
 /* Part of keeping track of eviction policies. */
 void cache_refresh(void) {
 	cache_refresh_count++;
