@@ -56,15 +56,23 @@ struct inode {
 static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
     ASSERT(inode != NULL);
     
-    int cache_ind  = cache_get_sector(inode->sector);
-    struct inode_disk *data = (struct inode_disk *) cache[cache_ind].data;
+    /* Value to return. */
+    block_sector_t result;
+    
+    /* Start reading inode->sector */
+    cache_sector sector = cache_read_sector(inode->sector);
+    struct inode_disk *data = (struct inode_disk *) sector.data;
 
     if (pos < data->length)
     {
        int block_index = pos / 512;
        if (block_index < NUM_DIRECT)
        {
-           return data->direct[block_index];
+
+           result = data->direct[block_index];
+           /* Done reading inode->sector. */
+           done_read(&sector.rw); 
+           return result;
        }
 
        else
@@ -73,10 +81,18 @@ static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
             if (indirect_index < NUM_INDIRECT)
             {
                 int indirect_block_sector = data->indirect[indirect_index];
+                /* Done reading inode->sector */
+                done_read(&sector.rw);
+
+                /* Start reading indirect sector. */
                 int indirect_block_sector_cache_ind = cache_get_sector(indirect_block_sector);
+                cache_sector indirect_sector = cache_read_sector(indirect_block_sector);
                 block_index = (block_index - NUM_DIRECT) % NUM_ENTRIES;
-                struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) cache[indirect_block_sector_cache_ind].data;
-                return indirect_data->sectors[block_index];
+                struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector.data;
+                result = indirect_data->sectors[block_index];
+                /* Done reading indirect data. */
+                done_read(&indirect_sector.rw); 
+                return result;
             }
 
             else
@@ -85,18 +101,31 @@ static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
                if (double_indirect_index < NUM_DOUBLE_INDIRECT)
                {
                    int double_indirect_block_sector = data->double_indirect[double_indirect_index];
-                   int double_indirect_block_sector_cache_ind = cache_get_sector(double_indirect_block_sector);
+
+                   /* Start reading doubly indirect sector. */
+                   cache_sector double_sector = cache_read_sector(double_indirect_block_sector);
+                   
                    indirect_index = (indirect_index - NUM_INDIRECT) % NUM_ENTRIES;
-                   struct indirect_inode_disk * double_indirect_data = (struct indirect_inode_disk *) cache[double_indirect_block_sector_cache_ind].data;
+                   struct indirect_inode_disk * double_indirect_data = (struct indirect_inode_disk *) double_sector.data;
                    int indirect_block_sector = double_indirect_data->sectors[indirect_index];
-                   int indirect_block_sector_cache_ind = cache_get_sector(indirect_block_sector);
+                   /* Done reading doubly indirect sector. */
+                   done_read(&double_sector.rw);
+
+                   /* Start reading indirect sector. */
+                   cache_sector indirect_sector = cache_read_sector(indirect_block_sector);
                    block_index = block_index - (NUM_DIRECT + NUM_INDIRECT * NUM_ENTRIES + indirect_index * NUM_ENTRIES);
-                   struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) cache[indirect_block_sector_cache_ind].data;
-                   return indirect_data->sectors[block_index];
+                   struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector.data;
+                   result = indirect_data->sectors[block_index];
+                   /* Done reading doubly indirect sector. */
+                   done_read(&indirect_sector.rw);
+
+                   return result;
                }
 
                else
                {
+                   /* Done reading inode->sector. */
+                   done_read(&sector.rw);
                    return -1;
                }
             }
@@ -104,8 +133,11 @@ static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
        }
     }
 
-    else
+    else {
+        /* Done reading inode->sector. */
+        done_read(&sector.rw);
         return -1;
+    }
 }
 
 /*! List of open inodes, so that opening a single inode twice
