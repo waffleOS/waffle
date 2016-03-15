@@ -151,6 +151,7 @@ int cache_get_sector(block_sector_t block_id) {
     /* Eviction involves writing to the cache sector, so
      * wait_write. */
     block_read(fs_device, block_id, cache[insert_ind].data);
+    /*printf("Done reading from block %d\n", block_id);*/
     cache[insert_ind].used = true;
     cache[insert_ind].dirty = false;
     cache[insert_ind].accessed = true;
