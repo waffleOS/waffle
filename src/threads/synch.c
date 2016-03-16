@@ -366,7 +366,8 @@ void wait_read(struct rw_lock *rw) {
 void wait_write(struct rw_lock *rw) { 
     ASSERT(rw != NULL);
 
-    printf("Waiting to write %d\n", rw->id);
+    struct thread *t = thread_current();
+    printf("Waiting to write %d in thread %s\n", rw->id, t->name);
 
     /* Acquire access to rw->num_read and rw->state. */
     lock_acquire(&rw->lock);
