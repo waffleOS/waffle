@@ -110,6 +110,7 @@ void sema_up(struct semaphore *sema) {
 
     old_level = intr_disable();
     if (!list_empty(&sema->waiters)) {
+        printf("%d threads waiting on sema\n", list_size(&sema->waiters));
         thread_unblock(list_entry(list_pop_front(&sema->waiters),
                                   struct thread, elem));
     }
@@ -183,8 +184,12 @@ void lock_acquire(struct lock *lock) {
     ASSERT(!intr_context());
     ASSERT(!lock_held_by_current_thread(lock));
 
+    //volatile struct thread *t = thread_current();
+    //printf("Thread %s waiting for %p\n", t->name, lock); 
     sema_down(&lock->semaphore);
-    lock->holder = thread_current();
+    struct thread *t = thread_current();
+    lock->holder = t;
+    printf("Thread %s Got %p\n", t->name, lock);
 }
 
 /*! Tries to acquires LOCK and returns true if successful or false
@@ -215,6 +220,7 @@ void lock_release(struct lock *lock) {
     ASSERT(lock != NULL);
     ASSERT(lock_held_by_current_thread(lock));
 
+    printf("Releasing lock %s %p\n", lock->name, lock);
     lock->holder = NULL;
     sema_up(&lock->semaphore);
 }
@@ -323,15 +329,18 @@ void rw_lock_init(struct rw_lock *rw) {
      * be UNLOCKED with no readers.*/
     rw->state = UNLOCKED;      
     lock_init(&rw->lock);
+    strlcpy(rw->lock.name, "rw_lock lock", 16);
     cond_init(&rw->read_cond);
     cond_init(&rw->write_cond);
     rw->num_read = 0;
+    printf("Initializing rw_locks...\n");
 }
 
 /*! Waits until readers are allowed to read. */
 void wait_read(struct rw_lock *rw) {
     ASSERT(rw != NULL);
 
+    printf("Waiting to read.\n");
     /* Acquire access to rw->num_read and rw->state. */
     lock_acquire(&rw->lock);
 
@@ -357,6 +366,8 @@ void wait_read(struct rw_lock *rw) {
 void wait_write(struct rw_lock *rw) { 
     ASSERT(rw != NULL);
 
+    printf("Waiting to write %d\n", rw->id);
+
     /* Acquire access to rw->num_read and rw->state. */
     lock_acquire(&rw->lock);
 
@@ -372,8 +383,10 @@ void wait_write(struct rw_lock *rw) {
         cond_wait(&rw->write_cond, &rw->lock);
     }
 
+    printf("About to write lock %p\n", &rw->lock);
     /* Release access to rw->num_read and rw->state. */
     lock_release(&rw->lock);
+    printf("Released lock %p\n", &rw->lock);
 }
 
 /*! Indicate that you are done reading  */

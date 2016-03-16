@@ -26,6 +26,7 @@ void sema_self_test(void);
 struct lock {
     struct thread *holder;      /*!< Thread holding lock (for debugging). */
     struct semaphore semaphore; /*!< Binary semaphore controlling access. */
+    char name[16];
 };
 
 void lock_init(struct lock *);
@@ -60,6 +61,7 @@ struct rw_lock {
     struct condition read_cond;  /*!< Condition to wake up waiting readers. */
     struct condition write_cond; /*!< Condition to wake up a writer. */
     int num_read;                /*!< Number of "active" readers. */
+    int id;
 };
 
 

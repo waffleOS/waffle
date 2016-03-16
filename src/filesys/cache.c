@@ -25,6 +25,7 @@ void cache_init(void) {
 		cache[i].accessed = false;
 		cache[i].block_id = 0;
         rw_lock_init(&cache[i].rw);
+        cache[i].rw.id = i;
 		cache_access_count[i] = 0;
 	}
 	cache_refresh_count = 0;
@@ -100,8 +101,8 @@ int cache_evict(void) {
 	    block_write(fs_device, cache[evict_ind].block_id, cache[evict_ind].data);
 	}
 	cache[evict_ind].used = false;
-
-	/*printf("evict_ind = %d\n", evict_ind);*/
+    
+	printf("evict_ind = %d\n", evict_ind);
 	return evict_ind;
 }
 
@@ -110,8 +111,8 @@ int cache_evict(void) {
  * Evicts another sector if needed. */
 int cache_get_sector(block_sector_t block_id) {
 	/* Check if we already have it in the cache */
-/*	printf("cache_get_sector: get sector %d\n", block_id);
-*/	
+	printf("cache_get_sector: get sector %d\n", block_id);
+	
     sema_down(&cache_sem);
 	cache_refresh();
 	int i;
@@ -140,9 +141,11 @@ int cache_get_sector(block_sector_t block_id) {
 
         /* Eviction involves writing to the cache sector, so wait_write.
          * This lets any active writer or readers to finish what they're doing. */
+        printf("Waiting to evict....\n");
         wait_write(&sector.rw);
         /* We must double check if it's still the same block */
         if (sector.block_id == block_id) { 
+            printf("Got correct block to evict.\n");
             break;
         }
         done_write(&sector.rw);
@@ -177,10 +180,10 @@ int cache_sync_sector(block_sector_t block_id, bool write) {
     while (true) { 
         cache_ind = cache_get_sector(block_id);
         cache_sector sector = cache[cache_ind];
-        sema_up(&cache_sem);
         
         /* Synchronously acquire sector for reading */
         if (write) { 
+            printf("Waiting to write.\n");
             wait_write(&sector.rw);
         }
         else {
@@ -188,11 +191,13 @@ int cache_sync_sector(block_sector_t block_id, bool write) {
         }
 
         if (sector.block_id == block_id) { 
+            printf("Acquired correct block.\n");
             return cache_ind;
         }
 
         /* Give up rw_lock if the block changed. */
         if (write) { 
+            printf("Failed to write.\n");
             done_write(&sector.rw);
         }
         else { 
