@@ -68,8 +68,10 @@ static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
     /* Start reading inode->sector */
     /*printf("Reading cache\n");*/
     /*printf("Inode sector: %d\n", inode->sector);*/
-    cache_sector sector = cache_read_sector(inode->sector);
-    struct inode_disk * data = (struct inode_disk *) sector.data;
+    int cache_ind = cache_get_sector(inode->sector);
+    struct inode_disk * data = (struct inode_disk *) cache[cache_ind].data;
+    /*cache_sector sector = cache_read_sector(inode->sector);*/
+    /*struct inode_disk * data = (struct inode_disk *) sector.data;*/
 
     /*if (pos < METADATA_BYTES)*/
     /*{*/
@@ -103,8 +105,10 @@ static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
             if (block_index < NUM_ENTRIES)
             {
                 /*printf("Found in indirect blocks\n");*/
-                cache_sector indirect_sector = cache_read_sector(data->indirect);
-                struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector.data;
+                int cache_ind = cache_get_sector(data->indirect);
+                struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) cache[cache_ind].data;
+                /*cache_sector indirect_sector = cache_read_sector(data->indirect);*/
+                /*struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector.data;*/
                 result = indirect_data->sectors[block_index];
                 /* Done reading indirect data. */
                 //done_read(&indirect_sector.rw);
@@ -122,14 +126,16 @@ static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
                     /*printf("Found in double indirect blocks\n");*/
                     int indirect_index = block_index / NUM_ENTRIES;
                     /*printf("Indirect index: %d\n", indirect_index);*/
-                    cache_sector double_indirect_sector = cache_read_sector(data->double_indirect);
-                    struct indirect_inode_disk * double_indirect_data = (struct indirect_inode_disk *) double_indirect_sector.data;
+                    int cache_ind = cache_get_sector(data->double_indirect);
+                    struct indirect_inode_disk * double_indirect_data = (struct inode_disk *) cache[cache_ind].data;
+                    /*cache_sector double_indirect_sector = cache_read_sector(data->double_indirect);*/
+                    /*struct indirect_inode_disk * double_indirect_data = (struct indirect_inode_disk *) double_indirect_sector.data;*/
                     block_sector_t indirect_sector_id = double_indirect_data->sectors[indirect_index];
                     /* Done reading double indirect data. */
                     //done_read(&double_indirect_sector.rw);
                     int direct_index = block_index % NUM_ENTRIES;
-                    cache_sector indirect_sector = cache_read_sector(indirect_sector_id);
-                    struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector.data;
+                    cache_ind = cache_get_sector(indirect_sector_id);
+                    struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) cache[cache_ind].data;
                     result = indirect_data->sectors[direct_index];
 
                     /* Done reading indirect data. */
@@ -354,8 +360,10 @@ void inode_close(struct inode *inode) {
  
         /* Deallocate blocks if removed. */
         if (inode->removed) {
-            cache_sector sector = cache_read_sector(inode->sector);
-            struct inode_disk *data = (struct inode_disk *) sector.data;
+            int cache_ind = cache_get_sector(inode->sector);
+            struct inode_disk * data = (struct inode_disk *) cache[cache_ind].data;
+            /*cache_sector sector = cache_read_sector(inode->sector);*/
+            /*struct inode_disk *data = (struct inode_disk *) sector.data;*/
             
             size_t length = data->length;
             int i;
@@ -411,10 +419,11 @@ off_t inode_read_at(struct inode *inode, void *buffer_, off_t size, off_t offset
 
 
         /* If there are things to read, let's get it into our cache. */
-        cache_sector sector = cache_read_sector(sector_idx);
+        int cache_ind = cache_get_sector(sector_idx);
+        /*cache_sector sector = cache_read_sector(sector_idx);*/
 
         /* Read from cache into the buffer */
-        memcpy(buffer + bytes_read, sector.data + sector_ofs, chunk_size);
+        memcpy(buffer + bytes_read, cache[cache_ind].data + sector_ofs, chunk_size);
         /* Done reading sector. */
         //done_read(&sector.rw);
 
@@ -476,11 +485,12 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
             break;
 
         /* If there are things to write, let's get it into our cache. */
-        cache_sector sector = cache_write_sector(sector_idx);
+        int cache_ind = cache_get_sector(sector_idx);
+        /*cache_sector sector = cache_write_sector(sector_idx);*/
 
         /* Write from cache into the buffer */
-        memcpy(sector.data + sector_ofs, buffer + bytes_written, chunk_size);
-        sector.dirty = true;
+        memcpy(cache[cache_ind].data + sector_ofs, buffer + bytes_written, chunk_size);
+        cache[cache_ind].dirty = true;
 
 /*        if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) {
 */            /* Write full sector directly to disk. */
@@ -535,8 +545,10 @@ void inode_allow_write (struct inode *inode) {
 
 /*! Returns the length, in bytes, of INODE's data. */
 off_t inode_length(const struct inode *inode) {
-    cache_sector sector = cache_read_sector(inode->sector);
-    struct inode_disk *data = (struct inode_disk *) sector.data;
+    int cache_ind = cache_get_sector(inode->sector);
+    struct inode_disk * data = (struct inode_disk *) cache[cache_ind].data;
+    /*cache_sector sector = cache_read_sector(inode->sector);*/
+    /*struct inode_disk *data = (struct inode_disk *) sector.data;*/
     off_t result = data->length;
     //done_read(&sector.rw);
 
