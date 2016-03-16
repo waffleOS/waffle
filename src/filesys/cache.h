@@ -24,22 +24,6 @@ typedef struct cache_sector {
 	uint8_t data[BLOCK_SECTOR_SIZE]; /* Holds up to BLOCK_SECTOR_SIZE bytes */
 } cache_sector;
 
-cache_sector cache[CACHE_SIZE];
-/* Guards access to the cache array. */
-struct semaphore cache_sem;
-
-
-/* This array keeps track of the number of times a cache_sector is accessed
- * so we can implement an eviction policy (least frequently used). This must
- * updated when the inode_read_at function is called. */
-unsigned int cache_access_count[CACHE_SIZE];
-
-/* This counter keeps track of cache events. Cache events will (probably) be
- * defined as cache accesses, cache evictions, writing to cache, etc. At a 
- * certain count level defined by CACHE_REFRESH_LIMIT, all dirty sectors will
- * be written back to disk as a safety measure against crashes. */
-unsigned int cache_refresh_count;
-
 void cache_init(void);
 bool cache_is_dirty(block_sector_t block_id);
 void cache_set_dirty(block_sector_t block_id, bool dirty);

@@ -10,6 +10,24 @@
  * write data.
  */
 
+/* Module static variables. */
+
+/* Cache. */
+static cache_sector cache[CACHE_SIZE];
+/* Guards access to the cache array. */
+static struct semaphore cache_sem;
+
+/* This array keeps track of the number of times a cache_sector is accessed
+ * so we can implement an eviction policy (least frequently used). This must
+ * updated when the inode_read_at function is called. */
+static unsigned int cache_access_count[CACHE_SIZE];
+
+/* This counter keeps track of cache events. Cache events will (probably) be
+ * defined as cache accesses, cache evictions, writing to cache, etc. At a 
+ * certain count level defined by CACHE_REFRESH_LIMIT, all dirty sectors will
+ * be written back to disk as a safety measure against crashes. */
+static unsigned int cache_refresh_count;
+
 /* Cache module internal function prototypes. */
 static int cache_get_sector(block_sector_t block_id);
 static int cache_sync_sector(block_sector_t block_id, bool write);
