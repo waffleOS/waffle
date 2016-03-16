@@ -11,7 +11,6 @@
  */
 
 /* Cache module internal function prototypes. */
-static int cache_get_sector(block_sector_t block_id);
 static int cache_sync_sector(block_sector_t block_id, bool write);
 
 void cache_init(void) {
