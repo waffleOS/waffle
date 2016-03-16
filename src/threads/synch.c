@@ -189,7 +189,7 @@ void lock_acquire(struct lock *lock) {
     sema_down(&lock->semaphore);
     struct thread *t = thread_current();
     lock->holder = t;
-    printf("Thread %s Got %p\n", t->name, lock);
+    //printf("Thread %s Got %p\n", t->name, lock);
 }
 
 /*! Tries to acquires LOCK and returns true if successful or false
@@ -220,7 +220,7 @@ void lock_release(struct lock *lock) {
     ASSERT(lock != NULL);
     ASSERT(lock_held_by_current_thread(lock));
 
-    printf("Releasing lock %s %p\n", lock->name, lock);
+    //printf("Releasing lock %s %p\n", lock->name, lock);
     lock->holder = NULL;
     sema_up(&lock->semaphore);
 }
@@ -333,7 +333,7 @@ void rw_lock_init(struct rw_lock *rw) {
     cond_init(&rw->read_cond);
     cond_init(&rw->write_cond);
     rw->num_read = 0;
-    printf("Initializing rw_locks...\n");
+    printf("Initializing rw_lock %p...\n", rw);
 }
 
 /*! Waits until readers are allowed to read. */

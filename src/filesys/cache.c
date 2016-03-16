@@ -146,29 +146,30 @@ int cache_get_sector(block_sector_t block_id) {
 	/* If we don't have it in the cache, then we have to read it in from
 	disk */
     int insert_ind;
-    cache_sector sector;
+    cache_sector *sector;
     /* Keep trying to evict until we get the desired block. */
     while (true) {
         sema_down(&cache_sem);
         insert_ind = cache_evict();
-        sector = cache[insert_ind];
+        sector = &cache[insert_ind];
         sema_up(&cache_sem);
 
         /* Eviction involves writing to the cache sector, so wait_write.
          * This lets any active writer or readers to finish what they're doing. */
         printf("Waiting to evict....\n");
-        wait_write(&sector.rw);
+        wait_write(&sector->rw);
+        break;
         /* We must double check if it's still the same block */
-        if (sector.block_id == block_id) { 
+        if (sector->block_id == block_id) { 
             printf("Got correct block to evict.\n");
             break;
         }
-        done_write(&sector.rw);
+        done_write(&sector->rw);
     }
 
     /* Eviction involves writing to the cache sector, so
      * wait_write. */
-    block_read(fs_device, block_id, cache[insert_ind].data);
+    block_read(fs_device, block_id, sector->data);
     cache[insert_ind].used = true;
     cache[insert_ind].dirty = false;
     cache[insert_ind].accessed = true;
@@ -176,7 +177,7 @@ int cache_get_sector(block_sector_t block_id) {
     cache_access_count[insert_ind] = 0;
 
     /* Done writing */
-    done_write(&sector.rw);
+    done_write(&sector->rw);
 
 /*	printf("cache_get_sector: read into cache at index %d\n", insert_ind);
 */
@@ -194,18 +195,18 @@ int cache_sync_sector(block_sector_t block_id, bool write) {
     int cache_ind;
     while (true) { 
         cache_ind = cache_get_sector(block_id);
-        cache_sector sector = cache[cache_ind];
+        cache_sector *sector = &cache[cache_ind];
         
         /* Synchronously acquire sector for reading */
         if (write) { 
             printf("Waiting to write.\n");
-            wait_write(&sector.rw);
+            wait_write(&sector->rw);
         }
         else {
-            wait_read(&sector.rw);
+            wait_read(&sector->rw);
         }
 
-        if (sector.block_id == block_id) { 
+        if (sector->block_id == block_id) { 
             printf("Acquired correct block.\n");
             return cache_ind;
         }
@@ -213,23 +214,23 @@ int cache_sync_sector(block_sector_t block_id, bool write) {
         /* Give up rw_lock if the block changed. */
         if (write) { 
             printf("Failed to write.\n");
-            done_write(&sector.rw);
+            done_write(&sector->rw);
         }
         else { 
-            done_read(&sector.rw);
+            done_read(&sector->rw);
         }
     }
 }
 
 /* Gets the cache sector synchronously. Takes care of
  * double checking the sector. Caller must call done_read*/
-cache_sector cache_read_sector(block_sector_t block_id) {
-    return cache[cache_sync_sector(block_id, false)];
+cache_sector *cache_read_sector(block_sector_t block_id) {
+    return &cache[cache_sync_sector(block_id, false)];
 }
 
 /* */
-cache_sector cache_write_sector(block_sector_t block_id) {
-    return cache[cache_sync_sector(block_id, true)];
+cache_sector *cache_write_sector(block_sector_t block_id) {
+    return &cache[cache_sync_sector(block_id, true)];
 }
 
 /* Part of keeping track of eviction policies. */

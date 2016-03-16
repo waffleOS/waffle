@@ -37,7 +37,7 @@ int cache_evict(void);
 
 /* Fetches sector from disk to cache and inserts into cache. Evicts another
  * sector if needed. */
-cache_sector cache_read_sector(block_sector_t block_id); 
-cache_sector cache_write_sector(block_sector_t block_id);
+cache_sector *cache_read_sector(block_sector_t block_id); 
+cache_sector *cache_write_sector(block_sector_t block_id);
 
 void cache_refresh(void);
