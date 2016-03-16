@@ -44,13 +44,18 @@ struct inode {
 static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
     ASSERT(inode != NULL);
     
-    int cache_ind  = cache_get_sector(inode->sector);
-    struct inode_disk *data = (struct inode_disk *) cache[cache_ind].data;
+    cache_sector sector = cache_read_sector(inode->sector);
+    struct inode_disk *data = (struct inode_disk *) sector.data;
 
-    if (pos < data->length)
-        return data->start + pos / BLOCK_SECTOR_SIZE;
-    else
+    if (pos < data->length) {
+        block_sector_t result = data->start + pos / BLOCK_SECTOR_SIZE;
+        done_read(&sector.rw);
+        return result;
+    }
+    else {
+        done_read(&sector.rw);
         return -1;
+    }
 }
 
 /*! List of open inodes, so that opening a single inode twice
@@ -158,12 +163,13 @@ void inode_close(struct inode *inode) {
  
         /* Deallocate blocks if removed. */
         if (inode->removed) {
-            int cache_ind  = cache_get_sector(inode->sector);
-            struct inode_disk *data = (struct inode_disk *) cache[cache_ind].data;
+            cache_sector sector = cache_read_sector(inode->sector);
+            struct inode_disk *data = (struct inode_disk *) sector.data;
             
             free_map_release(inode->sector, 1);
             free_map_release(data->start,
                              bytes_to_sectors(data->length)); 
+            done_read(&sector.rw);
         }
 
         free(inode); 
@@ -207,11 +213,12 @@ off_t inode_read_at(struct inode *inode, void *buffer_, off_t size, off_t offset
 
 
         /* If there are things to read, let's get it into our cache. */
-        int cache_ind = cache_get_sector(sector_idx);
+        cache_sector sector = cache_read_sector(sector_idx);
 
         /* Read from cache into the buffer */
-        memcpy(buffer + bytes_read, cache[cache_ind].data + sector_ofs, chunk_size);
+        memcpy(buffer + bytes_read, sector.data + sector_ofs, chunk_size);
 
+        done_read(&sector.rw);
 /*         if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) { 
 */            /* Read full sector directly into caller's buffer. */
          /*    block_read (fs_device, sector_idx, buffer + bytes_read);
@@ -270,11 +277,13 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
             break;
 
         /* If there are things to read, let's get it into our cache. */
-        int cache_ind = cache_get_sector(sector_idx);
+        cache_sector sector = cache_write_sector(sector_idx);
 
         /* Read from cache into the buffer */
-        memcpy(cache[cache_ind].data + sector_ofs, buffer + bytes_written, chunk_size);
-        cache[cache_ind].dirty = true;
+        memcpy(sector.data + sector_ofs, buffer + bytes_written, chunk_size);
+        sector.dirty = true;
+
+        done_write(&sector.rw);
 
 /*        if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) {
 */            /* Write full sector directly to disk. */
@@ -329,8 +338,11 @@ void inode_allow_write (struct inode *inode) {
 
 /*! Returns the length, in bytes, of INODE's data. */
 off_t inode_length(const struct inode *inode) {
-    int cache_ind  = cache_get_sector(inode->sector);
-    struct inode_disk *data = (struct inode_disk *) cache[cache_ind].data;
-    return data->length;
+    cache_sector sector = cache_read_sector(inode->sector);
+    struct inode_disk *data = (struct inode_disk *) sector.data;
+    off_t result = data->length;
+    done_read(&sector.rw);
+    
+    return result;
 }
 
