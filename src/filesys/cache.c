@@ -17,14 +17,14 @@ static int cache_sync_sector(block_sector_t block_id, bool write);
 void cache_init(void) {
 	int i;
     
-    sema_init(&cache_sem, 1);
+    //sema_init(&cache_sem, 1);
 
 	for(i = 0; i < CACHE_SIZE; i++) {
 		cache[i].used = false;
 		cache[i].dirty = false;
 		cache[i].accessed = false;
 		cache[i].block_id = 0;
-        rw_lock_init(&cache[i].rw);
+        //rw_lock_init(&cache[i].rw);
 		cache_access_count[i] = 0;
 	}
 	cache_refresh_count = 0;
@@ -112,45 +112,46 @@ int cache_get_sector(block_sector_t block_id) {
 	/* Check if we already have it in the cache */
 /*	printf("cache_get_sector: get sector %d\n", block_id);
 */	
-    sema_down(&cache_sem);
+    //sema_down(&cache_sem);
 	cache_refresh();
 	int i;
 	for(i = 0; i < CACHE_SIZE; i++) {
 /*		printf("cache_get_sector ind %d blockid = %d\n", i, cache[i].block_id);*/
 		if(cache[i].used && cache[i].block_id == block_id) {
 			cache[i].accessed = true;
-            sema_up(&cache_sem);
+            //sema_up(&cache_sem);
 /*			printf("cache_get_sector: found in cache at index %d\n", i);
 */			return i;
 		}
 	}
 
-    sema_up(&cache_sem);
+    //sema_up(&cache_sem);
 
 	/* If we don't have it in the cache, then we have to read it in from
 	disk */
     int insert_ind;
     cache_sector sector;
     /* Keep trying to evict until we get the desired block. */
-    while (true) {
-        sema_down(&cache_sem);
+    // while (true) {
+        //sema_down(&cache_sem);
         insert_ind = cache_evict();
         sector = cache[insert_ind];
-        sema_up(&cache_sem);
+        //sema_up(&cache_sem);
 
         /* Eviction involves writing to the cache sector, so wait_write.
          * This lets any active writer or readers to finish what they're doing. */
-        wait_write(&sector.rw);
+        //wait_write(&sector.rw);
         /* We must double check if it's still the same block */
-        if (sector.block_id == block_id) { 
-            break;
-        }
-        done_write(&sector.rw);
-    }
+        //if (sector.block_id == block_id) { 
+        //    break;
+        //}
+        //done_write(&sector.rw);
+    //}
 
     /* Eviction involves writing to the cache sector, so
      * wait_write. */
     block_read(fs_device, block_id, cache[insert_ind].data);
+    /*printf("Done reading from block %d\n", block_id);*/
     cache[insert_ind].used = true;
     cache[insert_ind].dirty = false;
     cache[insert_ind].accessed = true;
@@ -158,7 +159,7 @@ int cache_get_sector(block_sector_t block_id) {
     cache_access_count[insert_ind] = 0;
 
     /* Done writing */
-    done_write(&sector.rw);
+    //done_write(&sector.rw);
 
 /*	printf("cache_get_sector: read into cache at index %d\n", insert_ind);
 */
@@ -204,12 +205,12 @@ int cache_sync_sector(block_sector_t block_id, bool write) {
 /* Gets the cache sector synchronously. Takes care of
  * double checking the sector. Caller must call done_read*/
 cache_sector cache_read_sector(block_sector_t block_id) {
-    return cache[cache_sync_sector(block_id, false)];
+    return cache[cache_get_sector(block_id)];
 }
 
 /* */
 cache_sector cache_write_sector(block_sector_t block_id) {
-    return cache[cache_sync_sector(block_id, true)];
+    return cache[cache_get_sector(block_id)];
 }
 
 /* Part of keeping track of eviction policies. */

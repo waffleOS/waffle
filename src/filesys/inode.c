@@ -59,85 +59,88 @@ static inline int min(int a, int b)
     Returns -1 if INODE does not contain data for a byte at offset
     POS. */
 static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
-    printf("Byte to sector: %d\n", pos);
+    /*printf("Byte to sector: %d\n", pos);*/
     ASSERT(inode != NULL);
 
     /* Value to return. */
     block_sector_t result;
 
     /* Start reading inode->sector */
-    printf("Reading cache\n");
+    /*printf("Reading cache\n");*/
+    /*printf("Inode sector: %d\n", inode->sector);*/
     cache_sector sector = cache_read_sector(inode->sector);
     struct inode_disk * data = (struct inode_disk *) sector.data;
 
-    if (pos < METADATA_BYTES)
-    {
-        return -1;
-    }
-    pos -= METADATA_BYTES;
-    printf("pos -= metadata: %d\n", pos);
-    printf("File length: %d\n", data->length);
+    /*if (pos < METADATA_BYTES)*/
+    /*{*/
+        /*printf("Error in byte_to_sector, pos < metadata\n");*/
+        /*return -1;*/
+    /*}*/
+    /*pos -= METADATA_BYTES;*/
+    /*printf("pos -= metadata: %d\n", pos);*/
+    /*printf("File length: %d\n", data->length);*/
     if (pos < data->length)
     {
-        printf("Looking in direct blocks\n");
+        /*printf("Looking in direct blocks\n");*/
         int block_index = pos / NUM_BYTES_PER_SECTOR;
-        printf("Block index: %d\n", block_index);
+        /*printf("Block index: %d\n", block_index);*/
         if (block_index < NUM_DIRECT)
         {
-            printf("Found in direct blocks\n");
+            /*printf("Found in direct blocks\n");*/
             result = data->direct[block_index];
             /* Done reading inode->sector. */
-            done_read(&sector.rw);
-            printf("Done reading sector\n");
-            printf("Sector is %d\n", result);
+            //done_read(&sector.rw);
+            /*printf("Done reading sector\n");*/
+            /*printf("Sector is %d\n", result);*/
             return result;
         }
 
         else
         {
-            printf("Looking in indirect blocks\n");
+            /*printf("Looking in indirect blocks\n");*/
             block_index -= NUM_DIRECT;
-            printf("Block index: %d\n", block_index);
+            /*printf("Block index: %d\n", block_index);*/
             if (block_index < NUM_ENTRIES)
             {
-                printf("Found in indirect blocks\n");
+                /*printf("Found in indirect blocks\n");*/
                 cache_sector indirect_sector = cache_read_sector(data->indirect);
                 struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector.data;
                 result = indirect_data->sectors[block_index];
                 /* Done reading indirect data. */
-                done_read(&indirect_sector.rw);
-                printf("Sector is %d\n", result);
+                //done_read(&indirect_sector.rw);
+                /*printf("Sector is %d\n", result);*/
                 return result;
             }
 
             else
             {
-                printf("Looking in double indirect blocks\n");
+                /*printf("Looking in double indirect blocks\n");*/
                 block_index -= NUM_ENTRIES;
-                printf("Block index: %d\n", block_index);
+                /*printf("Block index: %d\n", block_index);*/
                 if (block_index < NUM_ENTRIES * NUM_ENTRIES)
                 {
-                    printf("Found in double indirect blocks\n");
+                    /*printf("Found in double indirect blocks\n");*/
                     int indirect_index = block_index / NUM_ENTRIES;
-                    printf("Indirect index: %d\n", indirect_index);
+                    /*printf("Indirect index: %d\n", indirect_index);*/
                     cache_sector double_indirect_sector = cache_read_sector(data->double_indirect);
                     struct indirect_inode_disk * double_indirect_data = (struct indirect_inode_disk *) double_indirect_sector.data;
                     block_sector_t indirect_sector_id = double_indirect_data->sectors[indirect_index];
                     /* Done reading double indirect data. */
-                    done_read(&double_indirect_sector.rw);
+                    //done_read(&double_indirect_sector.rw);
                     int direct_index = block_index % NUM_ENTRIES;
                     cache_sector indirect_sector = cache_read_sector(indirect_sector_id);
                     struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector.data;
                     result = indirect_data->sectors[direct_index];
 
                     /* Done reading indirect data. */
-                    done_read(&indirect_sector.rw);
-                    printf("Sector is %d\n", result);
+                    //done_read(&indirect_sector.rw);
+                    /*printf("Sector is %d\n", result);*/
                     return result;
                 }
 
                 else
                 {
+                    /*printf("Error in byte_to_sector, offset too big\n");*/
                     return -1;
                 }
             }
@@ -146,7 +149,8 @@ static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
 
     else {
         /* Done reading inode->sector. */
-        done_read(&sector.rw);
+        //done_read(&sector.rw);
+        /*printf("Error in byte_to_sector, offset > length\n");*/
         return -1;
     }
 
@@ -192,6 +196,7 @@ bool inode_create(block_sector_t sector, off_t length) {
                 free(disk_inode);
                 return success;
             }
+            /*printf("Found direct sector %d\n", disk_inode->direct[i])*/
             block_write(fs_device, disk_inode->direct[i], zeros);
         }
         sectors -= num_direct_blocks;
@@ -352,12 +357,17 @@ void inode_close(struct inode *inode) {
             cache_sector sector = cache_read_sector(inode->sector);
             struct inode_disk *data = (struct inode_disk *) sector.data;
             
+            size_t length = data->length;
+            int i;
+            for (i = 0; i < length; i += BLOCK_SECTOR_SIZE)
+            {
+                block_sector_t block_id = byte_to_sector(inode, i);
+                free_map_release(block_id, 1);
+            }
             free_map_release(inode->sector, 1);
-            free_map_release(data->start,
-                             bytes_to_sectors(data->length)); 
 
             /* Done reading inode->sector. */
-            done_read(&sector.rw);
+            //done_read(&sector.rw);
         }
 
         free(inode); 
@@ -406,7 +416,7 @@ off_t inode_read_at(struct inode *inode, void *buffer_, off_t size, off_t offset
         /* Read from cache into the buffer */
         memcpy(buffer + bytes_read, sector.data + sector_ofs, chunk_size);
         /* Done reading sector. */
-        done_read(&sector.rw);
+        //done_read(&sector.rw);
 
 /*         if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) { 
 */            /* Read full sector directly into caller's buffer. */
@@ -528,7 +538,7 @@ off_t inode_length(const struct inode *inode) {
     cache_sector sector = cache_read_sector(inode->sector);
     struct inode_disk *data = (struct inode_disk *) sector.data;
     off_t result = data->length;
-    done_read(&sector.rw);
+    //done_read(&sector.rw);
 
     return result;
 }
