@@ -59,85 +59,94 @@ static inline int min(int a, int b)
     Returns -1 if INODE does not contain data for a byte at offset
     POS. */
 static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
-    printf("Byte to sector: %d\n", pos);
+    /*printf("Byte to sector: %d\n", pos);*/
     ASSERT(inode != NULL);
 
     /* Value to return. */
     block_sector_t result;
 
     /* Start reading inode->sector */
-    printf("Reading cache\n");
-    cache_sector sector = cache_read_sector(inode->sector);
-    struct inode_disk * data = (struct inode_disk *) sector.data;
+    /*printf("Reading cache\n");*/
+    /*printf("Inode sector: %d\n", inode->sector);*/
+    int cache_ind = cache_get_sector(inode->sector);
+    struct inode_disk * data = (struct inode_disk *) cache[cache_ind].data;
+    /*cache_sector sector = cache_read_sector(inode->sector);*/
+    /*struct inode_disk * data = (struct inode_disk *) sector.data;*/
 
-    if (pos < METADATA_BYTES)
-    {
-        return -1;
-    }
-    pos -= METADATA_BYTES;
-    printf("pos -= metadata: %d\n", pos);
-    printf("File length: %d\n", data->length);
+    /*if (pos < METADATA_BYTES)*/
+    /*{*/
+        /*printf("Error in byte_to_sector, pos < metadata\n");*/
+        /*return -1;*/
+    /*}*/
+    /*pos -= METADATA_BYTES;*/
+    /*printf("pos -= metadata: %d\n", pos);*/
+    /*printf("File length: %d\n", data->length);*/
     if (pos < data->length)
     {
-        printf("Looking in direct blocks\n");
+        /*printf("Looking in direct blocks\n");*/
         int block_index = pos / NUM_BYTES_PER_SECTOR;
-        printf("Block index: %d\n", block_index);
+        /*printf("Block index: %d\n", block_index);*/
         if (block_index < NUM_DIRECT)
         {
-            printf("Found in direct blocks\n");
+            /*printf("Found in direct blocks\n");*/
             result = data->direct[block_index];
             /* Done reading inode->sector. */
-            done_read(&sector.rw);
-            printf("Done reading sector\n");
-            printf("Sector is %d\n", result);
+            //done_read(&sector.rw);
+            /*printf("Done reading sector\n");*/
+            /*printf("Sector is %d\n", result);*/
             return result;
         }
 
         else
         {
-            printf("Looking in indirect blocks\n");
+            /*printf("Looking in indirect blocks\n");*/
             block_index -= NUM_DIRECT;
-            printf("Block index: %d\n", block_index);
+            /*printf("Block index: %d\n", block_index);*/
             if (block_index < NUM_ENTRIES)
             {
-                printf("Found in indirect blocks\n");
-                cache_sector indirect_sector = cache_read_sector(data->indirect);
-                struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector.data;
+                /*printf("Found in indirect blocks\n");*/
+                int cache_ind = cache_get_sector(data->indirect);
+                struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) cache[cache_ind].data;
+                /*cache_sector indirect_sector = cache_read_sector(data->indirect);*/
+                /*struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector.data;*/
                 result = indirect_data->sectors[block_index];
                 /* Done reading indirect data. */
-                done_read(&indirect_sector.rw);
-                printf("Sector is %d\n", result);
+                //done_read(&indirect_sector.rw);
+                /*printf("Sector is %d\n", result);*/
                 return result;
             }
 
             else
             {
-                printf("Looking in double indirect blocks\n");
+                /*printf("Looking in double indirect blocks\n");*/
                 block_index -= NUM_ENTRIES;
-                printf("Block index: %d\n", block_index);
+                /*printf("Block index: %d\n", block_index);*/
                 if (block_index < NUM_ENTRIES * NUM_ENTRIES)
                 {
-                    printf("Found in double indirect blocks\n");
+                    /*printf("Found in double indirect blocks\n");*/
                     int indirect_index = block_index / NUM_ENTRIES;
-                    printf("Indirect index: %d\n", indirect_index);
-                    cache_sector double_indirect_sector = cache_read_sector(data->double_indirect);
-                    struct indirect_inode_disk * double_indirect_data = (struct indirect_inode_disk *) double_indirect_sector.data;
+                    /*printf("Indirect index: %d\n", indirect_index);*/
+                    int cache_ind = cache_get_sector(data->double_indirect);
+                    struct indirect_inode_disk * double_indirect_data = (struct inode_disk *) cache[cache_ind].data;
+                    /*cache_sector double_indirect_sector = cache_read_sector(data->double_indirect);*/
+                    /*struct indirect_inode_disk * double_indirect_data = (struct indirect_inode_disk *) double_indirect_sector.data;*/
                     block_sector_t indirect_sector_id = double_indirect_data->sectors[indirect_index];
                     /* Done reading double indirect data. */
-                    done_read(&double_indirect_sector.rw);
+                    //done_read(&double_indirect_sector.rw);
                     int direct_index = block_index % NUM_ENTRIES;
-                    cache_sector indirect_sector = cache_read_sector(indirect_sector_id);
-                    struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector.data;
+                    cache_ind = cache_get_sector(indirect_sector_id);
+                    struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) cache[cache_ind].data;
                     result = indirect_data->sectors[direct_index];
 
                     /* Done reading indirect data. */
-                    done_read(&indirect_sector.rw);
-                    printf("Sector is %d\n", result);
+                    //done_read(&indirect_sector.rw);
+                    /*printf("Sector is %d\n", result);*/
                     return result;
                 }
 
                 else
                 {
+                    /*printf("Error in byte_to_sector, offset too big\n");*/
                     return -1;
                 }
             }
@@ -146,7 +155,8 @@ static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
 
     else {
         /* Done reading inode->sector. */
-        done_read(&sector.rw);
+        //done_read(&sector.rw);
+        /*printf("Error in byte_to_sector, offset > length\n");*/
         return -1;
     }
 
@@ -192,6 +202,7 @@ bool inode_create(block_sector_t sector, off_t length) {
                 free(disk_inode);
                 return success;
             }
+            /*printf("Found direct sector %d\n", disk_inode->direct[i])*/
             block_write(fs_device, disk_inode->direct[i], zeros);
         }
         sectors -= num_direct_blocks;
@@ -349,15 +360,22 @@ void inode_close(struct inode *inode) {
  
         /* Deallocate blocks if removed. */
         if (inode->removed) {
-            cache_sector sector = cache_read_sector(inode->sector);
-            struct inode_disk *data = (struct inode_disk *) sector.data;
+            int cache_ind = cache_get_sector(inode->sector);
+            struct inode_disk * data = (struct inode_disk *) cache[cache_ind].data;
+            /*cache_sector sector = cache_read_sector(inode->sector);*/
+            /*struct inode_disk *data = (struct inode_disk *) sector.data;*/
             
+            size_t length = data->length;
+            int i;
+            for (i = 0; i < length; i += BLOCK_SECTOR_SIZE)
+            {
+                block_sector_t block_id = byte_to_sector(inode, i);
+                free_map_release(block_id, 1);
+            }
             free_map_release(inode->sector, 1);
-            free_map_release(data->start,
-                             bytes_to_sectors(data->length)); 
 
             /* Done reading inode->sector. */
-            done_read(&sector.rw);
+            //done_read(&sector.rw);
         }
 
         free(inode); 
@@ -401,12 +419,13 @@ off_t inode_read_at(struct inode *inode, void *buffer_, off_t size, off_t offset
 
 
         /* If there are things to read, let's get it into our cache. */
-        cache_sector sector = cache_read_sector(sector_idx);
+        int cache_ind = cache_get_sector(sector_idx);
+        /*cache_sector sector = cache_read_sector(sector_idx);*/
 
         /* Read from cache into the buffer */
-        memcpy(buffer + bytes_read, sector.data + sector_ofs, chunk_size);
+        memcpy(buffer + bytes_read, cache[cache_ind].data + sector_ofs, chunk_size);
         /* Done reading sector. */
-        done_read(&sector.rw);
+        //done_read(&sector.rw);
 
 /*         if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) { 
 */            /* Read full sector directly into caller's buffer. */
@@ -437,6 +456,163 @@ off_t inode_read_at(struct inode *inode, void *buffer_, off_t size, off_t offset
     return bytes_read;
 }
 
+bool inode_extend(struct inode *inode, off_t offset) {
+
+    int cache_ind = cache_get_sector(inode->sector);
+    struct inode_disk * disk_inode = (struct inode_disk *) cache[cache_ind].data;
+    int length = disk_inode->length;
+
+    bool success = false;
+
+    if (offset >= length)
+    {
+        int num_bytes = length - offset;
+        int num_blocks = num_bytes / NUM_BYTES_PER_SECTOR;
+        int last_block = length / NUM_BYTES_PER_SECTOR;
+        bool create_indirect = false;
+        while (last_block < NUM_DIRECT)
+        {
+            create_indirect = true;
+            if (num_blocks <= 0 || !free_map_allocate(1, &disk_inode->direct[last_block]))
+            {
+                block_write(fs_device, inode->sector, disk_inode);
+                return num_blocks <= 0;
+            }
+
+            last_block++;
+            num_blocks--;
+        }
+
+        if (num_blocks <= 0)
+        {
+            block_write(fs_device, inode->sector, disk_inode);
+            success = true;
+            return success;
+        }
+
+
+        if (create_indirect)
+        {
+            struct indirect_inode_disk * ind_disk_inode = NULL;
+            ind_disk_inode = calloc(1, sizeof * ind_disk_inode);
+            if(!free_map_allocate(1, &disk_inode->indirect))
+            {
+                block_write(fs_device, inode->sector, disk_inode);
+                return success;
+            }
+            block_write(fs_device, disk_inode->indirect, ind_disk_inode);
+            free(ind_disk_inode);
+        }
+
+        bool create_double_indirect = false;
+
+        int cache_ind = cache_get_sector(disk_inode->indirect);
+        struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) cache[cache_ind].data;
+
+        if (last_block < NUM_DIRECT + NUM_ENTRIES)
+        {
+            create_double_indirect = true;
+            int indirect_index = last_block - NUM_DIRECT;
+            int i;
+            for (i = indirect_index; i < NUM_ENTRIES; i++)
+            {
+                if (num_blocks <= 0 || !free_map_allocate(1, &indirect_data->sectors[i]))
+                {
+                    block_write(fs_device, disk_inode->indirect, indirect_data);
+                    block_write(fs_device, inode->sector, disk_inode);
+                    return num_blocks <= 0;
+                }
+                last_block++;
+                num_blocks--;
+                
+            }
+        }
+
+        block_write(fs_device, disk_inode->indirect, indirect_data);
+        if (num_blocks <= 0)
+        {
+            block_write(fs_device, inode->sector, disk_inode);
+            success = true;
+            return success;
+        }
+
+        if (create_double_indirect)
+        {
+            struct indirect_inode_disk * d_ind_disk_inode = NULL;
+            d_ind_disk_inode = calloc(1, sizeof * d_ind_disk_inode);
+            if(!free_map_allocate(1, &disk_inode->double_indirect))
+            {
+                block_write(fs_device, inode->sector, disk_inode);
+                return success;
+            }
+
+            struct indirect_inode_disk * ind_disk_inode = NULL;
+            ind_disk_inode = calloc(1, sizeof * ind_disk_inode);
+            if(!free_map_allocate(1, &d_ind_disk_inode->sectors[0]))
+            {
+                block_write(fs_device, disk_inode->double_indirect, d_ind_disk_inode);
+                block_write(fs_device, inode->sector, disk_inode);
+                return success;
+            }
+
+            block_write(fs_device, d_ind_disk_inode->sectors[0], ind_disk_inode);
+            block_write(fs_device, disk_inode->double_indirect, d_ind_disk_inode);
+            free(ind_disk_inode);
+            free(d_ind_disk_inode);
+        }
+
+        if (last_block < NUM_DIRECT + NUM_ENTRIES + NUM_ENTRIES * NUM_ENTRIES)
+        {
+            int indirect_index = (last_block - NUM_DIRECT - NUM_ENTRIES) / NUM_ENTRIES;
+            int cache_ind = cache_get_sector(disk_inode->double_indirect);
+            struct indirect_inode_disk * double_indirect_data = (struct indirect_inode_disk *) cache[cache_ind].data;
+            while (indirect_index < NUM_ENTRIES)
+            {
+                cache_ind = cache_get_sector(double_indirect_data->sectors[indirect_index]);
+                struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) cache[cache_ind].data;
+                int direct_index = (last_block - NUM_DIRECT - indirect_index * NUM_ENTRIES);
+                int i;
+                for (i = direct_index; i < NUM_ENTRIES; i++)
+                {
+                    if (num_blocks <= 0 || !free_map_allocate(1, &indirect_data->sectors[i]))
+                    {
+                        block_write(fs_device, double_indirect_data->sectors[indirect_index], indirect_data);
+                        block_write(fs_device, disk_inode->double_indirect, double_indirect_data);
+                        block_write(fs_device, inode->sector, disk_inode);
+                        return num_blocks <= 0;
+                    }
+                    last_block++;
+                    num_blocks--;
+                }
+
+                block_write(fs_device, double_indirect_data->sectors[indirect_index], indirect_data);
+                if (num_blocks <= 0)
+                {
+                        block_write(fs_device, disk_inode->double_indirect, double_indirect_data);
+                        block_write(fs_device, inode->sector, disk_inode);
+                        success = true;
+                        return success;
+                }
+
+                indirect_index++;
+                if (indirect_index < NUM_ENTRIES)
+                {
+                    struct indirect_inode_disk * ind_disk_inode = NULL;
+                    ind_disk_inode = calloc(1, sizeof * ind_disk_inode);
+                    if(!free_map_allocate(1, &double_indirect_data->sectors[indirect_index]))
+                    {
+                        block_write(fs_device, disk_inode->double_indirect, double_indirect_data);
+                        block_write(fs_device, inode->sector, disk_inode);
+                        return success;
+                    }
+                }
+            }
+        }
+    }
+
+    return success;
+}
+
 /*! Writes SIZE bytes from BUFFER into INODE, starting at OFFSET.
     Returns the number of bytes actually written, which may be
     less than SIZE if end of file is reached or an error occurs.
@@ -449,6 +625,18 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
 */
     if (inode->deny_write_cnt)
         return 0;
+
+    int cache_ind = cache_get_sector(inode->sector);
+    struct inode_disk * disk_inode = (struct inode_disk *) cache[cache_ind].data;
+
+    if (offset >= disk_inode->length)
+    {
+        if (inode_extend(inode, offset))
+        {
+            disk_inode->length += offset - disk_inode->length;
+        }
+    }
+
 
     while (size > 0) {
         /* Sector to write, starting byte offset within sector. */
@@ -466,11 +654,12 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
             break;
 
         /* If there are things to write, let's get it into our cache. */
-        cache_sector sector = cache_write_sector(sector_idx);
+        int cache_ind = cache_get_sector(sector_idx);
+        /*cache_sector sector = cache_write_sector(sector_idx);*/
 
         /* Write from cache into the buffer */
-        memcpy(sector.data + sector_ofs, buffer + bytes_written, chunk_size);
-        sector.dirty = true;
+        memcpy(cache[cache_ind].data + sector_ofs, buffer + bytes_written, chunk_size);
+        cache[cache_ind].dirty = true;
 
 /*        if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) {
 */            /* Write full sector directly to disk. */
@@ -525,10 +714,12 @@ void inode_allow_write (struct inode *inode) {
 
 /*! Returns the length, in bytes, of INODE's data. */
 off_t inode_length(const struct inode *inode) {
-    cache_sector sector = cache_read_sector(inode->sector);
-    struct inode_disk *data = (struct inode_disk *) sector.data;
+    int cache_ind = cache_get_sector(inode->sector);
+    struct inode_disk * data = (struct inode_disk *) cache[cache_ind].data;
+    /*cache_sector sector = cache_read_sector(inode->sector);*/
+    /*struct inode_disk *data = (struct inode_disk *) sector.data;*/
     off_t result = data->length;
-    done_read(&sector.rw);
+    //done_read(&sector.rw);
 
     return result;
 }

@@ -29,6 +29,7 @@ bool cache_is_dirty(block_sector_t block_id);
 void cache_set_dirty(block_sector_t block_id, bool dirty);
 void cache_write_all_dirty(void);
 bool cache_is_used(block_sector_t block_id);
+int cache_get_sector(block_sector_t block_id);
 
 /* Returns index of evicted cache_sector. Must write back if dirty. Sets used
  * flag to false. */
