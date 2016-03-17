@@ -117,7 +117,7 @@ int cache_evict(void) {
 	}
 	cache[evict_ind].used = false;
     
-	printf("evict_ind = %d\n", evict_ind);
+	//printf("evict_ind = %d\n", evict_ind);
 	return evict_ind;
 }
 
@@ -126,7 +126,7 @@ int cache_evict(void) {
  * Evicts another sector if needed. */
 int cache_get_sector(block_sector_t block_id) {
 	/* Check if we already have it in the cache */
-	printf("cache_get_sector: get sector %d\n", block_id);
+	//printf("cache_get_sector: get sector %d\n", block_id);
 	
     sema_down(&cache_sem);
 	cache_refresh();
@@ -148,24 +148,17 @@ int cache_get_sector(block_sector_t block_id) {
     int insert_ind;
     cache_sector *sector;
     /* Keep trying to evict until we get the desired block. */
-    while (true) {
-        sema_down(&cache_sem);
-        insert_ind = cache_evict();
-        sector = &cache[insert_ind];
-        sema_up(&cache_sem);
+    sema_down(&cache_sem);
+    insert_ind = cache_evict();
+    sector = &cache[insert_ind];
 
-        /* Eviction involves writing to the cache sector, so wait_write.
-         * This lets any active writer or readers to finish what they're doing. */
-        printf("Waiting to evict....\n");
-        wait_write(&sector->rw);
-        break;
-        /* We must double check if it's still the same block */
-        if (sector->block_id == block_id) { 
-            printf("Got correct block to evict.\n");
-            break;
-        }
-        done_write(&sector->rw);
-    }
+    /* Eviction involves writing to the cache sector, so wait_write.
+     * This lets any active writer or readers to finish what they're doing. */
+    //printf("Waiting to evict....\n");
+    wait_write(&sector->rw);
+
+    // Crabbing.
+    sema_up(&cache_sem);
 
     /* Eviction involves writing to the cache sector, so
      * wait_write. */
@@ -199,7 +192,7 @@ int cache_sync_sector(block_sector_t block_id, bool write) {
         
         /* Synchronously acquire sector for reading */
         if (write) { 
-            printf("Waiting to write.\n");
+            //printf("Waiting to write.\n");
             wait_write(&sector->rw);
         }
         else {
@@ -207,7 +200,7 @@ int cache_sync_sector(block_sector_t block_id, bool write) {
         }
 
         if (sector->block_id == block_id) { 
-            printf("Acquired correct block.\n");
+            //printf("Acquired correct block.\n");
             return cache_ind;
         }
 

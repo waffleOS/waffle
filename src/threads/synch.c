@@ -110,7 +110,7 @@ void sema_up(struct semaphore *sema) {
 
     old_level = intr_disable();
     if (!list_empty(&sema->waiters)) {
-        printf("%d threads waiting on sema\n", list_size(&sema->waiters));
+        //printf("%d threads waiting on sema\n", list_size(&sema->waiters));
         thread_unblock(list_entry(list_pop_front(&sema->waiters),
                                   struct thread, elem));
     }
@@ -333,14 +333,14 @@ void rw_lock_init(struct rw_lock *rw) {
     cond_init(&rw->read_cond);
     cond_init(&rw->write_cond);
     rw->num_read = 0;
-    printf("Initializing rw_lock %p...\n", rw);
+    //printf("Initializing rw_lock %p...\n", rw);
 }
 
 /*! Waits until readers are allowed to read. */
 void wait_read(struct rw_lock *rw) {
     ASSERT(rw != NULL);
 
-    printf("Waiting to read.\n");
+    //printf("Waiting to read.\n");
     /* Acquire access to rw->num_read and rw->state. */
     lock_acquire(&rw->lock);
 
@@ -367,7 +367,7 @@ void wait_write(struct rw_lock *rw) {
     ASSERT(rw != NULL);
 
     struct thread *t = thread_current();
-    printf("Waiting to write %d in thread %s\n", rw->id, t->name);
+    //printf("Waiting to write %d in thread %s\n", rw->id, t->name);
 
     /* Acquire access to rw->num_read and rw->state. */
     lock_acquire(&rw->lock);
@@ -384,10 +384,10 @@ void wait_write(struct rw_lock *rw) {
         cond_wait(&rw->write_cond, &rw->lock);
     }
 
-    printf("About to write lock %p\n", &rw->lock);
+    //printf("About to write lock %p\n", &rw->lock);
     /* Release access to rw->num_read and rw->state. */
     lock_release(&rw->lock);
-    printf("Released lock %p\n", &rw->lock);
+    //printf("Released lock %p\n", &rw->lock);
 }
 
 /*! Indicate that you are done reading  */

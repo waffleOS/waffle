@@ -276,7 +276,7 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
         if (chunk_size <= 0)
             break;
 
-        printf("About to write sector\n");
+        //printf("About to write sector\n");
         /* If there are things to read, let's get it into our cache. */
         cache_sector *sector = cache_write_sector(sector_idx);
 
@@ -285,7 +285,7 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
         sector->dirty = true;
 
         done_write(&sector->rw);
-        printf("Done writing sector\n");
+        //printf("Done writing sector\n");
 
 /*        if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) {
 */            /* Write full sector directly to disk. */
