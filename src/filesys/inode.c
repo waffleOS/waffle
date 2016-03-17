@@ -464,10 +464,10 @@ bool inode_extend(struct inode *inode, off_t offset) {
 
     bool success = false;
 
-    if (offset >= length)
+    if (offset > length)
     {
-        int num_bytes = length - offset;
-        int num_blocks = num_bytes / NUM_BYTES_PER_SECTOR;
+        int num_bytes = offset - length;
+        int num_blocks = DIV_ROUND_UP(num_bytes, NUM_BYTES_PER_SECTOR);
         int last_block = length / NUM_BYTES_PER_SECTOR;
         bool create_indirect = false;
         while (last_block < NUM_DIRECT)
@@ -626,14 +626,19 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
     if (inode->deny_write_cnt)
         return 0;
 
-    int cache_ind = cache_get_sector(inode->sector);
-    struct inode_disk * disk_inode = (struct inode_disk *) cache[cache_ind].data;
+    int disk_inode_length = inode_length(inode);
+    int length = DIV_ROUND_UP(disk_inode_length, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;
 
-    if (offset >= disk_inode->length)
+    if (offset + size > length)
     {
-        if (inode_extend(inode, offset))
+        if (inode_extend(inode, offset + size))
         {
-            disk_inode->length += offset - disk_inode->length;
+            disk_inode_length = DIV_ROUND_UP(offset + size, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;
+            /*disk_inode_length += offset + size - disk_inode_length;*/
+            int cache_ind = cache_get_sector(inode->sector);
+            struct inode_disk * disk_inode = (struct inode_disk *) cache[cache_ind].data;
+            disk_inode->length = disk_inode_length;
+            block_write(fs_device, inode->sector, disk_inode);
         }
     }
 
