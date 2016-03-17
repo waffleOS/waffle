@@ -25,6 +25,11 @@ int do_write(int fd, const void * buffer, unsigned int size);
 void do_seek(int fd, unsigned int position);
 unsigned int do_tell(int fd);
 void do_close(int fd);
+bool do_chdir(const char *dir);
+bool do_mkdir(const char *dir);
+bool do_readdir(int fd, char *name);
+bool do_isdir(int fd);
+int do_inumber(int fd);
 bool validate_pointer(void *ptr);
 void * sanitize_buffer(void ** buffer);
 
@@ -229,6 +234,21 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             fd = *((int *) (f->esp + 4));
             do_close(fd);
             break;
+        case SYS_CHDIR:
+
+            break;
+        case SYS_MKDIR:
+
+            break;
+        case SYS_READDIR:
+
+            break;
+        case SYS_ISDIR:
+
+            break;
+        case SYS_INUMBER:
+
+            break;
     }
 
 }
@@ -413,6 +433,27 @@ void do_close(int fd)
             t->files[fd - 2] = NULL;
         }
     }
+}
+
+
+bool do_chdir(const char *dir) {
+
+}
+
+bool do_mkdir(const char *dir) {
+
+}
+
+bool do_readdir(int fd, char *name) {
+
+}
+
+bool do_isdir(int fd) {
+
+}
+
+int do_inumber(int fd) {
+    
 }
 
 /* Validates pointers */

@@ -143,6 +143,9 @@ struct thread {
     /* Stores it's own exit status. This is so parent knows the status after
     child death */
     int exit_status;
+
+    /* Filesystem thread struct elements */
+    
 };
 
 
