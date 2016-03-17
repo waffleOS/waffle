@@ -422,7 +422,7 @@ off_t inode_read_at(struct inode *inode, void *buffer_, off_t size, off_t offset
 
 bool inode_extend(struct inode *inode, off_t offset) {
 
-    cache_sector * sector = cache_read_sector(inode->sector);
+    cache_sector * sector = cache_write_sector(inode->sector);
     struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
     int length = disk_inode->length;
 
@@ -439,8 +439,7 @@ bool inode_extend(struct inode *inode, off_t offset) {
             create_indirect = true;
             if (num_blocks <= 0 || !free_map_allocate(1, &disk_inode->direct[last_block]))
             {
-                block_write(fs_device, inode->sector, disk_inode);
-                done_read(&sector->rw);
+                done_write(&sector->rw);
                 return num_blocks <= 0;
             }
 
@@ -450,9 +449,8 @@ bool inode_extend(struct inode *inode, off_t offset) {
 
         if (num_blocks <= 0)
         {
-            block_write(fs_device, inode->sector, disk_inode);
             success = true;
-            done_read(&sector->rw);
+            done_write(&sector->rw);
             return success;
         }
 
@@ -463,8 +461,7 @@ bool inode_extend(struct inode *inode, off_t offset) {
             ind_disk_inode = calloc(1, sizeof * ind_disk_inode);
             if(!free_map_allocate(1, &disk_inode->indirect))
             {
-                block_write(fs_device, inode->sector, disk_inode);
-                done_read(&sector->rw);
+                done_write(&sector->rw);
                 return success;
             }
             block_write(fs_device, disk_inode->indirect, ind_disk_inode);
@@ -473,7 +470,7 @@ bool inode_extend(struct inode *inode, off_t offset) {
 
         bool create_double_indirect = false;
 
-        cache_sector * indirect_sector = cache_read_sector(disk_inode->indirect);
+        cache_sector * indirect_sector = cache_write_sector(disk_inode->indirect);
         struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector->data;
 
         if (last_block < NUM_DIRECT + NUM_ENTRIES)
@@ -485,10 +482,8 @@ bool inode_extend(struct inode *inode, off_t offset) {
             {
                 if (num_blocks <= 0 || !free_map_allocate(1, &indirect_data->sectors[i]))
                 {
-                    block_write(fs_device, disk_inode->indirect, indirect_data);
-                    block_write(fs_device, inode->sector, disk_inode);
-                    done_read(&indirect_sector->rw);
-                    done_read(&sector->rw);
+                    done_write(&indirect_sector->rw);
+                    done_write(&sector->rw);
                     return num_blocks <= 0;
                 }
                 last_block++;
@@ -497,51 +492,44 @@ bool inode_extend(struct inode *inode, off_t offset) {
             }
         }
 
-        block_write(fs_device, disk_inode->indirect, indirect_data);
-        done_read(&indirect_sector->rw);
+        done_write(&indirect_sector->rw);
         if (num_blocks <= 0)
         {
-            block_write(fs_device, inode->sector, disk_inode);
-            done_read(&sector->rw);
+            done_write(&sector->rw);
             success = true;
             return success;
         }
 
         if (create_double_indirect)
         {
-            struct indirect_inode_disk * d_ind_disk_inode = NULL;
-            d_ind_disk_inode = calloc(1, sizeof * d_ind_disk_inode);
+            /*struct indirect_inode_disk * d_ind_disk_inode = NULL;*/
+            /*d_ind_disk_inode = calloc(1, sizeof * d_ind_disk_inode);*/
             if(!free_map_allocate(1, &disk_inode->double_indirect))
             {
-                block_write(fs_device, inode->sector, disk_inode);
-                done_read(&sector->rw);
+                done_write(&sector->rw);
                 return success;
             }
 
-            struct indirect_inode_disk * ind_disk_inode = NULL;
-            ind_disk_inode = calloc(1, sizeof * ind_disk_inode);
+            cache_sector * d_indirect_sector = cache_write_sector(disk_inode->double_indirect);
+            struct indirect_inode_disk * d_ind_disk_inode = (struct indirect_inode_disk *) d_indirect_sector->data;
             if(!free_map_allocate(1, &d_ind_disk_inode->sectors[0]))
             {
-                block_write(fs_device, disk_inode->double_indirect, d_ind_disk_inode);
-                block_write(fs_device, inode->sector, disk_inode);
-                done_read(&sector->rw);
+                done_write(&d_indirect_sector->rw);
+                done_write(&sector->rw);
                 return success;
             }
 
-            block_write(fs_device, d_ind_disk_inode->sectors[0], ind_disk_inode);
-            block_write(fs_device, disk_inode->double_indirect, d_ind_disk_inode);
-            free(ind_disk_inode);
-            free(d_ind_disk_inode);
+            done_write(&d_indirect_sector->rw);
         }
 
         if (last_block < NUM_DIRECT + NUM_ENTRIES + NUM_ENTRIES * NUM_ENTRIES)
         {
             int indirect_index = (last_block - NUM_DIRECT - NUM_ENTRIES) / NUM_ENTRIES;
-            cache_sector * d_indirect_sector = cache_read_sector(disk_inode->double_indirect);
+            cache_sector * d_indirect_sector = cache_write_sector(disk_inode->double_indirect);
             struct indirect_inode_disk * double_indirect_data = (struct indirect_inode_disk *) d_indirect_sector->data;
             while (indirect_index < NUM_ENTRIES)
             {
-                cache_sector * indirect_sector = cache_read_sector(double_indirect_data->sectors[indirect_index]);
+                cache_sector * indirect_sector = cache_write_sector(double_indirect_data->sectors[indirect_index]);
                 struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector->data;
                 int direct_index = (last_block - NUM_DIRECT - indirect_index * NUM_ENTRIES);
                 int i;
@@ -549,25 +537,20 @@ bool inode_extend(struct inode *inode, off_t offset) {
                 {
                     if (num_blocks <= 0 || !free_map_allocate(1, &indirect_data->sectors[i]))
                     {
-                        block_write(fs_device, double_indirect_data->sectors[indirect_index], indirect_data);
-                        block_write(fs_device, disk_inode->double_indirect, double_indirect_data);
-                        block_write(fs_device, inode->sector, disk_inode);
-                        done_read(&d_indirect_sector->rw);
-                        done_read(&indirect_sector->rw);
-                        done_read(&sector->rw);
+                        done_write(&d_indirect_sector->rw);
+                        done_write(&indirect_sector->rw);
+                        done_write(&sector->rw);
                         return num_blocks <= 0;
                     }
                     last_block++;
                     num_blocks--;
                 }
 
-                block_write(fs_device, double_indirect_data->sectors[indirect_index], indirect_data);
+                done_write(&indirect_sector->rw);
                 if (num_blocks <= 0)
                 {
-                        block_write(fs_device, disk_inode->double_indirect, double_indirect_data);
-                        block_write(fs_device, inode->sector, disk_inode);
-                        done_read(&d_indirect_sector->rw);
-                        done_read(&sector->rw);
+                        done_write(&d_indirect_sector->rw);
+                        done_write(&sector->rw);
                         success = true;
                         return success;
                 }
@@ -575,14 +558,10 @@ bool inode_extend(struct inode *inode, off_t offset) {
                 indirect_index++;
                 if (indirect_index < NUM_ENTRIES)
                 {
-                    struct indirect_inode_disk * ind_disk_inode = NULL;
-                    ind_disk_inode = calloc(1, sizeof * ind_disk_inode);
                     if(!free_map_allocate(1, &double_indirect_data->sectors[indirect_index]))
                     {
-                        block_write(fs_device, disk_inode->double_indirect, double_indirect_data);
-                        block_write(fs_device, inode->sector, disk_inode);
-                        done_read(&d_indirect_sector->rw);
-                        done_read(&sector->rw);
+                        done_write(&d_indirect_sector->rw);
+                        done_write(&sector->rw);
                         return success;
                     }
                 }
@@ -590,7 +569,7 @@ bool inode_extend(struct inode *inode, off_t offset) {
         }
     }
 
-    done_read(&sector->rw);
+    done_write(&sector->rw);
     return success;
 }
 
@@ -616,10 +595,10 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
         {
             disk_inode_length = DIV_ROUND_UP(offset + size, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;
             /*disk_inode_length += offset + size - disk_inode_length;*/
-            /*int cache_ind = cache_get_sector(inode->sector);*/
-            /*struct inode_disk * disk_inode = (struct inode_disk *) cache[cache_ind].data;*/
-            /*disk_inode->length = disk_inode_length;*/
-            /*block_write(fs_device, inode->sector, disk_inode);*/
+            cache_sector * sector = cache_write_sector(inode->sector);
+            struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
+            disk_inode->length = disk_inode_length;
+            done_write(&sector->rw);
         }
     }
 
