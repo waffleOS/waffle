@@ -498,9 +498,8 @@ void do_close(int fd)
 
 bool do_chdir(const char *dir) {
     /* PARSING??? */
-    if(do_isdir(dir)) {
+    
 
-    }
 
     return false;
 }
@@ -524,7 +523,7 @@ bool do_readdir(int fd, char *name) {
     struct thread * t = thread_current();
     if (is_valid_fd(t, fd))
     {
-        return inode_readdir(fd, name);
+        return inode_readdir(t, fd, name);
     }
     return false;
 }
