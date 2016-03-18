@@ -594,24 +594,30 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
 
     if (offset + size > disk_inode_length)
     {
+        lock_acquire(&inode->extension_lock);
         if (offset + size > length)
         {
-            lock_acquire(&inode->extension_lock);
+            disk_inode_length = DIV_ROUND_UP(offset + size, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;
             if (offset + size > length) {
+                printf("Extending file to %d\n", offset + size);
                 inode_extend(inode, offset + size);
-                lock_release(&inode->extension_lock);
+                /*disk_inode_length += offset + size - disk_inode_length;*/
+                cache_sector * sector = cache_write_sector(inode->sector);
+                struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
+                disk_inode->length = disk_inode_length;
+                done_write(&sector->rw);
             }
             else
             {
-                lock_release(&inode->extension_lock);
+                /*disk_inode_length += offset + size - disk_inode_length;*/
+                cache_sector * sector = cache_write_sector(inode->sector);
+                struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
+                disk_inode->length = disk_inode_length;
+                done_write(&sector->rw);
             }
         }
-        disk_inode_length = DIV_ROUND_UP(offset + size, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;
-        /*disk_inode_length += offset + size - disk_inode_length;*/
-        cache_sector * sector = cache_write_sector(inode->sector);
-        struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
-        disk_inode->length = disk_inode_length;
-        done_write(&sector->rw);
+        lock_release(&inode->extension_lock);
+        /*disk_inode_length = DIV_ROUND_UP(offset + size, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;*/
     }
 
     /*cache_sector * sector = cache_write_sector(inode->sector);*/

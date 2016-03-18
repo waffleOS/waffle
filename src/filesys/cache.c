@@ -99,8 +99,8 @@ int cache_evict(void) {
 	/* Current eviction policy: NFU (Not Frequently Used). The initial index
 	is a "random" replacement strategy so it doesn't keep thrashing on the
 	first index. It isn't perfect, but it should do it most of the time. */
-	/*int i, evict_ind = (int) timer_ticks() % CACHE_SIZE;*/
-    int i, evict_ind = 0;
+    int i, evict_ind = (int) timer_ticks() % CACHE_SIZE;
+    /*int i, evict_ind = 0;*/
 	for(i = 0; i < CACHE_SIZE; i++) {
 		if(cache[i].used == false) { /* If sector is unused, use it */
 			return i;
