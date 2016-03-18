@@ -428,6 +428,7 @@ bool inode_extend(struct inode *inode, off_t offset) {
     cache_sector * sector = cache_write_sector(inode->sector);
     struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
     int length = disk_inode->length;
+    length = DIV_ROUND_UP(length, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;
 
     bool success = false;
 
@@ -594,30 +595,29 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
 
     if (offset + size > disk_inode_length)
     {
-        lock_acquire(&inode->extension_lock);
+        disk_inode_length = offset + size;
         if (offset + size > length)
         {
-            disk_inode_length = DIV_ROUND_UP(offset + size, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;
+            lock_acquire(&inode->extension_lock);
+            /*disk_inode_length = DIV_ROUND_UP(offset + size, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;*/
             if (offset + size > length) {
-                printf("Extending file to %d\n", offset + size);
                 inode_extend(inode, offset + size);
-                /*disk_inode_length += offset + size - disk_inode_length;*/
                 cache_sector * sector = cache_write_sector(inode->sector);
                 struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
                 disk_inode->length = disk_inode_length;
                 done_write(&sector->rw);
             }
-            else
-            {
-                /*disk_inode_length += offset + size - disk_inode_length;*/
-                cache_sector * sector = cache_write_sector(inode->sector);
-                struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
-                disk_inode->length = disk_inode_length;
-                done_write(&sector->rw);
-            }
+            lock_release(&inode->extension_lock);
         }
-        lock_release(&inode->extension_lock);
-        /*disk_inode_length = DIV_ROUND_UP(offset + size, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;*/
+        else
+        {
+            lock_acquire(&inode->extension_lock);
+            cache_sector * sector = cache_write_sector(inode->sector);
+            struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
+            disk_inode->length = disk_inode_length;
+            done_write(&sector->rw);
+            lock_release(&inode->extension_lock);
+        }
     }
 
     /*cache_sector * sector = cache_write_sector(inode->sector);*/
@@ -636,18 +636,20 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
         int min_left = inode_left < sector_left ? inode_left : sector_left;
 
         /* Number of bytes to actually write into this sector. */
-        int chunk_size = size < min_left ? size : min_left;
+        int chunk_size = size < sector_left ? size : sector_left;
         if (chunk_size <= 0)
             break;
 
         /* If there are things to write, let's get it into our cache. */
         cache_sector *sector = cache_write_sector(sector_idx);
+        /*printf("Got the sector\n");*/
         /*cache_sector sector = cache_write_sector(sector_idx);*/
 
         /* Write from cache into the buffer */
         memcpy(sector->data + sector_ofs, buffer + bytes_written, chunk_size);
         sector->dirty = true;
         done_write(&sector->rw);
+        /*printf("Wrote to file\n");*/
 
 /*        if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) {
 */            /* Write full sector directly to disk. */

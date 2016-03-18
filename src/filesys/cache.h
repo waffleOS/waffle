@@ -10,7 +10,7 @@
 #include "filesys/filesys.h"
 #include "threads/synch.h"
 
-#define CACHE_SIZE 63
+#define CACHE_SIZE 630
 #define CACHE_REFRESH_LIMIT 50
 #define CACHE_DELAY_MULTIPLIER 10 /* Multiply by CACHE_REFRESH_LIMIT to get how
                                   long we wait until we decay the access count */
