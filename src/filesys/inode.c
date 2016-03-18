@@ -18,7 +18,10 @@ struct inode_disk {
     block_sector_t start;               /*!< First data sector. */
     off_t length;                       /*!< File size in bytes. */
     unsigned magic;                     /*!< Magic number. */
-    uint32_t unused[125];               /*!< Not used. */
+
+    bool isDirectory;                   /* Needed for subdirectories */
+
+    uint32_t unused[124];               /*!< Not used. */
 };
 
 /*! Returns the number of sectors to allocate for an inode SIZE
@@ -87,6 +90,7 @@ bool inode_create(block_sector_t sector, off_t length) {
         size_t sectors = bytes_to_sectors(length);
         disk_inode->length = length;
         disk_inode->magic = INODE_MAGIC;
+        disk_inode->isDirectory = false;
         if (free_map_allocate(sectors, &disk_inode->start)) {
             block_write(fs_device, sector, disk_inode);
             if (sectors > 0) {

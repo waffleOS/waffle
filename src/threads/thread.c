@@ -100,6 +100,7 @@ void thread_init(void) {
     init_thread(initial_thread, "main", PRI_DEFAULT);
     initial_thread->status = THREAD_RUNNING;
     initial_thread->tid = allocate_tid();
+    initial_thread->curdir = dir_open_root();
 }
 
 /*! Starts preemptive thread scheduling by enabling interrupts.
@@ -215,6 +216,9 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
     struct thread *cur = thread_current();
     /* Add thread as child to current thread. */
     list_push_back(&cur->children, &t->child_elem);
+
+    /* Copy the parent's directory as this new thread's directory. */
+    t->curdir = cur->curdir;
 
     /* Add current thread as parent to child. */
     t->parent = cur;

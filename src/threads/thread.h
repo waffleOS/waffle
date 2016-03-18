@@ -145,7 +145,7 @@ struct thread {
     int exit_status;
 
     /* Filesystem thread struct elements */
-    
+    struct dir * curdir; /* The current directory */
 };
 
 

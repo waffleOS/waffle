@@ -60,6 +60,8 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
     const char * cmd_line;
     pid_t pid;
     const char * file;
+    const char * dir;
+    char * name;
     unsigned int initial_size;
     void * buffer;
     unsigned int position;
@@ -67,6 +69,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
     int size;
     int fd;
     bool success;
+    int inumber;
 
 
     switch (syscall_num)
@@ -235,19 +238,72 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             do_close(fd);
             break;
         case SYS_CHDIR:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
+            dir = *((const char **) (f->esp + 4));
+            if (validate_pointer(dir)) {
+                success = do_chdir(dir);
+                f->eax = success;
+            } else {
+                do_exit(-1);
+            }
 
             break;
         case SYS_MKDIR:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
+            dir = *((const char **) (f->esp + 4));
+            if (validate_pointer(dir)) {
+                success = do_mkdir(dir);
+                f->eax = success;
+            } else {
+                do_exit(-1);
+            }
 
             break;
         case SYS_READDIR:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 8))) {
+                do_exit(-1);
+                return;
+            }
+            fd = *((int *) (f->esp + 4));
+            name = *((char **) (f->esp + 8));
+            if (validate_pointer(name)) {
+                success = do_readdir(fd, name);
+                f->eax = success;
+            } else {
+                do_exit(-1);
+            }
 
             break;
         case SYS_ISDIR:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
+            fd = *((int *) (f->esp + 4));
+            success = do_isdir(fd);
+            f->eax = success;
 
             break;
         case SYS_INUMBER:
-
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
+            fd = *((int *) (f->esp + 4));
+            inumber = do_inumber(fd);
+            f->eax = inumber;
+            
             break;
     }
 
@@ -438,10 +494,14 @@ void do_close(int fd)
 
 bool do_chdir(const char *dir) {
 
+
+
+    return false;
 }
 
 bool do_mkdir(const char *dir) {
 
+    return false;
 }
 
 bool do_readdir(int fd, char *name) {
@@ -449,7 +509,9 @@ bool do_readdir(int fd, char *name) {
 }
 
 bool do_isdir(int fd) {
-
+    struct thread * t = thread_current();
+    int length = file_length(t->files[fd - 2]);
+    return length;
 }
 
 int do_inumber(int fd) {
