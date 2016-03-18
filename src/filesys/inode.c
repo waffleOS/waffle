@@ -6,14 +6,16 @@
 #include "filesys/filesys.h"
 #include "filesys/free-map.h"
 #include "threads/malloc.h"
+#include "threads/thread.h"
 #include "filesys/cache.h"
+#include "filesys/directory.h"
 #include <stdio.h>
 
 /*! Identifies an inode. */
 #define INODE_MAGIC 0x494e4f44
 
 /* Constants for number of entries */
-#define NUM_DIRECT 123 
+#define NUM_DIRECT 122
 #define NUM_BYTES_PER_SECTOR 512
 #define NUM_ENTRIES NUM_BYTES_PER_SECTOR / 4
 #define METADATA_BYTES (NUM_ENTRIES - NUM_DIRECT) * 4
@@ -24,6 +26,7 @@ struct inode_disk {
     block_sector_t start;               /*!< First data sector. */
     off_t length;                       /*!< File size in bytes. */
     unsigned magic;                     /*!< Magic number. */
+    bool isDirectory;
     block_sector_t direct[NUM_DIRECT];
     block_sector_t indirect;
     block_sector_t double_indirect;
@@ -158,6 +161,7 @@ bool inode_create(block_sector_t sector, off_t length) {
         size_t sectors = bytes_to_sectors(length);
         disk_inode->length = length;
         disk_inode->magic = INODE_MAGIC;
+        disk_inode->isDirectory = false;
         volatile int num_direct_blocks = min(sectors, NUM_DIRECT);
         int i;
         for (i = 0; i < num_direct_blocks; i++)
@@ -713,3 +717,71 @@ off_t inode_length(const struct inode *inode) {
     return result;
 }
 
+
+bool inode_is_dir(int fd) {
+/* Loop through all the threads out there looking for the fd. */
+    struct list_elem *e;
+    struct list all_list = get_all_list();
+    for (e = list_begin(&all_list); e != list_end(&all_list);
+         e = list_next(e)) {
+        struct thread *t = list_entry(e, struct thread, allelem);
+        if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+        {
+            struct inode *inode = file_get_inode(t->files[fd - 2]);
+            // printf("%d", inode->sector);
+            cache_sector * sector = cache_read_sector(inode->sector);
+            struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
+            bool result = disk_inode->isDirectory;
+            done_read(&sector->rw);
+            return result;
+            /*cache_sector *sector = cache_read_sector(inode->sector);
+            struct inode_disk *data = (struct inode_disk *) sector->data;
+            bool result = data->isDirectory;
+            done_read(&sector->rw);
+            return result;*/
+        }
+    }
+
+    return false;
+}
+
+
+block_sector_t inode_get_inumber_from_fd(int fd) {
+    struct list_elem *e;
+    struct list all_list = get_all_list();
+    for (e = list_begin(&all_list); e != list_end(&all_list);
+         e = list_next(e)) {
+        struct thread *t = list_entry(e, struct thread, allelem);
+        if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+        {
+            struct inode *inode = file_get_inode(t->files[fd - 2]);
+            return inode->sector;
+            // return file_get_inode(t->files[fd - 2])->sector;
+        }
+    }
+    return -1;
+}
+
+
+
+bool inode_readdir(int fd, char * name) {
+    struct list_elem *e;
+    struct list all_list = get_all_list();
+    for (e = list_begin(&all_list); e != list_end(&all_list);
+         e = list_next(e)) {
+        struct thread *t = list_entry(e, struct thread, allelem);
+        if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+        {
+            struct inode *inode = file_get_inode(t->files[fd - 2]);
+            struct dir *dir = dir_open(inode);
+            bool success = dir_readdir(dir, name);
+            /* Must check if name is . or .. */
+            if(!strcmp(name, ".") || !strcmp(name, "..")) {
+                return false;
+            }
+            return success;
+            // return file_get_inode(t->files[fd - 2])->sector;
+        }
+    }
+    return false;
+}

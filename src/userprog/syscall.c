@@ -9,6 +9,8 @@
 #include "lib/user/syscall.h"
 #include "filesys/file.h"
 #include "filesys/filesys.h"
+#include "filesys/inode.h"
+#include "filesys/cache.h"
 
 /* Module specific function prototypes. */
 static void syscall_handler(struct intr_frame *);
@@ -25,6 +27,11 @@ int do_write(int fd, const void * buffer, unsigned int size);
 void do_seek(int fd, unsigned int position);
 unsigned int do_tell(int fd);
 void do_close(int fd);
+bool do_chdir(const char *dir);
+bool do_mkdir(const char *dir);
+bool do_readdir(int fd, char *name);
+bool do_isdir(int fd);
+int do_inumber(int fd);
 bool validate_pointer(void *ptr);
 void * sanitize_buffer(void ** buffer);
 
@@ -55,6 +62,8 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
     const char * cmd_line;
     pid_t pid;
     const char * file;
+    const char * dir;
+    char * name;
     unsigned int initial_size;
     void * buffer;
     unsigned int position;
@@ -62,6 +71,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
     int size;
     int fd;
     bool success;
+    int inumber;
 
 
     switch (syscall_num)
@@ -229,6 +239,76 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             fd = *((int *) (f->esp + 4));
             do_close(fd);
             break;
+
+        case SYS_CHDIR:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
+            dir = *((const char **) (f->esp + 4));
+            if (validate_pointer(dir)) {
+                success = do_chdir(dir);
+                f->eax = success;
+            } else {
+                do_exit(-1);
+            }
+
+            break;
+        case SYS_MKDIR:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
+            dir = *((const char **) (f->esp + 4));
+            if (validate_pointer(dir)) {
+                success = do_mkdir(dir);
+                f->eax = success;
+            } else {
+                do_exit(-1);
+            }
+
+            break;
+        case SYS_READDIR:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 8))) {
+                do_exit(-1);
+                return;
+            }
+            fd = *((int *) (f->esp + 4));
+            name = *((char **) (f->esp + 8));
+            if (validate_pointer(name)) {
+                success = do_readdir(fd, name);
+                f->eax = success;
+            } else {
+                do_exit(-1);
+            }
+
+            break;
+        case SYS_ISDIR:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
+            fd = *((int *) (f->esp + 4));
+            success = do_isdir(fd);
+            f->eax = success;
+
+            break;
+        case SYS_INUMBER:
+            // Check stack pointer isn't too far up
+            if(!validate_pointer((void *)(f->esp + 4))) {
+                do_exit(-1);
+                return;
+            }
+            fd = *((int *) (f->esp + 4));
+            inumber = do_inumber(fd);
+            f->eax = inumber;
+            
+            break;
+
     }
 
 }
@@ -346,7 +426,7 @@ int do_read(int fd, void * buffer, unsigned int size)
 {
     if (fd == 0)
     {
-        int i;
+        unsigned int i;
         for (i = 0; i < size; i++)
         {
             *((char *) buffer + i) = input_getc();
@@ -414,6 +494,77 @@ void do_close(int fd)
         }
     }
 }
+
+
+bool do_chdir(const char *dir) {
+    /* PARSING??? */
+
+
+    return false;
+}
+
+bool do_mkdir(const char *dir) {
+    /* PARSING? */
+
+    return false;
+}
+
+bool do_readdir(int fd, char *name) {
+/*    struct list_elem *e;
+    for (e = list_begin(&all_list); e != list_end(&all_list);
+         e = list_next(e)) {
+        struct thread *t = list_entry(e, struct thread, allelem);
+        if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+        {
+            return file_get_inode(t->files[fd - 2])->sector;
+        }
+    }*/
+    return inode_readdir(fd, name);
+}
+
+bool do_isdir(int fd) {
+/*    struct thread * t = thread_current();
+    int length = file_length(t->files[fd - 2]);
+    return length;
+*/
+    /* Loop through all the threads out there looking for the fd. */
+    // struct list_elem *e;
+    // struct list all_list = get_all_list();
+    // for (e = list_begin(&all_list); e != list_end(&all_list);
+    //      e = list_next(e)) {
+    //     struct thread *t = list_entry(e, struct thread, allelem);
+    //     if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+    //     {
+    //         struct inode *inode = file_get_inode(t->files[fd - 2]);
+    //         printf("%d", inode);
+    //         // cache_sector * sector = cache_write_sector(inode->sector);
+    //         /*struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
+    //         return disk_inode->isDirectory;*/
+
+    //         /*cache_sector *sector = cache_read_sector(inode->sector);
+    //         struct inode_disk *data = (struct inode_disk *) sector->data;
+    //         bool result = data->isDirectory;
+    //         done_read(&sector->rw);
+    //         return result;*/
+    //     }
+    // }
+    return inode_is_dir(fd);
+}
+
+int do_inumber(int fd) {
+    // struct list_elem *e;
+    // for (e = list_begin(&all_list); e != list_end(&all_list);
+    //      e = list_next(e)) {
+    //     struct thread *t = list_entry(e, struct thread, allelem);
+    //     if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+    //     {
+    //         return file_get_inode(t->files[fd - 2])->sector;
+    //     }
+    // }
+    // return -1;
+    return inode_get_inumber_from_fd(fd);
+}
+
 
 /* Validates pointers */
 bool validate_pointer(void *ptr) {

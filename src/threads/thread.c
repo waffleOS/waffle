@@ -359,6 +359,14 @@ void thread_foreach(thread_action_func *func, void *aux) {
     }
 }
 
+/* Possibly a questionable function. Unsure if there's a better way
+to do this. I want to work with all the threads out there to get
+the file descriptors in them for the subdirectories portion of the
+lab */
+struct list get_all_list(void) {
+    return all_list;
+}
+
 /*! Sets the current thread's priority to NEW_PRIORITY. */
 void thread_set_priority(int new_priority) {
     thread_current()->priority = new_priority;
