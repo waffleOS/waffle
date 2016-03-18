@@ -498,7 +498,9 @@ void do_close(int fd)
 
 bool do_chdir(const char *dir) {
     /* PARSING??? */
+    if(do_isdir(dir)) {
 
+    }
 
     return false;
 }
@@ -519,7 +521,12 @@ bool do_readdir(int fd, char *name) {
             return file_get_inode(t->files[fd - 2])->sector;
         }
     }*/
-    return inode_readdir(fd, name);
+    struct thread * t = thread_current();
+    if (is_valid_fd(t, fd))
+    {
+        return inode_readdir(fd, name);
+    }
+    return false;
 }
 
 bool do_isdir(int fd) {
@@ -548,7 +555,12 @@ bool do_isdir(int fd) {
     //         return result;*/
     //     }
     // }
-    return inode_is_dir(fd);
+    struct thread * t = thread_current();
+    if (is_valid_fd(t, fd))
+    {
+        return inode_is_dir(t, fd);
+    }
+    return false;
 }
 
 int do_inumber(int fd) {
@@ -562,7 +574,14 @@ int do_inumber(int fd) {
     //     }
     // }
     // return -1;
-    return inode_get_inumber_from_fd(fd);
+    struct thread * t = thread_current();
+    if (is_valid_fd(t, fd))
+    {
+        // return inode_get_inumber_from_fd(fd);
+
+        return inode_get_inumber_from_fd(t, fd);
+    }
+    return -1;
 }
 
 

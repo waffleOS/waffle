@@ -720,15 +720,15 @@ off_t inode_length(const struct inode *inode) {
 }
 
 
-bool inode_is_dir(int fd) {
+bool inode_is_dir(struct thread * t, int fd) {
 /* Loop through all the threads out there looking for the fd. */
-    struct list_elem *e;
-    struct list all_list = get_all_list();
-    for (e = list_begin(&all_list); e != list_end(&all_list);
-         e = list_next(e)) {
-        struct thread *t = list_entry(e, struct thread, allelem);
-        if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
-        {
+    // struct list_elem *e;
+    // struct list all_list = get_all_list();
+    // for (e = list_begin(&all_list); e != list_end(&all_list);
+    //      e = list_next(e)) {
+    //     struct thread *t = list_entry(e, struct thread, allelem);
+    //     if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+    //     {
             struct inode *inode = file_get_inode(t->files[fd - 2]);
             // printf("%d", inode->sector);
             cache_sector * sector = cache_read_sector(inode->sector);
@@ -741,39 +741,39 @@ bool inode_is_dir(int fd) {
             bool result = data->isDirectory;
             done_read(&sector->rw);
             return result;*/
-        }
-    }
+    //     }
+    // }
 
-    return false;
+    // return false;
 }
 
 
-block_sector_t inode_get_inumber_from_fd(int fd) {
-    struct list_elem *e;
-    struct list all_list = get_all_list();
-    for (e = list_begin(&all_list); e != list_end(&all_list);
-         e = list_next(e)) {
-        struct thread *t = list_entry(e, struct thread, allelem);
-        if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
-        {
+block_sector_t inode_get_inumber_from_fd(struct thread * t, int fd) {
+    // struct list_elem *e;
+    // struct list all_list = get_all_list();
+    // for (e = list_begin(&all_list); e != list_end(&all_list);
+    //      e = list_next(e)) {
+    //     struct thread *t = list_entry(e, struct thread, allelem);
+    //     if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+    //     {
             struct inode *inode = file_get_inode(t->files[fd - 2]);
             return inode->sector;
             // return file_get_inode(t->files[fd - 2])->sector;
-        }
-    }
-    return -1;
+    //     }
+    // }
+    // return -1;
 }
 
 
 
-bool inode_readdir(int fd, char * name) {
-    struct list_elem *e;
-    struct list all_list = get_all_list();
-    for (e = list_begin(&all_list); e != list_end(&all_list);
-         e = list_next(e)) {
-        struct thread *t = list_entry(e, struct thread, allelem);
-        if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
-        {
+bool inode_readdir(struct thread * t, int fd, char * name) {
+    // struct list_elem *e;
+    // struct list all_list = get_all_list();
+    // for (e = list_begin(&all_list); e != list_end(&all_list);
+    //      e = list_next(e)) {
+    //     struct thread *t = list_entry(e, struct thread, allelem);
+    //     if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+    //     {
             struct inode *inode = file_get_inode(t->files[fd - 2]);
             struct dir *dir = dir_open(inode);
             bool success = dir_readdir(dir, name);
@@ -783,7 +783,7 @@ bool inode_readdir(int fd, char * name) {
             }
             return success;
             // return file_get_inode(t->files[fd - 2])->sector;
-        }
-    }
-    return false;
+    //     }
+    // }
+    // return false;
 }
