@@ -493,29 +493,60 @@ void do_close(int fd)
 
 
 bool do_chdir(const char *dir) {
-
+    /* PARSING??? */
 
 
     return false;
 }
 
 bool do_mkdir(const char *dir) {
+    /* PARSING? */
 
     return false;
 }
 
 bool do_readdir(int fd, char *name) {
-
+/*    struct list_elem *e;
+    for (e = list_begin(&all_list); e != list_end(&all_list);
+         e = list_next(e)) {
+        struct thread *t = list_entry(e, struct thread, allelem);
+        if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+        {
+            return file_get_inode(t->files[fd - 2])->sector;
+        }
+    }*/
 }
 
 bool do_isdir(int fd) {
-    struct thread * t = thread_current();
+/*    struct thread * t = thread_current();
     int length = file_length(t->files[fd - 2]);
     return length;
+*/
+    /* Loop through all the threads out there looking for the fd. */
+    struct list_elem *e;
+
+    for (e = list_begin(&all_list); e != list_end(&all_list);
+         e = list_next(e)) {
+        struct thread *t = list_entry(e, struct thread, allelem);
+        if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+        {
+            return file_get_inode(t->files[fd - 2])->isDirectory;
+        }
+    }
+    return false;
 }
 
 int do_inumber(int fd) {
-    
+    struct list_elem *e;
+    for (e = list_begin(&all_list); e != list_end(&all_list);
+         e = list_next(e)) {
+        struct thread *t = list_entry(e, struct thread, allelem);
+        if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
+        {
+            return file_get_inode(t->files[fd - 2])->sector;
+        }
+    }
+    return -1;
 }
 
 /* Validates pointers */
