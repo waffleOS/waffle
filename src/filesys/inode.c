@@ -46,6 +46,7 @@ struct inode {
     int open_cnt;                       /*!< Number of openers. */
     bool removed;                       /*!< True if deleted, false otherwise. */
     int deny_write_cnt;                 /*!< 0: writes ok, >0: deny writes. */
+    struct lock extension_lock;
     /*struct inode_disk data;*/             /*!< Inode content. */
 };
 
@@ -66,8 +67,9 @@ static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
 
     cache_sector * sector = cache_read_sector(inode->sector);
     struct inode_disk * data = (struct inode_disk *) sector->data;
+    int length = DIV_ROUND_UP(data->length, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;
 
-    if (pos < data->length)
+    if (pos < length)
     {
         int block_index = pos / NUM_BYTES_PER_SECTOR;
         if (block_index < NUM_DIRECT)
@@ -292,6 +294,7 @@ struct inode * inode_open(block_sector_t sector) {
     inode->open_cnt = 1;
     inode->deny_write_cnt = 0;
     inode->removed = false;
+    lock_init(&inode->extension_lock);
 
 /*    block_read(fs_device, inode->sector, &inode->data);
 */    return inode;
@@ -589,18 +592,31 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
     int disk_inode_length = inode_length(inode);
     int length = DIV_ROUND_UP(disk_inode_length, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;
 
-    if (offset + size > length)
+    if (offset + size > disk_inode_length)
     {
-        if (inode_extend(inode, offset + size))
+        if (offset + size > length)
         {
-            disk_inode_length = DIV_ROUND_UP(offset + size, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;
-            /*disk_inode_length += offset + size - disk_inode_length;*/
-            cache_sector * sector = cache_write_sector(inode->sector);
-            struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
-            disk_inode->length = disk_inode_length;
-            done_write(&sector->rw);
+            lock_acquire(&inode->extension_lock);
+            if (offset + size > length) {
+                inode_extend(inode, offset + size);
+                lock_release(&inode->extension_lock);
+            }
+            else
+            {
+                lock_release(&inode->extension_lock);
+            }
         }
+        disk_inode_length = DIV_ROUND_UP(offset + size, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;
+        /*disk_inode_length += offset + size - disk_inode_length;*/
+        cache_sector * sector = cache_write_sector(inode->sector);
+        struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
+        disk_inode->length = disk_inode_length;
+        done_write(&sector->rw);
     }
+
+    /*cache_sector * sector = cache_write_sector(inode->sector);*/
+    /*struct inode_disk * disk_inode = (struct inode_disk *) sector->data;*/
+    /*done_write(&sector->rw);*/
 
 
     while (size > 0) {
@@ -659,6 +675,9 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
     }
 /*    free(bounce);
 */
+    /*sector = cache_write_sector(inode->sector);*/
+    /*disk_inode = (struct inode_disk *) sector->data;*/
+    /*done_write(&sector->rw);*/
     return bytes_written;
 }
 
