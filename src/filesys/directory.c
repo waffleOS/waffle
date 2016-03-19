@@ -119,6 +119,7 @@ bool dir_lookup(const struct dir *dir, const char *name, struct inode **inode) {
     Fails if NAME is invalid (i.e. too long) or a disk or memory
     error occurs. */
 bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
+    printf("In dir add, name: %s\n", name);
     struct dir_entry e;
     off_t ofs;
     bool success = false;
@@ -375,6 +376,7 @@ bool dir_mkdir(const char *dir) {
     int i;
     struct dir *curdir = NULL;
 
+
   printf("WHEREAMI curdir = %d, num_slashes = %d, slash_indeces[0] = %d, dir = %d\n", curdir, num_slashes, slash_indeces[0], dir);
     /* Absolute path:  A '/' exists in first index */
     if(num_slashes > 0 && slash_indeces[0] == dir) {
@@ -404,11 +406,11 @@ bool dir_mkdir(const char *dir) {
 
 
     /* Different strategy. Parse up to the next slash. */
-    char *c = dir;
     char name[NAME_MAX + 1];
     int namelen;
+    char *c = dir;
 
-    for(i = 0; i < num_slashes - 1; i++) {
+    for(i = 0; i < num_slashes; i++) {
   printf("LOOOOPOPPPITTTTTTTTTTTTTTTTTTTTTTTT\n");
         /* Get the next path name */
         namelen = slash_indeces[i] - c;
@@ -416,6 +418,7 @@ bool dir_mkdir(const char *dir) {
         /* Make sure we didn't just grab nothing ie two slashes in a row. */
         if(namelen <= 0) {
             c = slash_indeces[i] + 1;
+            printf("YEAH YOU SHOULAD GOTTEN HERE c = %s\n", c);
             continue;
         }
 
@@ -434,9 +437,9 @@ bool dir_mkdir(const char *dir) {
         }
 
         /* Go look it up, check the directory exists, and store it */
-        struct inode **inode;
-        if(dir_lookup(curdir, name, inode)) {
-            curdir = dir_open(*inode);
+        struct inode *inode;
+        if(dir_lookup(curdir, name, &inode)) {
+            curdir = dir_open(inode);
         } else {
             return false;
         }
@@ -450,7 +453,7 @@ printf("GOLDLLDLDELENENNENENNNENENNENENAU79\n");
 printf("IN THE IF STATEMENTETETETETET\n");
         strlcpy(name, c, namelen);
         name[namelen] = '\0';
-
+printf("name = %s, c = %s, namelen = %d, name[0] = %c\n", name, c, namelen, name[0]);
         /* Handle the special cases . and .. and note we can't add them */
         if(!strcmp(name, ".") || !strcmp(name, "..")) {
             return false;
@@ -461,8 +464,10 @@ printf("IN ABOUT TO LOOKIT UPETET\n");
 printf("IN THE LOOOOOOOOOOOOOOOOOOOOOOOOOKINGEMENTETETETETET\n");
 printf("dir = %d, name = %s, inode = %d\n", curdir, name, inode);
             if(!dir_lookup(curdir, name, &inode)) {
-printf("ADDDING inode_get_inumber = %d\n", inode_get_inumber(inode));
-                return dir_add(curdir, name, inode_get_inumber(inode));
+                /*return dir_add(curdir, name, inode_get_inumber(inode));*/
+                int sector;
+                printf("Creating dir %s\n", name);
+                return free_map_allocate(1, &sector) && inode_create(sector, 512) && dir_add(curdir, name, sector);
             }
         }
     }
@@ -535,13 +540,12 @@ int parse_slashes(const char * dir, char * slash_indeces[]) {
     int i, ind = 0;
     printf("IN PARSELSLASHES dir = %s\n", dir);
     /* Fill it with zeroes */
-    for(i = 0; i != '\0'; i++) {
+    for(i = 0; dir[i] != '\0'; i++) {
         slash_indeces[i] = 0;
     }
 
     /* fill slash_indeces with pointers to the slashes */
     for(i = 0; dir[i] != '\0'; i++) {
-        printf("FORORORbOOFORO IN PARSESLASHES\n");
         if(dir[i] == '/') {
             printf("PARSE_SLASHES I FOUND ONE\n");
             if(ind < MAX_PATH_DEPTH) {
