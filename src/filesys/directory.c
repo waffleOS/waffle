@@ -77,6 +77,8 @@ struct inode * dir_get_inode(struct dir *dir) {
     otherwise, returns false and ignores EP and OFSP. */
 static bool lookup(const struct dir *dir, const char *name,
                    struct dir_entry *ep, off_t *ofsp) {
+    printf("In lookup, finding name: %s\tcurdir: %p\n", name, dir);
+    printf("Curdir sector: %d\n", inode_get_inumber(dir->inode));
     struct dir_entry e;
     size_t ofs;
 
@@ -91,9 +93,11 @@ static bool lookup(const struct dir *dir, const char *name,
                 *ep = e;
             if (ofsp != NULL)
                 *ofsp = ofs;
+            printf("Found\n");
             return true;
         }
     }
+    printf("Not found\n");
     return false;
 }
 
@@ -153,7 +157,6 @@ bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
             break;
     }
 
-/*    printf("IN DIR ADD BEFORE WRITE SLOT\n", name);*/
     /* Write slot. */
     e.in_use = true;
     strlcpy(e.name, name, sizeof e.name);
@@ -226,12 +229,14 @@ bool dir_chdir(const char *dir) {
         curdir = dir_open_root();
     } else { /* Relative path: set curdir to where this thread is */
         curdir = t->curdir;
-        printf("RELATIVELYSPEAKING curdir = %d\n", curdir);
+        /*printf("RELATIVELYSPEAKING curdir = %d\n", curdir);*/
         if(curdir == NULL) {
-            printf("ITS NULLLLLLL\n");
+            /*printf("ITS NULLLLLLL\n");*/
             curdir = dir_open_root();
         }
     }
+
+    printf("In chdir, changing dir to: %s\n\tcurdir:%p\n", dir, curdir);
 
     /* Different strategy. Parse up to the next slash. */
     int i;
@@ -274,7 +279,7 @@ bool dir_chdir(const char *dir) {
 
     }
 
-    printf("CHDIR: AM I HERE?\n");
+    /*printf("CHDIR: AM I HERE?\n");*/
     /* Handle anything after the last '/'. Check that it DOESNT exist */
     namelen = dir + length - c;
     if(namelen > 0) {
@@ -288,8 +293,9 @@ bool dir_chdir(const char *dir) {
             return false;
         } else {
             /* Go look it up, check the directory exists */
-            printf("CHDIR: LOOKUP AND CHECK\n");
+            /*printf("CHDIR: LOOKUP AND CHECK\n");*/
             struct inode *inode;
+            printf("In chdir, looking up name: %s\n", name);
             if(dir_lookup(curdir, name, &inode)) {
                 // int sector;
                 // printf("CHDIR: IN THE LOOKUP name = %s, curdir = %d\n", name, curdir);
@@ -302,6 +308,21 @@ bool dir_chdir(const char *dir) {
                 // curdir = dir_open(inode);
                 // return success;
                 curdir = dir_open(inode);
+
+
+
+                // int sector;
+                // /*printf("CHDIR: IN THE LOOKUP name = %s, curdir = %d\n", name, curdir);*/
+                // bool success = free_map_allocate(1, &sector);
+                // /*printf("sucess1 = %d\n", success);*/
+                // success = success && inode_create(sector, 512);
+                // /*printf("sucess2 = %d\n", success);*/
+                // /*success = success && dir_add(curdir, name, sector);*/
+                // /*printf("sucess3 = %d\n", success);*/
+                // curdir = dir_open(inode);
+                // printf("Opened name: %s\tcurdir: %p\n", name, curdir);
+                // printf("Curdir sector: %d\n", inode_get_inumber(curdir->inode));
+                // return success;
 
             }
         }
