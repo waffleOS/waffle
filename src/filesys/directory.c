@@ -79,12 +79,15 @@ static bool lookup(const struct dir *dir, const char *name,
                    struct dir_entry *ep, off_t *ofsp) {
     struct dir_entry e;
     size_t ofs;
-
+printf("IM IN LOOKUP NOW\n");
     ASSERT(dir != NULL);
     ASSERT(name != NULL);
 
+printf("PAST THE ASSERT\n");
     for (ofs = 0; inode_read_at(dir->inode, &e, sizeof(e), ofs) == sizeof(e);
          ofs += sizeof(e)) {
+        printf("IN THE FOR LOOP\n");
+
         if (e.in_use && !strcmp(name, e.name)) {
             if (ep != NULL)
                 *ep = e;
@@ -119,7 +122,7 @@ bool dir_lookup(const struct dir *dir, const char *name, struct inode **inode) {
     Fails if NAME is invalid (i.e. too long) or a disk or memory
     error occurs. */
 bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
-/*    printf("In dir add, name: %s\n", name);*/
+    printf("In dir add, name: %s\n", name);
     struct dir_entry e;
     off_t ofs;
     bool success = false;
@@ -130,10 +133,14 @@ bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
     /* Check NAME for validity. */
     if (*name == '\0' || strlen(name) > NAME_MAX)
         return false;
+    printf("NAME IN USE?\n", name);
 
     /* Check that NAME is not in use. */
-    if (lookup(dir, name, NULL, NULL))
+    if (lookup(dir, name, NULL, NULL)) {
+        printf("YOU BUTT\n");
         goto done;
+    }
+    printf("NOODLES AND POODLES\n", name);
 
     /* Set OFS to offset of free slot.
        If there are no free slots, then it will be set to the
@@ -148,6 +155,7 @@ bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
             break;
     }
 
+    printf("IN DIR ADD BEFORE WRITE SLOT\n", name);
     /* Write slot. */
     e.in_use = true;
     strlcpy(e.name, name, sizeof e.name);
@@ -220,6 +228,11 @@ bool dir_chdir(const char *dir) {
         curdir = dir_open_root();
     } else { /* Relative path: set curdir to where this thread is */
         curdir = t->curdir;
+        printf("RELATIVELYSPEAKING curdir = %d\n", curdir);
+        if(curdir == NULL) {
+            printf("ITS NULLLLLLL\n");
+            curdir = dir_open_root();
+        }
     }
 
     /* Different strategy. Parse up to the next slash. */
@@ -263,6 +276,7 @@ bool dir_chdir(const char *dir) {
 
     }
 
+    printf("CHDIR: AM I HERE?\n");
     /* Handle anything after the last '/'. Check that it DOESNT exist */
     namelen = dir + length - c;
     if(namelen > 0) {
@@ -276,12 +290,19 @@ bool dir_chdir(const char *dir) {
             return false;
         } else {
             /* Go look it up, check the directory exists */
+            printf("CHDIR: LOOKUP AND CHECK\n");
             struct inode *inode;
             if(dir_lookup(curdir, name, &inode)) {
                 int sector;
-                return free_map_allocate(1, &sector) && 
-                inode_create(sector, 512) && dir_add(curdir, name, sector);
+                printf("CHDIR: IN THE LOOKUP name = %s, curdir = %d\n", name, curdir);
+                bool success = free_map_allocate(1, &sector);
+                printf("sucess1 = %d\n", success);
+                success = success && inode_create(sector, 512);
+                printf("sucess2 = %d\n", success);
+                success = success && dir_add(curdir, name, sector);
+                printf("sucess3 = %d\n", success);
                 curdir = dir_open(inode);
+                return success;
 
             }
         }
@@ -441,10 +462,14 @@ bool dir_mkdir(const char *dir) {
   /*printf("ABOSOLUTELY\n");*/
         curdir = dir_open_root();
     } else { /* Relative path: set curdir to where this thread is */
-  printf("RELATIVELYSPEAKING\n");
         curdir = t->curdir;
+  printf("RELATIVELYSPEAKING curdir = %d\n", curdir);
+        if(curdir == NULL) {
+            printf("ITS NULLLLLLL\n");
+            curdir = dir_open_root();
+        }
     }
-  printf("IM OUT curdir = %d\n", curdir);
+/*  printf("IM OUT curdir = %d\n", curdir);*/
 
     /* Find which slash ends the last true name. This means like
     in example "a/b/c/d//////" d would be the last true name. */
@@ -521,7 +546,7 @@ bool dir_mkdir(const char *dir) {
 /*printf("IN ABOUT TO LOOKIT UPETET\n");*/
             struct inode *inode;
 /*printf("IN THE LOOOOOOOOOOOOOOOOOOOOOOOOOKINGEMENTETETETETET\n");*/
-printf("dir = %d, name = %s, inode = %d\n", curdir, name, inode);
+/*printf("dir = %d, name = %s, inode = %d\n", curdir, name, inode);*/
             if(!dir_lookup(curdir, name, &inode)) {
                 /*return dir_add(curdir, name, inode_get_inumber(inode));*/
                 int sector;

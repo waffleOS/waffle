@@ -100,9 +100,11 @@ void thread_init(void) {
     init_thread(initial_thread, "main", PRI_DEFAULT);
     initial_thread->status = THREAD_RUNNING;
 /*    printf("THREAD_INIT\n");*/
-/*    initial_thread->curdir = dir_open_root();*/
 /*    printf("AFTER CURDIR THREAD_INIT\n"); */
     initial_thread->tid = allocate_tid();
+/*    initial_thread->curdir = dir_open_root();*/
+    initial_thread->curdir = NULL;
+    // do_chdir("/");
 }
 
 /*! Starts preemptive thread scheduling by enabling interrupts.
