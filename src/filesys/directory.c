@@ -78,6 +78,7 @@ struct inode * dir_get_inode(struct dir *dir) {
 static bool lookup(const struct dir *dir, const char *name,
                    struct dir_entry *ep, off_t *ofsp) {
     printf("In lookup, finding name: %s\tcurdir: %p\n", name, dir);
+    printf("Curdir sector: %d\n", inode_get_inumber(dir->inode));
     struct dir_entry e;
     size_t ofs;
 /*printf("IM IN LOOKUP NOW\n");*/
@@ -282,7 +283,7 @@ bool dir_chdir(const char *dir) {
 
     }
 
-    printf("CHDIR: AM I HERE?\n");
+    /*printf("CHDIR: AM I HERE?\n");*/
     /* Handle anything after the last '/'. Check that it DOESNT exist */
     namelen = dir + length - c;
     if(namelen > 0) {
@@ -310,6 +311,7 @@ bool dir_chdir(const char *dir) {
                 /*printf("sucess3 = %d\n", success);*/
                 curdir = dir_open(inode);
                 printf("Opened name: %s\tcurdir: %p\n", name, curdir);
+                printf("Curdir sector: %d\n", inode_get_inumber(curdir->inode));
                 return success;
 
             }
