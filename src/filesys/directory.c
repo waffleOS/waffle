@@ -119,6 +119,7 @@ bool dir_lookup(const struct dir *dir, const char *name, struct inode **inode) {
     Fails if NAME is invalid (i.e. too long) or a disk or memory
     error occurs. */
 bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
+    printf("In dir add, name: %s\n", name);
     struct dir_entry e;
     off_t ofs;
     bool success = false;
@@ -433,9 +434,9 @@ bool dir_mkdir(const char *dir) {
         }
 
         /* Go look it up, check the directory exists, and store it */
-        struct inode **inode;
-        if(dir_lookup(curdir, name, inode)) {
-            curdir = dir_open(*inode);
+        struct inode *inode;
+        if(dir_lookup(curdir, name, &inode)) {
+            curdir = dir_open(inode);
         } else {
             return false;
         }
@@ -456,12 +457,14 @@ printf("IN THE IF STATEMENTETETETETET\n");
         } else {
             /* Go look it up, check the directory doesn't exists, and make it */
 printf("IN ABOUT TO LOOKIT UPETET\n");
-            struct inode **inode;
+            struct inode *inode;
 printf("IN THE LOOOOOOOOOOOOOOOOOOOOOOOOOKINGEMENTETETETETET\n");
 printf("dir = %d, name = %s, inode = %d\n", curdir, name, inode);
-            if(!dir_lookup(curdir, name, inode)) {
-printf("ADDDING\n");
-                return dir_add(curdir, name, inode_get_inumber(*inode));
+            if(!dir_lookup(curdir, name, &inode)) {
+                /*return dir_add(curdir, name, inode_get_inumber(inode));*/
+                int sector;
+                printf("Creating dir %s\n", name);
+                return free_map_allocate(1, &sector) && inode_create(sector, 512) && dir_add(curdir, name, sector);
             }
         }
     }
@@ -533,19 +536,19 @@ the number of slashes found */
 int parse_slashes(const char * dir, char * slash_indeces[]) {
     int i, ind = 0;
     /* Fill it with zeroes */
-    for(i = 0; i != '\0'; i++) {
+    for(i = 0; dir[i] != '\0'; i++) {
         slash_indeces[i] = 0;
     }
 
     /* fill slash_indeces with pointers to the slashes */
-    for(i = 0; i != '\0'; i++) {
+    for(i = 0; dir[i] != '\0'; i++) {
         if(dir[i] == '/') {
             if(ind < MAX_PATH_DEPTH) {
                 slash_indeces[ind] = dir + i;
                 ind++;
             } else {
                 /* Too many slashes */
-                exit(-1);
+                do_exit(-1);
             }
         }
     }
