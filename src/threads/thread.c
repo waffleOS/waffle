@@ -99,7 +99,9 @@ void thread_init(void) {
     initial_thread = running_thread();
     init_thread(initial_thread, "main", PRI_DEFAULT);
     initial_thread->status = THREAD_RUNNING;
-    // initial_thread->curdir = dir_open_root();
+/*    printf("THREAD_INIT\n");*/
+/*    initial_thread->curdir = dir_open_root();*/
+/*    printf("AFTER CURDIR THREAD_INIT\n"); */
     initial_thread->tid = allocate_tid();
 }
 

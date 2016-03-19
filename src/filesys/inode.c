@@ -402,16 +402,23 @@ struct inode * inode_open(block_sector_t sector) {
     struct list_elem *e;
     struct inode *inode;
 
+
+    
     /* Check whether this inode is already open. */
     for (e = list_begin(&open_inodes); e != list_end(&open_inodes);
          e = list_next(e)) {
-        inode = list_entry(e, struct inode, elem);
-        if (inode->sector == sector) {
-            inode_reopen(inode);
-            return inode; 
+/*    printf("FOR INODE_OPEN\n");
+*/        inode = list_entry(e, struct inode, elem);
+/*    printf("INODE_OPEN2 inode->sector = %d, sector = %d\n", inode->sector, sector);
+*/        if (inode->sector == sector) {
+/*    printf("INODE_OPEN3\n");
+*/            inode_reopen(inode);
+/*    printf("INODE_OPEN4\n");
+*/            return inode; 
         }
     }
-
+/*    printf("INODE_OPEN\n");
+*/
     /* Allocate memory. */
     inode = malloc(sizeof *inode);
     if (inode == NULL)
