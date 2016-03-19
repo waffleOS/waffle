@@ -263,6 +263,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             }
             dir = *((const char **) (f->esp + 4));
             if (validate_pointer(dir)) {
+
                 success = do_mkdir(dir);
                 f->eax = success;
             } else {

@@ -3,6 +3,7 @@
 
 #include "tests/filesys/extended/mk-tree.h"
 #include "tests/main.h"
+#include <stdio.h>
 
 void
 test_main (void) 

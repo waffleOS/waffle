@@ -227,7 +227,8 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
     /* Set default exit status to 0 */
     t->exit_status = 0;
 
-    t->curdir = dir_open_root();
+    // t->curdir = dir_open_root();
+    t->curdir = cur->curdir;
 
     return tid;
 }
