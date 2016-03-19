@@ -99,6 +99,7 @@ void thread_init(void) {
     initial_thread = running_thread();
     init_thread(initial_thread, "main", PRI_DEFAULT);
     initial_thread->status = THREAD_RUNNING;
+    // initial_thread->curdir = dir_open_root();
     initial_thread->tid = allocate_tid();
 }
 

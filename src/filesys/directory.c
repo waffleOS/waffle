@@ -375,7 +375,7 @@ bool dir_mkdir(const char *dir) {
     int i;
     struct dir *curdir = NULL;
 
-  printf("WHEREAMI curdir = %d\n", curdir);
+  printf("WHEREAMI curdir = %d, num_slashes = %d, slash_indeces[0] = %d, dir = %d\n", curdir, num_slashes, slash_indeces[0], dir);
     /* Absolute path:  A '/' exists in first index */
     if(num_slashes > 0 && slash_indeces[0] == dir) {
   printf("ABOSOLUTELY\n");
@@ -391,6 +391,7 @@ bool dir_mkdir(const char *dir) {
     char * the_end = dir + length - 1;
     for(i = num_slashes - 1; i >= 0; i++) {
   printf("THE PRE FOR LOOOOOOOOOOOOOOOOOOOOPY\n");
+    printf("the_end = %d, slash_indeces[i] = %d\n", the_end, slash_indeces[i]);
         if(slash_indeces[i] == the_end) {
             num_slashes--;
             the_end--;
@@ -456,12 +457,12 @@ printf("IN THE IF STATEMENTETETETETET\n");
         } else {
             /* Go look it up, check the directory doesn't exists, and make it */
 printf("IN ABOUT TO LOOKIT UPETET\n");
-            struct inode **inode;
+            struct inode *inode;
 printf("IN THE LOOOOOOOOOOOOOOOOOOOOOOOOOKINGEMENTETETETETET\n");
 printf("dir = %d, name = %s, inode = %d\n", curdir, name, inode);
-            if(!dir_lookup(curdir, name, inode)) {
-printf("ADDDING\n");
-                return dir_add(curdir, name, inode_get_inumber(*inode));
+            if(!dir_lookup(curdir, name, &inode)) {
+printf("ADDDING inode_get_inumber = %d\n", inode_get_inumber(inode));
+                return dir_add(curdir, name, inode_get_inumber(inode));
             }
         }
     }
@@ -532,20 +533,23 @@ printf("GOLDLLDLDFALSE\n");
 the number of slashes found */
 int parse_slashes(const char * dir, char * slash_indeces[]) {
     int i, ind = 0;
+    printf("IN PARSELSLASHES dir = %s\n", dir);
     /* Fill it with zeroes */
     for(i = 0; i != '\0'; i++) {
         slash_indeces[i] = 0;
     }
 
     /* fill slash_indeces with pointers to the slashes */
-    for(i = 0; i != '\0'; i++) {
+    for(i = 0; dir[i] != '\0'; i++) {
+        printf("FORORORbOOFORO IN PARSESLASHES\n");
         if(dir[i] == '/') {
+            printf("PARSE_SLASHES I FOUND ONE\n");
             if(ind < MAX_PATH_DEPTH) {
                 slash_indeces[ind] = dir + i;
                 ind++;
             } else {
                 /* Too many slashes */
-                exit(-1);
+                do_exit(-1);
             }
         }
     }
