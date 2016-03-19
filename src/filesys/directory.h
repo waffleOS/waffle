@@ -10,6 +10,11 @@
     After directories are implemented, this maximum length may be
     retained, but much longer full path names must be allowed. */
 #define NAME_MAX 14
+/* MAX_PATH_DEPTH determines the number of directories chained together
+in a path allowed. More specifically, it is the number of slashes
+allowed because this will create an array to store pointers to the
+slashes in a given path. */
+#define MAX_PATH_DEPTH 100
 
 struct inode;
 
@@ -20,6 +25,9 @@ struct dir *dir_open_root(void);
 struct dir *dir_reopen(struct dir *);
 void dir_close(struct dir *);
 struct inode *dir_get_inode(struct dir *);
+
+bool dir_chdir(const char *dir);
+bool dir_mkdir(const char *dir);
 
 /* Reading and writing. */
 bool dir_lookup(const struct dir *, const char *name, struct inode **);

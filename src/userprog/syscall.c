@@ -497,17 +497,11 @@ void do_close(int fd)
 
 
 bool do_chdir(const char *dir) {
-    /* PARSING??? */
-    
-
-
-    return false;
+    return dir_chdir(dir);
 }
 
 bool do_mkdir(const char *dir) {
-    /* PARSING? */
-
-    return false;
+    return dir_mkdir(dir);
 }
 
 bool do_readdir(int fd, char *name) {

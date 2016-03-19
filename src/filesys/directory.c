@@ -6,10 +6,13 @@
 #include "filesys/inode.h"
 #include "threads/malloc.h"
 
+int parse_slashes(const char * dir, char * slash_indeces[]);
+
 /*! A directory. */
 struct dir {
     struct inode *inode;                /*!< Backing store. */
     off_t pos;                          /*!< Current position. */
+    struct dir *parent;             /* Pointer to the parent directory */
 };
 
 /*! A single directory entry. */
@@ -32,6 +35,7 @@ struct dir * dir_open(struct inode *inode) {
     if (inode != NULL && dir != NULL) {
         dir->inode = inode;
         dir->pos = 0;
+        // dir->parent = NULL; /* Put something ehre */
         return dir;
     }
     else {
@@ -200,5 +204,85 @@ bool dir_readdir(struct dir *dir, char name[NAME_MAX + 1]) {
         } 
     }
     return false;
+}
+
+
+bool dir_chdir(const char *dir) {
+    char * slash_indeces[MAX_PATH_DEPTH];
+    int length = strlen(dir);
+    int num_slashes = parse_slashes(dir, slash_indeces);
+    struct thread * t = thread_current();
+    struct dir *curdir;
+
+    /* Absolute path:  A '/' exists in first index */
+    if(num_slashes > 0 && slash_indeces[0] == dir) {
+        curdir = dir_open_root();
+    } else { /* Relative path: set curdir to where this thread is */
+        curdir = t->curdir;
+    }
+
+    int i;
+    for(i = 0; i < num_slashes; i++) {
+        char name[NAME_MAX + 1];
+        int namelen;
+
+        /* Get the next path name */
+        if(i == num_slashes - 1) { /* get everything to the end of dir */
+            namelen = dir + length - (slash_indeces[i] + 1);
+        } else { /* Somewhere in the middle */
+            namelen = slash_indeces[i + 1] - (slash_indeces[i] + 1);
+        }
+
+        /* Make sure we didn't just grab nothing. */
+        if(namelen <= 0) {
+            continue;
+        }
+
+        strncpy(name, slash_indeces[i] + 1, namelen);
+        name[namelen] = '\0';
+
+        /* Go look it up, check the directory exists, and store it */
+        struct inode **inode;
+        if(dir_lookup(curdir, name, inode)) {
+            curdir = dir_open(*inode);
+        } else {
+            return false;
+        }
+
+    }
+
+    /* If everything worked out correctly, set this thread to that
+    current directory we found */
+    t->curdir = curdir;    
+
+    return true;
+}
+
+bool dir_mkdir(const char *dir) {
+
+}
+
+/* Fills array slash_indeces with the pointers to the slashes. Returns
+the number of slashes found */
+int parse_slashes(const char * dir, char * slash_indeces[]) {
+    int i, ind = 0;
+    /* Fill it with zeroes */
+    for(i = 0; i != '\0'; i++) {
+        slash_indeces[i] = 0;
+    }
+
+    /* fill slash_indeces with pointers to the slashes */
+    for(i = 0; i != '\0'; i++) {
+        if(dir[i] == '/') {
+            if(ind < MAX_PATH_DEPTH) {
+                slash_indeces[ind] = dir + i;
+                ind++;
+            } else {
+                /* Too many slashes */
+                exit(-1);
+            }
+        }
+    }
+    return ind;
 }
 

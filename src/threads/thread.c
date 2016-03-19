@@ -227,6 +227,8 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
     /* Set default exit status to 0 */
     t->exit_status = 0;
 
+    t->curdir = dir_open_root();
+
     return tid;
 }
 
@@ -363,9 +365,9 @@ void thread_foreach(thread_action_func *func, void *aux) {
 to do this. I want to work with all the threads out there to get
 the file descriptors in them for the subdirectories portion of the
 lab */
-struct list get_all_list(void) {
-    return all_list;
-}
+// struct list get_all_list(void) {
+//     return all_list;
+// }
 
 /*! Sets the current thread's priority to NEW_PRIORITY. */
 void thread_set_priority(int new_priority) {
