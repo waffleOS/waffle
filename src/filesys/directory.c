@@ -208,58 +208,151 @@ bool dir_readdir(struct dir *dir, char name[NAME_MAX + 1]) {
 
 
 bool dir_chdir(const char *dir) {
-    char * slash_indeces[MAX_PATH_DEPTH];
-    int length = strlen(dir);
-    int num_slashes = parse_slashes(dir, slash_indeces);
-    struct thread * t = thread_current();
-    struct dir *curdir;
+    // char * slash_indeces[MAX_PATH_DEPTH];
+    // int length = strlen(dir);
+    // int num_slashes = parse_slashes(dir, slash_indeces);
+    // struct thread * t = thread_current();
+    // struct dir *curdir;
 
-    /* Absolute path:  A '/' exists in first index */
-    if(num_slashes > 0 && slash_indeces[0] == dir) {
-        curdir = dir_open_root();
-    } else { /* Relative path: set curdir to where this thread is */
-        curdir = t->curdir;
-    }
+    // /* Absolute path:  A '/' exists in first index */
+    // if(num_slashes > 0 && slash_indeces[0] == dir) {
+    //     curdir = dir_open_root();
+    // } else { /* Relative path: set curdir to where this thread is */
+    //     curdir = t->curdir;
+    // }
 
-    int i;
-    for(i = 0; i < num_slashes; i++) {
-        char name[NAME_MAX + 1];
-        int namelen;
+    // /******* Corner case: Process up to the first slash ***/
+    // char name[NAME_MAX + 1];
+    // int namelen;
 
-        /* Get the next path name */
-        if(i == num_slashes - 1) { /* get everything to the end of dir */
-            namelen = dir + length - (slash_indeces[i] + 1);
-        } else { /* Somewhere in the middle */
-            namelen = slash_indeces[i + 1] - (slash_indeces[i] + 1);
-        }
+    // /* Get the next path name */
+    // if(num_slashes == 0) { /* get everything to the end of dir */
+    //     namelen = length;
+    // } else { /* Somewhere in the middle */
+    //     namelen = slash_indeces[0] - dir;
+    // }
 
-        /* Make sure we didn't just grab nothing. */
-        if(namelen <= 0) {
-            continue;
-        }
+    // if(namelen > 0) {
+    //     strlcpy(name, dir, namelen);
+    //     name[namelen] = '\0';
+    // }
 
-        strncpy(name, slash_indeces[i] + 1, namelen);
-        name[namelen] = '\0';
+    // /* Handle the special cases . and .. */
+    // if(!strcmp(name, ".")) {
+    //     /* Do nothing */
+    // } else if(!strcmp(name, "..")) {
+    //     curdir = curdir->parent;
+    // } else {
+    //     /* Go look it up, check the directory exists, and store it */
+    //     struct inode **inode;
+    //     if(dir_lookup(curdir, name, inode)) {
+    //         curdir = dir_open(*inode);
+    //     } else {
+    //         return false;
+    //     }
+    // }
 
-        /* Go look it up, check the directory exists, and store it */
-        struct inode **inode;
-        if(dir_lookup(curdir, name, inode)) {
-            curdir = dir_open(*inode);
-        } else {
-            return false;
-        }
+    // /******** Process everything from first slash on *****/
+    // int i;
+    // for(i = 0; i < num_slashes; i++) {
+    //     // char name[NAME_MAX + 1];
+    //     // int namelen;
 
-    }
+    //     /* Get the next path name */
+    //     if(i == num_slashes - 1) { /* get everything to the end of dir */
+    //         namelen = dir + length - (slash_indeces[i] + 1);
+    //     } else { /* Somewhere in the middle */
+    //         namelen = slash_indeces[i + 1] - (slash_indeces[i] + 1);
+    //     }
 
-    /* If everything worked out correctly, set this thread to that
-    current directory we found */
-    t->curdir = curdir;    
+    //     /* Make sure we didn't just grab nothing. */
+    //     if(namelen <= 0) {
+    //         continue;
+    //     }
 
-    return true;
+    //     strncpy(name, slash_indeces[i] + 1, namelen);
+    //     name[namelen] = '\0';
+
+    //     /* Handle the special cases . and .. */
+    //     if(!strcmp(name, ".")) {
+    //         continue;
+    //     }
+    //     if(!strcmp(name, "..")) {
+    //         curdir = curdir->parent;
+    //         continue;
+    //     }
+
+    //     /* Go look it up, check the directory exists, and store it */
+    //     struct inode **inode;
+    //     if(dir_lookup(curdir, name, inode)) {
+    //         curdir = dir_open(*inode);
+    //     } else {
+    //         return false;
+    //     }
+    // }
+
+
+
+    // /* If everything worked out correctly, set this thread to that
+    // current directory we found */
+    // t->curdir = curdir;    
+
+    // return true;
 }
 
 bool dir_mkdir(const char *dir) {
+    // char * slash_indeces[MAX_PATH_DEPTH];
+    // int length = strlen(dir);
+    // int num_slashes = parse_slashes(dir, slash_indeces);
+    // struct thread * t = thread_current();
+    // struct dir *curdir;
 
+    // int i;
+    // for(i = 0; i < num_slashes - 1; i++) {
+    //     char name[NAME_MAX + 1];
+    //     int namelen;
+
+    //     /* Get the next path name */
+    //     if(i == num_slashes - 1) { /* get everything to the end of dir */
+    //         namelen = dir + length - (slash_indeces[i] + 1);
+    //     } else { /* Somewhere in the middle */
+    //         namelen = slash_indeces[i + 1] - (slash_indeces[i] + 1);
+    //     }
+
+    //     /* Make sure we didn't just grab nothing. */
+    //     if(namelen <= 0) {
+    //         continue;
+    //     }
+
+    //     strncpy(name, slash_indeces[i] + 1, namelen);
+    //     name[namelen] = '\0';
+
+    //     /* Handle the special cases . and .. */
+    //     if(!strcmp(name, ".")) {
+    //         continue;
+    //     }
+    //     if(!strcmp(name, "..")) {
+    //         curdir = curdir->parent;
+    //         continue;
+    //     }
+
+    //     /* Go look it up, check the directory exists, and store it */
+    //     struct inode **inode;
+    //     if(dir_lookup(curdir, name, inode)) {
+    //         curdir = dir_open(*inode);
+    //     } else {
+    //         return false;
+    //     }
+    // }
+
+
+
+    // /* If everything worked out correctly, set this thread to that
+    // current directory we found */
+    // t->curdir = curdir;    
+
+    // return true;
+    return false;
 }
 
 /* Fills array slash_indeces with the pointers to the slashes. Returns
