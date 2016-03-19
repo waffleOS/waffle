@@ -26,14 +26,20 @@ struct inode_disk {
     block_sector_t start;               /*!< First data sector. */
     off_t length;                       /*!< File size in bytes. */
     unsigned magic;                     /*!< Magic number. */
-    bool isDirectory;
-    block_sector_t direct[NUM_DIRECT];
-    block_sector_t indirect;
-    block_sector_t double_indirect;
+    bool isDirectory;                   /*!< Specifies if inode is directory. */
+    block_sector_t direct[NUM_DIRECT];  /*!< Array of direct blocks. */
+    block_sector_t indirect;            /*!< Indirect block. */
+    block_sector_t double_indirect;     /*!< Double indirect block. */
 };
 
+/*! On-disk inode for indirect and double indirect blocks.
+    Must be exactly BLOCK_SECTOR_SIZE bytes long. */
 struct indirect_inode_disk {
-    block_sector_t sectors[NUM_ENTRIES];
+    block_sector_t sectors[NUM_ENTRIES];    /*!< Block sectors. If inode is
+                                              indirect block, contains direct
+                                              blocks. Else if inode is double
+                                              indirect block, contains indirect
+                                              blocks. */
 };
 
 /*! Returns the number of sectors to allocate for an inode SIZE
@@ -49,10 +55,10 @@ struct inode {
     int open_cnt;                       /*!< Number of openers. */
     bool removed;                       /*!< True if deleted, false otherwise. */
     int deny_write_cnt;                 /*!< 0: writes ok, >0: deny writes. */
-    struct lock extension_lock;
-    /*struct inode_disk data;*/             /*!< Inode content. */
+    struct lock extension_lock;         /*!< Lock to allow extending file. */
 };
 
+/*! Returns the minimum of a and b. If a == b, returns b. */
 static inline int min(int a, int b)
 {
     return a < b ? a : b;
@@ -65,16 +71,25 @@ static inline int min(int a, int b)
 static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
     ASSERT(inode != NULL);
 
-    /* Value to return. */
+    /* Value to return */
     block_sector_t result;
 
+    /* Read the sector for the inode containing the file metadata */
     cache_sector * sector = cache_read_sector(inode->sector);
     struct inode_disk * data = (struct inode_disk *) sector->data;
+
+    /* The allocated length of the file is the number of sectors allocated times
+     * the number of bytes per sector */
     int length = DIV_ROUND_UP(data->length, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;
 
+    /* Check if pos is valid */
     if (pos < length)
     {
+        /* Convert the byte offset to a sector offset */
         int block_index = pos / NUM_BYTES_PER_SECTOR;
+
+        /* If the desired sector offset is less than NUM_DIRECT, look in the
+         * direct blocks of the inode */
         if (block_index < NUM_DIRECT)
         {
             result = data->direct[block_index];
@@ -82,39 +97,72 @@ static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
             return result;
         }
 
+        /* The desired sector offset is past the number of direct blocks */
         else
         {
+            /* Get the index of the desired sector past the first NUM_DIRECT
+             * blocks */
             block_index -= NUM_DIRECT;
+
+            /* If the desired sector index is less than NUM_ENTRIES, look in
+             * the indirect block of the inode */
             if (block_index < NUM_ENTRIES)
             {
+                /* Read the indirect block */
                 cache_sector * indirect_sector = cache_read_sector(data->indirect);
                 struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector->data;
+
+                /* Read the block sector number at the sector index */
                 result = indirect_data->sectors[block_index];
+
+                /* We are done reading the indirect sector and the file inode */
                 done_read(&indirect_sector->rw);
                 done_read(&sector->rw);
                 return result;
             }
 
+            /* The desired sector offset is past the indirect block */
             else
             {
+                /* Get the index of the desired sector past the indirect block */
                 block_index -= NUM_ENTRIES;
+
+                /* If the desired sector index is less than the number of direct
+                 * blocks in the double indirect block, look in the double
+                 * indirect block of the inode */
                 if (block_index < NUM_ENTRIES * NUM_ENTRIES)
                 {
+                    /* Find the index of the indirect block in the double
+                     * indirect block */
                     int indirect_index = block_index / NUM_ENTRIES;
+
+                    /* Read the double indirect block */
                     cache_sector * d_indirect_sector = cache_read_sector(data->double_indirect);
                     struct indirect_inode_disk * double_indirect_data = (struct indirect_inode_disk *) d_indirect_sector->data;
+
+                    /* Get the block number of the indirect block */
                     block_sector_t indirect_sector_id = double_indirect_data->sectors[indirect_index];
+
+                    /* Find the direct block indirect in the indirect block */
                     int direct_index = block_index % NUM_ENTRIES;
+
+                    /* Read the indirect block */
                     cache_sector * indirect_sector = cache_read_sector(indirect_sector_id);
                     struct indirect_inode_disk * indirect_data = (struct indirect_inode_disk *) indirect_sector->data;
+
+                    /* Read the block sector number at the direct index */
                     result = indirect_data->sectors[direct_index];
 
+                    /* We are done reading the double indirect sector, the
+                     * indirect sector, and the file inode */
                     done_read(&d_indirect_sector->rw);
                     done_read(&indirect_sector->rw);
                     done_read(&sector->rw);
                     return result;
                 }
 
+                /* The offset is past the double indirect block. This will not
+                 * happen since we check if the offset is valid */
                 else
                 {
                     done_read(&sector->rw);
@@ -124,6 +172,7 @@ static block_sector_t byte_to_sector(const struct inode *inode, off_t pos) {
         }
     }
 
+    /* The offset is invalid */
     else {
         done_read(&sector->rw);
         return -1;
