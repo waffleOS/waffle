@@ -919,3 +919,11 @@ bool inode_readdir(struct thread * t, int fd, char * name) {
     // }
     // return false;
 }
+
+
+void inode_set_dir(block_sector_t sector_id, bool isDir) {
+    cache_sector * sector = cache_write_sector(sector_id);
+    struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
+    disk_inode->isDirectory = isDir;
+    done_write(&sector->rw);
+}

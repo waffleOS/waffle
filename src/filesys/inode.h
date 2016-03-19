@@ -25,4 +25,6 @@ off_t inode_length(const struct inode *);
 bool inode_is_dir(struct thread * t, int fd);
 bool inode_readdir(struct thread * t, int fd, char * name);
 
+void inode_set_dir(block_sector_t sector_id, bool isDir);
+
 #endif /* filesys/inode.h */

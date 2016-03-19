@@ -31,6 +31,7 @@ bool dir_create(block_sector_t sector, size_t entry_cnt) {
 /*! Opens and returns the directory for the given INODE, of which
     it takes ownership.  Returns a null pointer on failure. */
 struct dir * dir_open(struct inode *inode) {
+/*    printf("Dir open?\n");*/
     struct dir *dir = calloc(1, sizeof(*dir));
     if (inode != NULL && dir != NULL) {
         dir->inode = inode;
@@ -77,8 +78,8 @@ struct inode * dir_get_inode(struct dir *dir) {
     otherwise, returns false and ignores EP and OFSP. */
 static bool lookup(const struct dir *dir, const char *name,
                    struct dir_entry *ep, off_t *ofsp) {
-    printf("In lookup, finding name: %s\tcurdir: %p\n", name, dir);
-    printf("Curdir sector: %d\n", inode_get_inumber(dir->inode));
+    /*printf("In lookup, finding name: %s\tcurdir: %p\n", name, dir);
+    printf("Curdir sector: %d\n", inode_get_inumber(dir->inode));*/
     struct dir_entry e;
     size_t ofs;
 
@@ -93,11 +94,11 @@ static bool lookup(const struct dir *dir, const char *name,
                 *ep = e;
             if (ofsp != NULL)
                 *ofsp = ofs;
-            printf("Found\n");
+/*            printf("Found\n");*/
             return true;
         }
     }
-    printf("Not found\n");
+/*    printf("Not found\n");*/
     return false;
 }
 
@@ -228,12 +229,12 @@ bool dir_chdir(const char *dir) {
     if(num_slashes > 0 && slash_indeces[0] == dir) {
         curdir = dir_open_root();
     } else { /* Relative path: set curdir to where this thread is */
-        printf("Opening a relative path\n");
+/*        printf("Opening a relative path\n");*/
         curdir = t->curdir;
-        printf("curdir: %p\n", curdir);
+/*        printf("curdir: %p\n", curdir);*/
         if (curdir != NULL)
         {
-            printf("Curdir sector: %d\n", inode_get_inumber(curdir->inode));
+/*            printf("Curdir sector: %d\n", inode_get_inumber(curdir->inode));*/
         }
         /*printf("RELATIVELYSPEAKING curdir = %d\n", curdir);*/
         if(curdir == NULL) {
@@ -242,7 +243,7 @@ bool dir_chdir(const char *dir) {
         }
     }
 
-    printf("In chdir, changing dir to: %s\n\tcurdir:%p\n", dir, curdir);
+/*    printf("In chdir, changing dir to: %s\n\tcurdir:%p\n", dir, curdir);*/
 
     /* Different strategy. Parse up to the next slash. */
     int i;
@@ -301,7 +302,7 @@ bool dir_chdir(const char *dir) {
             /* Go look it up, check the directory exists */
             /*printf("CHDIR: LOOKUP AND CHECK\n");*/
             struct inode *inode;
-            printf("In chdir, looking up name: %s\n", name);
+/*            printf("In chdir, looking up name: %s\n", name);*/
             if(dir_lookup(curdir, name, &inode)) {
                 // int sector;
                 // printf("CHDIR: IN THE LOOKUP name = %s, curdir = %d\n", name, curdir);
@@ -315,10 +316,11 @@ bool dir_chdir(const char *dir) {
                 // return success;
                 curdir = dir_open(inode);
 
-                printf("Opened name: %s\tcurdir: %p\n", name, curdir);
-                printf("Curdir sector: %d\n", inode_get_inumber(curdir->inode));
+/*                printf("Opened name: %s\tcurdir: %p\n", name, curdir);
+                printf("Curdir sector: %d\n", inode_get_inumber(curdir->inode));*/
                 t->curdir = curdir;
-                return success;
+                return true;
+                // return success;
 
             }
         }
@@ -462,7 +464,7 @@ bool dir_chdir(const char *dir) {
     return true;
 }
 
-bool dir_mkdir(const char *dir) {
+bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size) {
     // printf("MKDIR dir = %s\n", dir);
 
     char * slash_indeces[MAX_PATH_DEPTH];
@@ -479,9 +481,9 @@ bool dir_mkdir(const char *dir) {
         curdir = dir_open_root();
     } else { /* Relative path: set curdir to where this thread is */
         curdir = t->curdir;
-  printf("RELATIVELYSPEAKING curdir = %d\n", curdir);
+/*  printf("RELATIVELYSPEAKING curdir = %d\n", curdir);*/
         if(curdir == NULL) {
-            printf("ITS NULLLLLLL\n");
+/*            printf("ITS NULLLLLLL\n");*/
             curdir = dir_open_root();
         }
     }
@@ -565,12 +567,25 @@ bool dir_mkdir(const char *dir) {
 /*printf("dir = %d, name = %s, inode = %d\n", curdir, name, inode);*/
             if(!dir_lookup(curdir, name, &inode)) {
                 /*return dir_add(curdir, name, inode_get_inumber(inode));*/
-                int sector;
+                int sector = 0;
 /*                printf("Creating dir %s\n", name);*/
-                return free_map_allocate(1, &sector) && inode_create(sector, 512) && dir_add(curdir, name, sector);
+                bool success = free_map_allocate(1, &sector) && inode_create(sector, file_size) && dir_add(curdir, name, sector);
+                if (!success && sector != 0) 
+                    free_map_release(sector, 1);
+                // dir_close(dir);
+                    /* Set the isdirectory flag */
+                if(isDirectory) {
+                    inode_set_dir(sector, isDirectory);
+                }
+
+                return success;
+
             }
         }
     }
+
+
+
 /*printf("GOLDLLDLDFALSE\n");*/
     return false;
 

@@ -502,7 +502,7 @@ bool do_chdir(const char *dir) {
 }
 
 bool do_mkdir(const char *dir) {
-    return dir_mkdir(dir);
+    return dir_mkdir(dir, true, 512);
 }
 
 bool do_readdir(int fd, char *name) {
