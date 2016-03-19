@@ -206,29 +206,54 @@ bool inode_create(block_sector_t sector, off_t length) {
 
     disk_inode = calloc(1, sizeof *disk_inode);
     if (disk_inode != NULL) {
+        
         static char zeros[BLOCK_SECTOR_SIZE];
+
+        /* Find the number of sectors needed to allocate */
         size_t sectors = bytes_to_sectors(length);
+
+        /* Update the file metadata */
         disk_inode->length = length;
         disk_inode->magic = INODE_MAGIC;
         disk_inode->isDirectory = false;
-        volatile int num_direct_blocks = min(sectors, NUM_DIRECT);
+
+        /* The number of direct blocks needed to allocate is the minimum of
+         * the number of sectors needed and the number of direct blocks
+         * available in the inode */
+        int num_direct_blocks = min(sectors, NUM_DIRECT);
+
+        /* Allocate direct blocks */
         int i;
         for (i = 0; i < num_direct_blocks; i++)
         {
+            /* Allocate a free block by finding the first free block. If this 
+             * fails, there is no more space. Write the inode to disk and
+             * return false */
             if (!free_map_allocate(1, &disk_inode->direct[i]))
             {
                 block_write(fs_device, sector, disk_inode);
                 free(disk_inode);
                 return success;
             }
-            /*printf("Found direct sector %d\n", disk_inode->direct[i])*/
+
+            /* Write zeros to the new allocated block */
             block_write(fs_device, disk_inode->direct[i], zeros);
         }
+
+        /* Find the number of remaining sectors to allocate */
         sectors -= num_direct_blocks;
+
+        /* If we still have sectors left to allocate, begin allocating in the
+         * indirect block */
         if (sectors > 0)
         {
+            /* Allocate indirect block */
             struct indirect_inode_disk * ind_disk_inode = NULL;
             ind_disk_inode = calloc(1, sizeof * ind_disk_inode);
+
+            /* Allocate a free block by finding the first free block. If this 
+             * fails, there is no more space. Write the inode to disk and
+             * return false */
             if (!free_map_allocate(1, &disk_inode->indirect))
             {
                 free(ind_disk_inode);
@@ -236,9 +261,16 @@ bool inode_create(block_sector_t sector, off_t length) {
                 free(disk_inode);
                 return success;
             }
+
+            /* The number of direct blocks needed to allocate is the minimum of
+             * the number of sectors needed and the number of direct blocks
+             * available in the indirect block */
             int num_blocks = min(sectors, NUM_ENTRIES);
             for (i = 0; i < num_blocks; i++)
             {
+                /* Allocate a free block by finding the first free block. If this 
+                 * fails, there is no more space. Write the indirect block and
+                 * inode to disk and return false */
                 if (!free_map_allocate(1, &ind_disk_inode->sectors[i]))
                 {
                     block_write(fs_device, disk_inode->indirect, ind_disk_inode);
@@ -247,30 +279,54 @@ bool inode_create(block_sector_t sector, off_t length) {
                     free(disk_inode);
                     return success;
                 }
-                static char zeros[BLOCK_SECTOR_SIZE];
+
+                /* Write zeros to the new allocated block */
                 block_write(fs_device, ind_disk_inode->sectors[i], zeros);
             }
+
+            /* Write the indirect block to the disk */
             block_write(fs_device, disk_inode->indirect, ind_disk_inode);
             free(ind_disk_inode);
+
+            /* Find the number of remaining sectors to allocate */
             sectors -= num_blocks;
+            /* If we still have sectors left to allocate, begin allocating in the
+             * double indirect block */
             if (sectors > 0)
             {
+                /* Allocate double indirect block */
                 struct indirect_inode_disk * d_ind_disk_inode = NULL;
                 d_ind_disk_inode = calloc(1, sizeof * d_ind_disk_inode);
+                
+                /* Allocate a free block by finding the first free block. If this 
+                 * fails, there is no more space. Write the inode to disk and
+                 * return false */
                 if (!free_map_allocate(1, &disk_inode->double_indirect))
                 {
-                    block_write(fs_device, disk_inode->double_indirect, d_ind_disk_inode);
                     free(d_ind_disk_inode);
                     block_write(fs_device, sector, disk_inode);
                     free(disk_inode);
                     return success;
                 }
+
+                /* Find the number of indirect blocks needed */
                 int num_indirect_blocks = DIV_ROUND_UP(sectors, NUM_ENTRIES);
+
+                /* The number of indirect blocks to allocate is the minimum
+                 * of the number of blocks needed and the number of blocks
+                 * available */
                 num_indirect_blocks = min(num_indirect_blocks, NUM_ENTRIES);
+
+                /* Allocate indirect blocks */
                 for (i = 0; i < num_indirect_blocks; i++)
                 {
+
                     struct indirect_inode_disk * ind_disk_inode = NULL;
                     ind_disk_inode = calloc(1, sizeof * ind_disk_inode);
+
+                    /* Allocate a free block by finding the first free block. If this 
+                     * fails, there is no more space. Write the double indirect
+                     * block and inode to disk and return false */
                     if (!free_map_allocate(1, &d_ind_disk_inode->sectors[i]))
                     {
                         free(ind_disk_inode);
@@ -280,10 +336,18 @@ bool inode_create(block_sector_t sector, off_t length) {
                         free(disk_inode);
                         return success;
                     }
+
+                    /* The number of blocks to allocate in the indirect block */
                     int num_blocks = min(sectors, NUM_ENTRIES);
+
+                    /* Allocate direct blocks */
                     int j;
                     for (j = 0; j < num_blocks; j++)
                     {
+
+                        /* Allocate a free block by finding the first free block. If this 
+                         * fails, there is no more space. Write the double indirect
+                         * block, indirect block, and inode to disk and return false */
                         if (!free_map_allocate(1, &ind_disk_inode->sectors[j]))
                         {
                             block_write(fs_device, d_ind_disk_inode->sectors[i], ind_disk_inode);
@@ -294,14 +358,24 @@ bool inode_create(block_sector_t sector, off_t length) {
                             free(disk_inode);
                             return success;
                         }
+
+                        /* Write zeros to the new allocated block */
                         block_write(fs_device, ind_disk_inode->sectors[j], zeros);
                     }
+
+                    /* The number of remaining sectors */
                     sectors -= num_blocks;
+                    
+                    /* Write the indirect block to the disk */
                     block_write(fs_device, d_ind_disk_inode->sectors[i], ind_disk_inode);
                 }
+
+                /* Write the double indirect block to the disk */
                 block_write(fs_device, disk_inode->double_indirect, d_ind_disk_inode);
                 free(d_ind_disk_inode);
 
+                /* If there are remaining sectors, there are no more blocks
+                 * left. Write the inode to disk and return false */
                 if (sectors > 0)
                 {
                    block_write(fs_device, sector, disk_inode);
@@ -311,6 +385,8 @@ bool inode_create(block_sector_t sector, off_t length) {
             }
         }
 
+        /* We have successfully created the file */
+        /* Write the inode to disk */
         block_write(fs_device, sector, disk_inode);
         success = true; 
         
