@@ -228,7 +228,13 @@ bool dir_chdir(const char *dir) {
     if(num_slashes > 0 && slash_indeces[0] == dir) {
         curdir = dir_open_root();
     } else { /* Relative path: set curdir to where this thread is */
+        printf("Opening a relative path\n");
         curdir = t->curdir;
+        printf("curdir: %p\n", curdir);
+        if (curdir != NULL)
+        {
+            printf("Curdir sector: %d\n", inode_get_inumber(curdir->inode));
+        }
         /*printf("RELATIVELYSPEAKING curdir = %d\n", curdir);*/
         if(curdir == NULL) {
             /*printf("ITS NULLLLLLL\n");*/
@@ -309,20 +315,10 @@ bool dir_chdir(const char *dir) {
                 // return success;
                 curdir = dir_open(inode);
 
-
-
-                // int sector;
-                // /*printf("CHDIR: IN THE LOOKUP name = %s, curdir = %d\n", name, curdir);*/
-                // bool success = free_map_allocate(1, &sector);
-                // /*printf("sucess1 = %d\n", success);*/
-                // success = success && inode_create(sector, 512);
-                // /*printf("sucess2 = %d\n", success);*/
-                // /*success = success && dir_add(curdir, name, sector);*/
-                // /*printf("sucess3 = %d\n", success);*/
-                // curdir = dir_open(inode);
-                // printf("Opened name: %s\tcurdir: %p\n", name, curdir);
-                // printf("Curdir sector: %d\n", inode_get_inumber(curdir->inode));
-                // return success;
+                printf("Opened name: %s\tcurdir: %p\n", name, curdir);
+                printf("Curdir sector: %d\n", inode_get_inumber(curdir->inode));
+                t->curdir = curdir;
+                return success;
 
             }
         }
