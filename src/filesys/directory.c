@@ -451,7 +451,8 @@ printf("GOLDLLDLDELENENNENENNNENENNENENAU79\n");
     namelen = dir + length - c;
     if(namelen > 0) {
 printf("IN THE IF STATEMENTETETETETET\n");
-        strlcpy(name, c, namelen);
+        name[0] = '0';
+        memcpy(name, c, namelen);
         name[namelen] = '\0';
 printf("name = %s, c = %s, namelen = %d, name[0] = %c\n", name, c, namelen, name[0]);
         /* Handle the special cases . and .. and note we can't add them */
