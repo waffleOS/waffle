@@ -79,14 +79,12 @@ static bool lookup(const struct dir *dir, const char *name,
                    struct dir_entry *ep, off_t *ofsp) {
     struct dir_entry e;
     size_t ofs;
-printf("IM IN LOOKUP NOW\n");
+
     ASSERT(dir != NULL);
     ASSERT(name != NULL);
 
-printf("PAST THE ASSERT\n");
     for (ofs = 0; inode_read_at(dir->inode, &e, sizeof(e), ofs) == sizeof(e);
          ofs += sizeof(e)) {
-        printf("IN THE FOR LOOP\n");
 
         if (e.in_use && !strcmp(name, e.name)) {
             if (ep != NULL)
@@ -122,7 +120,7 @@ bool dir_lookup(const struct dir *dir, const char *name, struct inode **inode) {
     Fails if NAME is invalid (i.e. too long) or a disk or memory
     error occurs. */
 bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
-    printf("In dir add, name: %s\n", name);
+/*    printf("In dir add, name: %s\n", name);*/
     struct dir_entry e;
     off_t ofs;
     bool success = false;
@@ -133,14 +131,14 @@ bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
     /* Check NAME for validity. */
     if (*name == '\0' || strlen(name) > NAME_MAX)
         return false;
-    printf("NAME IN USE?\n", name);
+    // printf("NAME IN USE?\n", name);
 
     /* Check that NAME is not in use. */
     if (lookup(dir, name, NULL, NULL)) {
-        printf("YOU BUTT\n");
+        // printf("YOU BUTT\n");
         goto done;
     }
-    printf("NOODLES AND POODLES\n", name);
+    // printf("NOODLES AND POODLES\n", name);
 
     /* Set OFS to offset of free slot.
        If there are no free slots, then it will be set to the
@@ -155,7 +153,7 @@ bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
             break;
     }
 
-    printf("IN DIR ADD BEFORE WRITE SLOT\n", name);
+/*    printf("IN DIR ADD BEFORE WRITE SLOT\n", name);*/
     /* Write slot. */
     e.in_use = true;
     strlcpy(e.name, name, sizeof e.name);
@@ -293,16 +291,17 @@ bool dir_chdir(const char *dir) {
             printf("CHDIR: LOOKUP AND CHECK\n");
             struct inode *inode;
             if(dir_lookup(curdir, name, &inode)) {
-                int sector;
-                printf("CHDIR: IN THE LOOKUP name = %s, curdir = %d\n", name, curdir);
-                bool success = free_map_allocate(1, &sector);
-                printf("sucess1 = %d\n", success);
-                success = success && inode_create(sector, 512);
-                printf("sucess2 = %d\n", success);
-                success = success && dir_add(curdir, name, sector);
-                printf("sucess3 = %d\n", success);
+                // int sector;
+                // printf("CHDIR: IN THE LOOKUP name = %s, curdir = %d\n", name, curdir);
+                // bool success = free_map_allocate(1, &sector);
+                // printf("sucess1 = %d\n", success);
+                // success = success && inode_create(sector, 512);
+                // printf("sucess2 = %d\n", success);
+                // success = success && dir_add(curdir, name, sector);
+                // printf("sucess3 = %d\n", success);
+                // curdir = dir_open(inode);
+                // return success;
                 curdir = dir_open(inode);
-                return success;
 
             }
         }
