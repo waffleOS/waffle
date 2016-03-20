@@ -77,7 +77,7 @@ struct inode * dir_get_inode(struct dir *dir) {
     otherwise, returns false and ignores EP and OFSP. */
 static bool lookup(const struct dir *dir, const char *name,
                    struct dir_entry *ep, off_t *ofsp) {
-    printf("In lookup, finding name: %s\tcurdir: %p\n", name, dir);
+/*    printf("In lookup, finding name: %s\tcurdir: %p\n", name, dir);*/
     // printf("Curdir sector: %d\n", inode_get_inumber(dir->inode));
     struct dir_entry e;
     size_t ofs;
@@ -88,7 +88,7 @@ static bool lookup(const struct dir *dir, const char *name,
     for (ofs = 0; inode_read_at(dir->inode, &e, sizeof(e), ofs) == sizeof(e);
          ofs += sizeof(e)) {
 
-        printf("name = %s, e.name = %s\n", name, e.name);
+/*        printf("LOOKUP: name = %s, e.name = %s\n", name, e.name);*/
         if (e.in_use && !strcmp(name, e.name)) {
             if (ep != NULL)
                 *ep = e;
@@ -133,6 +133,10 @@ bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
     ASSERT(dir != NULL);
     ASSERT(name != NULL);
 
+    if(inode_is_removed(dir->inode)) { /* We want to remove this dir. Dissallowe stuff */
+        return false;
+    }
+
     /* Check NAME for validity. */
     if (*name == '\0' || strlen(name) > NAME_MAX)
         return false;
@@ -162,9 +166,9 @@ bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
     e.in_use = true;
     strlcpy(e.name, name, sizeof e.name);
     e.inode_sector = inode_sector;
-    // printf("name = %s, e.name = %s\n", name, e.name);
+    // printf("DIRADD: name = %s, e.name = %s\n", name, e.name);
     success = inode_write_at(dir->inode, &e, sizeof(e), ofs) == sizeof(e);
-printf("successssssssssssssssssssss = %d, dir = %p\n", success, dir);
+/*printf("successssssssssssssssssssss = %d, dir = %p\n", success, dir);*/
 done:
     return success;
 }
@@ -467,8 +471,7 @@ bool dir_chdir(const char *dir) {
 }
 
 bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size) {
-    printf("MKDIR dir = %s\n", dir);
-
+    // printf("MKDIR dir = %s\n", dir);
 
     char * slash_indeces[MAX_PATH_DEPTH];
     int length = strlen(dir);
@@ -567,11 +570,11 @@ bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size) {
 /*printf("IN ABOUT TO LOOKIT UPETET\n");*/
             struct inode *inode;
 /*printf("IN THE LOOOOOOOOOOOOOOOOOOOOOOOOOKINGEMENTETETETETET\n");*/
-printf("dir = %p, name = %s, inode = %p\n", curdir, name, inode);
+// printf("dir = %p, name = %s, inode = %p\n", curdir, name, inode);
             if(!dir_lookup(curdir, name, &inode)) {
                 /*return dir_add(curdir, name, inode_get_inumber(inode));*/
                 int sector = 0;
-                printf("Creating dir %s\n", name);
+                // printf("Creating dir %s\n", name);
                 bool success = free_map_allocate(1, &sector) && inode_create(sector, file_size) && dir_add(curdir, name, sector);
                 if (!success && sector != 0) 
                     free_map_release(sector, 1);
@@ -648,8 +651,8 @@ printf("dir = %p, name = %s, inode = %p\n", curdir, name, inode);
     // current directory we found */
     // t->curdir = curdir;    
 
-    return true;
-    return false;
+    // return true;
+    // return false;
 }
 
 /* Fills array slash_indeces with the pointers to the slashes. Returns
@@ -897,7 +900,9 @@ bool dir_rmdir(const char *dir) {
             /* Go look it up, check the directory doesn't exists, and make it */
 /*            printf("curdir = %p, name = %s, inode = %p\n", curdir, name, inode);*/
             if(dir_lookup(curdir, name, &inode)) {
+                struct dir *curdir_child = dir_open(inode);
                 bool success = dir_remove(curdir, name);
+/*                printf("curdir = %p\n", curdir);*/
                 dir_close(curdir);
 /*                printf("success = %d\n", success);*/
                 return success;

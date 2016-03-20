@@ -390,7 +390,7 @@ bool do_create(const char * file, unsigned int initial_size)
     }
 
     bool success = filesys_create(file, initial_size);
-    
+    // printf("successs for do_create = %d\n", success);
     return success;
 }
 

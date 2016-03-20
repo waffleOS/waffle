@@ -26,5 +26,6 @@ bool inode_is_dir(struct thread * t, int fd);
 bool inode_readdir(struct thread * t, int fd, char * name);
 
 void inode_set_dir(block_sector_t sector_id, bool isDir);
+bool inode_is_removed(struct inode *);
 
 #endif /* filesys/inode.h */

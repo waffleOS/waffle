@@ -927,3 +927,8 @@ void inode_set_dir(block_sector_t sector_id, bool isDir) {
     disk_inode->isDirectory = isDir;
     done_write(&sector->rw);
 }
+
+
+bool inode_is_removed(struct inode * inode) {
+    return inode->removed;
+}
