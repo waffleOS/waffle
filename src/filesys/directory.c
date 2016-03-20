@@ -77,8 +77,8 @@ struct inode * dir_get_inode(struct dir *dir) {
     otherwise, returns false and ignores EP and OFSP. */
 static bool lookup(const struct dir *dir, const char *name,
                    struct dir_entry *ep, off_t *ofsp) {
-    /*printf("In lookup, finding name: %s\tcurdir: %p\n", name, dir);
-    printf("Curdir sector: %d\n", inode_get_inumber(dir->inode));*/
+    printf("In lookup, finding name: %s\tcurdir: %p\n", name, dir);
+    // printf("Curdir sector: %d\n", inode_get_inumber(dir->inode));
     struct dir_entry e;
     size_t ofs;
 
@@ -88,6 +88,7 @@ static bool lookup(const struct dir *dir, const char *name,
     for (ofs = 0; inode_read_at(dir->inode, &e, sizeof(e), ofs) == sizeof(e);
          ofs += sizeof(e)) {
 
+        printf("name = %s, e.name = %s\n", name, e.name);
         if (e.in_use && !strcmp(name, e.name)) {
             if (ep != NULL)
                 *ep = e;
@@ -161,8 +162,9 @@ bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
     e.in_use = true;
     strlcpy(e.name, name, sizeof e.name);
     e.inode_sector = inode_sector;
+    // printf("name = %s, e.name = %s\n", name, e.name);
     success = inode_write_at(dir->inode, &e, sizeof(e), ofs) == sizeof(e);
-
+printf("successssssssssssssssssssss = %d, dir = %p\n", success, dir);
 done:
     return success;
 }
@@ -465,8 +467,8 @@ bool dir_chdir(const char *dir) {
 }
 
 bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size) {
-/*    printf("MKDIR dir = %s\n", dir);
-*/
+    printf("MKDIR dir = %s\n", dir);
+
 
     char * slash_indeces[MAX_PATH_DEPTH];
     int length = strlen(dir);
@@ -540,7 +542,7 @@ bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size) {
 
         /* Go look it up, check the directory exists, and store it */
         struct inode *inode;
-/*        printf("I'm looking for c again2 = %s, name = %s\n", c, name);*/
+        // printf("I'm looking for c again2 = %s, name = %s\n", c, name);
         if(dir_lookup(curdir, name, &inode)) {
             curdir = dir_open(inode);
         } else {
@@ -565,11 +567,11 @@ bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size) {
 /*printf("IN ABOUT TO LOOKIT UPETET\n");*/
             struct inode *inode;
 /*printf("IN THE LOOOOOOOOOOOOOOOOOOOOOOOOOKINGEMENTETETETETET\n");*/
-/*printf("dir = %d, name = %s, inode = %d\n", curdir, name, inode);*/
+printf("dir = %p, name = %s, inode = %p\n", curdir, name, inode);
             if(!dir_lookup(curdir, name, &inode)) {
                 /*return dir_add(curdir, name, inode_get_inumber(inode));*/
                 int sector = 0;
-/*                printf("Creating dir %s\n", name);*/
+                printf("Creating dir %s\n", name);
                 bool success = free_map_allocate(1, &sector) && inode_create(sector, file_size) && dir_add(curdir, name, sector);
                 if (!success && sector != 0) 
                     free_map_release(sector, 1);
@@ -669,7 +671,7 @@ int parse_slashes(const char * dir, char * slash_indeces[]) {
                 ind++;
             } else {
                 /* Too many slashes */
-                do_exit(-1);
+                // do_exit(-1);
             }
         }
     }
@@ -677,7 +679,7 @@ int parse_slashes(const char * dir, char * slash_indeces[]) {
 }
 
 bool dir_open_file(const char *dir, struct inode **inode_ptr) {
-    // printf("MKDIR dir = %s\n", dir);
+    // printf("DIROPENFILE dir = %s\n", dir);
 
 
     char * slash_indeces[MAX_PATH_DEPTH];
@@ -768,7 +770,7 @@ bool dir_open_file(const char *dir, struct inode **inode_ptr) {
     if(namelen > 0) {
         memcpy(name, c, namelen);
         name[namelen] = '\0';
-/*printf("name = %s, c = %s, namelen = %d, name[0] = %c\n", name, c, namelen, name[0]);*/
+// printf("name = %s, c = %s, namelen = %d, name[0] = %c\n", name, c, namelen, name[0]);
         /* Handle the special cases . and .. and note we can't add them */
         if(!strcmp(name, ".") || !strcmp(name, "..")) {
             return false;
@@ -781,7 +783,14 @@ bool dir_open_file(const char *dir, struct inode **inode_ptr) {
 
             }
         }
+    } else if(strlen(dir) > 0) { /* This means the entire path was made of '/'
+        and we should open up the root directory. */
+        *inode_ptr = inode_open(ROOT_DIR_SECTOR);
+/*        printf("IN HERE\n");*/
+        return true;
     }
+// printf("name = %s, c = %s, namelen = %d, name[0] = %c\n", name, c, namelen, name[0]);
+    // printf("namelen = %d, length = %d\n", namelen, length);
     return false;
 
 }
