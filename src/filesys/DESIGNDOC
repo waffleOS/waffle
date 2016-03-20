@@ -61,6 +61,36 @@ David: Implemented read write lock, and refactored cache API to use the
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+This struct represents the inode on disk and contains metadata for the file
+struct inode_disk {
+    block_sector_t start;               /*!< First data sector. */
+    off_t length;                       /*!< File size in bytes. */
+    unsigned magic;                     /*!< Magic number. */
+    bool isDirectory;                   /*!< Specifies if inode is directory. */
+    block_sector_t direct[NUM_DIRECT];  /*!< Array of direct blocks. */
+    block_sector_t indirect;            /*!< Indirect block. */
+    block_sector_t double_indirect;     /*!< Double indirect block. */
+};
+
+ On-disk inode for indirect and double indirect blocks
+struct indirect_inode_disk {
+    block_sector_t sectors[NUM_ENTRIES];    /*!< Block sectors. If inode is
+                                              indirect block, contains direct
+                                              blocks. Else if inode is double
+                                              indirect block, contains indirect
+                                              blocks. */
+};
+
+In-memory inode
+struct inode {
+    struct list_elem elem;              /*!< Element in inode list. */
+    block_sector_t sector;              /*!< Sector number of disk location. */
+    int open_cnt;                       /*!< Number of openers. */
+    bool removed;                       /*!< True if deleted, false otherwise. */
+    int deny_write_cnt;                 /*!< 0: writes ok, >0: deny writes. */
+    struct lock extension_lock;         /*!< Lock to allow extending file. */
+};
+
 >> A2: What is the maximum size of a file supported by your inode
 >> structure?  Show your work.
 NUM_DIRECT = 122
@@ -79,6 +109,8 @@ size = NUM_DIRECT * NUM_BYTES_PER_SECTOR + NUM_INDIRECT * NUM_SECTORS *
 
 >> A3: Explain how your code avoids a race if two processes attempt to
 >> extend a file at the same time.
+The file has an extension lock that only one process can acquire at a time. This
+prevents race conditions in file extension.
 
 >> A4: Suppose processes A and B both have file F open, both
 >> positioned at end-of-file.  If A reads and B writes F at the same
@@ -97,6 +129,8 @@ race.
 >> prevent forever another process from writing the file, and many
 >> processes writing to a file cannot prevent another process forever
 >> from reading the file.
+Readers check after reading whether there is a writer waiting and if so, allow
+the writer to write. This is vice versa for writers.
 
 ---- RATIONALE ----
 
@@ -153,6 +187,10 @@ implement directory locks.
 >> is open by a process or if it is in use as a process's current
 >> working directory?  If so, what happens to that process's future
 >> file system operations?  If not, how do you prevent it?
+Our implementation allows a directory to be removed if it is open or in use
+as a process's current working directory. The process's future file system
+operations inside that directory are disabled until the process changes
+directory.
 
 ---- RATIONALE ----
 

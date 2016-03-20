@@ -268,7 +268,6 @@ bool dir_chdir(const char *dir) {
 
     }
 
-    /*printf("CHDIR: AM I HERE?\n");*/
     /* Handle anything after the last '/'. Check that it DOESNT exist */
     namelen = dir + length - c;
     if(namelen > 0) {
@@ -282,173 +281,21 @@ bool dir_chdir(const char *dir) {
             return false;
         } else {
             /* Go look it up, check the directory exists */
-            /*printf("CHDIR: LOOKUP AND CHECK\n");*/
             struct inode *inode;
-            // printf("In chdir, looking up name: %s\n", name);
             if(dir_lookup(curdir, name, &inode)) {
-                // int sector;
-                // printf("CHDIR: IN THE LOOKUP name = %s, curdir = %d\n", name, curdir);
-                // bool success = free_map_allocate(1, &sector);
-                // printf("sucess1 = %d\n", success);
-                // success = success && inode_create(sector, 512);
-                // printf("sucess2 = %d\n", success);
-                // success = success && dir_add(curdir, name, sector);
-                // printf("sucess3 = %d\n", success);
-                // curdir = dir_open(inode);
-                // return success;
                 curdir = dir_open(inode);
 
-/*                printf("Opened name: %s\tcurdir: %p\n", name, curdir);
-                printf("Curdir sector: %d\n", inode_get_inumber(curdir->inode));*/
                 t->curdir = curdir;
                 return true;
-                // return success;
 
             }
         }
     }
 
-    // for(i = 0; i < num_slashes; i++) {
-    //     /* Get the next path name */
-    //     namelen = slash_indeces[i] - c;
-
-    //     /* Make sure we didn't just grab nothing ie two slashes in a row. */
-    //     if(namelen <= 0) {
-    //         c = slash_indeces[i] + 1;
-    //         continue;
-    //     }
-
-    //     strlcpy(name, c, namelen);
-    //     name[namelen] = '\0';
-
-    //     /* Handle the special cases . and .. */
-    //     if(!strcmp(name, ".")) {
-    //         c = slash_indeces[i] + 1;
-    //         continue;
-    //     }
-    //     if(!strcmp(name, "..")) {
-    //         curdir = curdir->parent;
-    //         c = slash_indeces[i] + 1;
-    //         continue;
-    //     }
-
-    //     /* Go look it up, check the directory exists, and store it */
-    //     struct inode **inode;
-    //     if(dir_lookup(curdir, name, inode)) {
-    //         curdir = dir_open(*inode);
-    //     } else {
-    //         return false;
-    //     }
-    //     c = slash_indeces[i] + 1;
-    // }
-
-
-    // /* Handle anything after the last '/' */
-    // namelen = dir + length - c;
-    // if(namelen > 0) {
-    //     strlcpy(name, c, namelen);
-    //     name[namelen] = '\0';
-
-    //     /* Handle the special cases . and .. */
-    //     if(!strcmp(name, ".")) {
-    //         /* Do nothing */
-    //     } else if(!strcmp(name, "..")) {
-    //         curdir = curdir->parent;
-    //     } else {
-    //         /* Go look it up, check the directory exists, and store it */
-    //         struct inode **inode;
-    //         if(dir_lookup(curdir, name, inode)) {
-    //             curdir = dir_open(*inode);
-    //         } else {
-    //             return false;
-    //         }
-    //     }
-    // }
-
-
-    // /******* Corner case: Process up to the first slash ***/
-    // // process_next_name(name, dir, slash_indeces)
-    // char name[NAME_MAX + 1];
-    // int namelen;
-
-    // /* Get the next path name */
-    // if(num_slashes == 0) { /* get everything to the end of dir */
-    //     namelen = length;
-    // } else { /* Somewhere in the middle */
-    //     namelen = slash_indeces[0] - dir;
-    // }
-
-    // if(namelen > 0) {
-    //     strlcpy(name, dir, namelen);
-    //     name[namelen] = '\0';
-    // }
-
-    // /* Handle the special cases . and .. */
-    // if(!strcmp(name, ".")) {
-    //     /* Do nothing */
-    // } else if(!strcmp(name, "..")) {
-    //     curdir = curdir->parent;
-    // } else {
-    //     /* Go look it up, check the directory exists, and store it */
-    //     struct inode **inode;
-    //     if(dir_lookup(curdir, name, inode)) {
-    //         curdir = dir_open(*inode);
-    //     } else {
-    //         return false;
-    //     }
-    // }
-
-    // /******** Process everything from first slash on *****/
-    // int i;
-    // for(i = 0; i < num_slashes; i++) {
-    //     // char name[NAME_MAX + 1];
-    //     // int namelen;
-
-    //     /* Get the next path name */
-    //     if(i == num_slashes - 1) { /* get everything to the end of dir */
-    //         namelen = dir + length - (slash_indeces[i] + 1);
-    //     } else { /* Somewhere in the middle */
-    //         namelen = slash_indeces[i + 1] - (slash_indeces[i] + 1);
-    //     }
-
-    //     /* Make sure we didn't just grab nothing. */
-    //     if(namelen <= 0) {
-    //         continue;
-    //     }
-
-    //     strncpy(name, slash_indeces[i] + 1, namelen);
-    //     name[namelen] = '\0';
-
-    //     /* Handle the special cases . and .. */
-    //     if(!strcmp(name, ".")) {
-    //         continue;
-    //     }
-    //     if(!strcmp(name, "..")) {
-    //         curdir = curdir->parent;
-    //         continue;
-    //     }
-
-    //     /* Go look it up, check the directory exists, and store it */
-    //     struct inode **inode;
-    //     if(dir_lookup(curdir, name, inode)) {
-    //         curdir = dir_open(*inode);
-    //     } else {
-    //         return false;
-    //     }
-    // }
-
-
-
-    /* If everything worked out correctly, set this thread to that
-    current directory we found */
-    // t->curdir = curdir;    
-
-    // return true;
     return false;
 }
 
 bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size) {
-    // printf("MKDIR dir = %s\n", dir);
 
     char * slash_indeces[MAX_PATH_DEPTH];
     int length = strlen(dir);
@@ -457,26 +304,20 @@ bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size) {
     int i;
     struct dir *curdir = NULL;  
 
-  /*printf("WHEREAMI curdir = %d\n", curdir);*/
     /* Absolute path:  A '/' exists in first index */
     if(num_slashes > 0 && slash_indeces[0] == dir) {
-  /*printf("ABOSOLUTELY\n");*/
         curdir = dir_open_root();
     } else { /* Relative path: set curdir to where this thread is */
         curdir = t->curdir;
-/*  printf("RELATIVELYSPEAKING curdir = %d\n", curdir);*/
         if(curdir == NULL) {
-/*            printf("ITS NULLLLLLL\n");*/
             curdir = dir_open_root();
         }
     }
-/*  printf("IM OUT curdir = %d\n", curdir);*/
 
     /* Find which slash ends the last true name. This means like
     in example "a/b/c/d//////" d would be the last true name. */
     char * the_end = dir + length - 1;
     for(i = num_slashes - 1; i >= 0; i++) {
-  /*printf("THE PRE FOR LOOOOOOOOOOOOOOOOOOOOPY\n");*/
         if(slash_indeces[i] == the_end) {
             num_slashes--;
             the_end--;
@@ -485,7 +326,6 @@ bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size) {
             break;
         }
     }
-  /*printf("HEREE YOU SAY????????\n");*/
 
 
     /* Different strategy. Parse up to the next slash. */
@@ -494,18 +334,15 @@ bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size) {
     char *c = dir;
 
     for(i = 0; i < num_slashes; i++) {
-/*  printf("LOOOOPOPPPITTTTTTTTTTTTTTTTTTTTTTTT\n");*/
         /* Get the next path name */
         namelen = slash_indeces[i] - c;
 
         /* Make sure we didn't just grab nothing ie two slashes in a row. */
         if(namelen <= 0) {
             c = slash_indeces[i] + 1;
-/*            printf("YEAH YOU SHOULAD GOTTEN HERE c = %s\n", c);*/
             continue;
         }
 
-/*        printf("I'm looking for c again = %s\n", c);*/
         memcpy(name, c, namelen);
         name[namelen] = '\0';
 
@@ -522,7 +359,6 @@ bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size) {
 
         /* Go look it up, check the directory exists, and store it */
         struct inode *inode;
-        // printf("I'm looking for c again2 = %s, name = %s\n", c, name);
         if(dir_lookup(curdir, name, &inode)) {
             curdir = dir_open(inode);
         } else {
@@ -532,31 +368,23 @@ bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size) {
 
     }
 
-/*printf("GOLDLLDLDELENENNENENNNENENNENENAU79\n");*/
     /* Handle anything after the last '/'. Check that it DOESNT exist */
     namelen = dir + length - c;
     if(namelen > 0) {
         memcpy(name, c, namelen);
         name[namelen] = '\0';
-/*printf("name = %s, c = %s, namelen = %d, name[0] = %c\n", name, c, namelen, name[0]);*/
         /* Handle the special cases . and .. and note we can't add them */
         if(!strcmp(name, ".") || !strcmp(name, "..")) {
             return false;
         } else {
             /* Go look it up, check the directory doesn't exists, and make it */
-/*printf("IN ABOUT TO LOOKIT UPETET\n");*/
             struct inode *inode;
-/*printf("IN THE LOOOOOOOOOOOOOOOOOOOOOOOOOKINGEMENTETETETETET\n");*/
-// printf("dir = %p, name = %s, inode = %p\n", curdir, name, inode);
             if(!dir_lookup(curdir, name, &inode)) {
-                /*return dir_add(curdir, name, inode_get_inumber(inode));*/
                 int sector = 0;
-                // printf("Creating dir %s\n", name);
                 bool success = free_map_allocate(1, &sector) && inode_create(sector, file_size) && dir_add(curdir, name, sector);
                 if (!success && sector != 0) 
                     free_map_release(sector, 1);
-                // dir_close(dir);
-                    /* Set the isdirectory flag */
+                /* Set the isdirectory flag */
                 if(isDirectory) {
                     inode_set_dir(sector, isDirectory);
                 }
@@ -569,74 +397,14 @@ bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size) {
 
 
 
-/*printf("GOLDLLDLDFALSE\n");*/
     return false;
 
-
-
-
-
-
-    // /* Absolute path:  A '/' exists in first index */
-    // if(num_slashes > 0 && slash_indeces[0] == dir) {
-    //     curdir = dir_open_root();
-    // } else { /* Relative path: set curdir to where this thread is */
-    //     curdir = t->curdir;
-    // }
-
-    // int i;
-    // for(i = 0; i < num_slashes - 1; i++) {
-    //     char name[NAME_MAX + 1];
-    //     int namelen;
-
-    //     /* Get the next path name */
-    //     if(i == num_slashes - 1) { /* get everything to the end of dir */
-    //         namelen = dir + length - (slash_indeces[i] + 1);
-    //     } else { /* Somewhere in the middle */
-    //         namelen = slash_indeces[i + 1] - (slash_indeces[i] + 1);
-    //     }
-
-    //     /* Make sure we didn't just grab nothing. */
-    //     if(namelen <= 0) {
-    //         continue;
-    //     }
-
-    //     strncpy(name, slash_indeces[i] + 1, namelen);
-    //     name[namelen] = '\0';
-
-    //     /* Handle the special cases . and .. */
-    //     if(!strcmp(name, ".")) {
-    //         continue;
-    //     }
-    //     if(!strcmp(name, "..")) {
-    //         curdir = curdir->parent;
-    //         continue;
-    //     }
-
-    //     /* Go look it up, check the directory exists, and store it */
-    //     struct inode **inode;
-    //     if(dir_lookup(curdir, name, inode)) {
-    //         curdir = dir_open(*inode);
-    //     } else {
-    //         return false;
-    //     }
-    // }
-
-
-
-    // /* If everything worked out correctly, set this thread to that
-    // current directory we found */
-    // t->curdir = curdir;    
-
-    // return true;
-    // return false;
 }
 
 /* Fills array slash_indeces with the pointers to the slashes. Returns
 the number of slashes found */
 int parse_slashes(const char * dir, char * slash_indeces[]) {
     int i, ind = 0;
-    /*printf("IN PARSELSLASHES dir = %s\n", dir);*/
     /* Fill it with zeroes */
     for(i = 0; dir[i] != '\0'; i++) {
         slash_indeces[i] = 0;
@@ -645,7 +413,6 @@ int parse_slashes(const char * dir, char * slash_indeces[]) {
     /* fill slash_indeces with pointers to the slashes */
     for(i = 0; dir[i] != '\0'; i++) {
         if(dir[i] == '/') {
-            /*printf("PARSE_SLASHES I FOUND ONE\n");*/
             if(ind < MAX_PATH_DEPTH) {
                 slash_indeces[ind] = dir + i;
                 ind++;
@@ -659,7 +426,6 @@ int parse_slashes(const char * dir, char * slash_indeces[]) {
 }
 
 bool dir_open_file(const char *dir, struct inode **inode_ptr) {
-    // printf("DIROPENFILE dir = %s\n", dir);
 
 
     char * slash_indeces[MAX_PATH_DEPTH];
@@ -669,26 +435,20 @@ bool dir_open_file(const char *dir, struct inode **inode_ptr) {
     int i;
     struct dir *curdir = NULL;  
 
-  /*printf("WHEREAMI curdir = %d\n", curdir);*/
     /* Absolute path:  A '/' exists in first index */
     if(num_slashes > 0 && slash_indeces[0] == dir) {
-  /*printf("ABOSOLUTELY\n");*/
         curdir = dir_open_root();
     } else { /* Relative path: set curdir to where this thread is */
         curdir = t->curdir;
-/*  printf("RELATIVELYSPEAKING curdir = %d\n", curdir);*/
         if(curdir == NULL) {
-/*            printf("ITS NULLLLLLL\n");*/
             curdir = dir_open_root();
         }
     }
-/*  printf("IM OUT curdir = %d\n", curdir);*/
 
     /* Find which slash ends the last true name. This means like
     in example "a/b/c/d//////" d would be the last true name. */
     char * the_end = dir + length - 1;
     for(i = num_slashes - 1; i >= 0; i++) {
-  /*printf("THE PRE FOR LOOOOOOOOOOOOOOOOOOOOPY\n");*/
         if(slash_indeces[i] == the_end) {
             num_slashes--;
             the_end--;
@@ -697,7 +457,6 @@ bool dir_open_file(const char *dir, struct inode **inode_ptr) {
             break;
         }
     }
-  /*printf("HEREE YOU SAY????????\n");*/
 
 
     /* Different strategy. Parse up to the next slash. */
@@ -707,18 +466,15 @@ bool dir_open_file(const char *dir, struct inode **inode_ptr) {
     struct inode *inode;
 
     for(i = 0; i < num_slashes; i++) {
-/*  printf("LOOOOPOPPPITTTTTTTTTTTTTTTTTTTTTTTT\n");*/
         /* Get the next path name */
         namelen = slash_indeces[i] - c;
 
         /* Make sure we didn't just grab nothing ie two slashes in a row. */
         if(namelen <= 0) {
             c = slash_indeces[i] + 1;
-/*            printf("YEAH YOU SHOULAD GOTTEN HERE c = %s\n", c);*/
             continue;
         }
 
-/*        printf("I'm looking for c again = %s\n", c);*/
         memcpy(name, c, namelen);
         name[namelen] = '\0';
 
@@ -744,25 +500,20 @@ bool dir_open_file(const char *dir, struct inode **inode_ptr) {
 
     }
 
-/*printf("GOLDLLDLDELENENNENENNNENENNENENAU79\n");*/
     /* Handle anything after the last '/'. Check that it DOESNT exist */
     namelen = dir + length - c;
     if(namelen > 0) {
         memcpy(name, c, namelen);
         name[namelen] = '\0';
-// printf("name = %s, c = %s, namelen = %d, name[0] = %c\n", name, c, namelen, name[0]);
         /* Handle the special cases . and .. and note we can't add them */
         if(!strcmp(name, ".") && !inode_is_removed(curdir->inode)) {
             *inode_ptr = curdir->inode;
             return true;
         }else if(!strcmp(name, "..")) {
-            // printf("Inside the strcmp\n");
             return false;
         } else {
             /* Go look it up, check the directory exists, and say you have it */
-            // printf("curdir = %p, name = %s, inode_ptr = %p\n", curdir, name, inode_ptr);
             if(dir_lookup(curdir, name, inode_ptr)) {
-                // printf("inode_ptr = %p\n", inode_ptr);
                 return true;
 
             }
@@ -770,19 +521,14 @@ bool dir_open_file(const char *dir, struct inode **inode_ptr) {
     } else if(strlen(dir) > 0) { /* This means the entire path was made of '/'
         and we should open up the root directory. */
         *inode_ptr = inode_open(ROOT_DIR_SECTOR);
-/*        printf("IN HERE\n");*/
         return true;
     }
-// printf("name = %s, c = %s, namelen = %d, name[0] = %c\n", name, c, namelen, name[0]);
-    // printf("namelen = %d, length = %d\n", namelen, length);
     return false;
 
 }
 
 
 bool dir_rmdir(const char *dir) {
-/*    printf("MKDIR dir = %s\n", dir);
-*/
 
     char * slash_indeces[MAX_PATH_DEPTH];
     int length = strlen(dir);
@@ -791,26 +537,20 @@ bool dir_rmdir(const char *dir) {
     int i;
     struct dir *curdir = NULL;  
 
-  /*printf("WHEREAMI curdir = %d\n", curdir);*/
     /* Absolute path:  A '/' exists in first index */
     if(num_slashes > 0 && slash_indeces[0] == dir) {
-  /*printf("ABOSOLUTELY\n");*/
         curdir = dir_open_root();
     } else { /* Relative path: set curdir to where this thread is */
         curdir = t->curdir;
-/*  printf("RELATIVELYSPEAKING curdir = %d\n", curdir);*/
         if(curdir == NULL) {
-/*            printf("ITS NULLLLLLL\n");*/
             curdir = dir_open_root();
         }
     }
-/*  printf("IM OUT curdir = %d\n", curdir);*/
 
     /* Find which slash ends the last true name. This means like
     in example "a/b/c/d//////" d would be the last true name. */
     char * the_end = dir + length - 1;
     for(i = num_slashes - 1; i >= 0; i++) {
-  /*printf("THE PRE FOR LOOOOOOOOOOOOOOOOOOOOPY\n");*/
         if(slash_indeces[i] == the_end) {
             num_slashes--;
             the_end--;
@@ -819,7 +559,6 @@ bool dir_rmdir(const char *dir) {
             break;
         }
     }
-  /*printf("HEREE YOU SAY????????\n");*/
 
 
     /* Different strategy. Parse up to the next slash. */
@@ -828,18 +567,15 @@ bool dir_rmdir(const char *dir) {
     char *c = dir;
 
     for(i = 0; i < num_slashes; i++) {
-/*  printf("LOOOOPOPPPITTTTTTTTTTTTTTTTTTTTTTTT\n");*/
         /* Get the next path name */
         namelen = slash_indeces[i] - c;
 
         /* Make sure we didn't just grab nothing ie two slashes in a row. */
         if(namelen <= 0) {
             c = slash_indeces[i] + 1;
-/*            printf("YEAH YOU SHOULAD GOTTEN HERE c = %s\n", c);*/
             continue;
         }
 
-/*        printf("I'm looking for c again = %s\n", c);*/
         memcpy(name, c, namelen);
         name[namelen] = '\0';
 
@@ -856,7 +592,6 @@ bool dir_rmdir(const char *dir) {
 
         /* Go look it up, check the directory exists, and store it */
         struct inode *inode;
-/*        printf("I'm looking for c again2 = %s, name = %s\n", c, name);*/
         if(dir_lookup(curdir, name, &inode)) {
             curdir = dir_open(inode);
         } else {
@@ -866,28 +601,23 @@ bool dir_rmdir(const char *dir) {
 
     }
 
-/*printf("GOLDLLDLDELENENNENENNNENENNENENAU79\n");*/
     /* Handle anything after the last '/'. Check that it DOESNT exist */
     namelen = dir + length - c;
     if(namelen > 0) {
         memcpy(name, c, namelen);
         name[namelen] = '\0';
-/*printf("name = %s, c = %s, namelen = %d, name[0] = %c\n", name, c, namelen, name[0]);*/
         /* Handle the special cases . and .. and note we can't add them */
         if(!strcmp(name, ".") || !strcmp(name, "..")) {
             return false;
         } else {
             struct inode *inode;
             /* Go look it up, check the directory doesn't exists, and make it */
-/*            printf("curdir = %p, name = %s, inode = %p\n", curdir, name, inode);*/
             if(dir_lookup(curdir, name, &inode)) {
                 struct dir *curdir_child = dir_open(inode);
                 char temp[NAME_MAX + 1];
                 if(!dir_readdir(curdir_child, temp)) {
                     bool success = dir_remove(curdir, name);
-    /*                printf("curdir = %p\n", curdir);*/
                     dir_close(curdir);
-    /*                printf("success = %d\n", success);*/
                     return success;
                 } else {
                     curdir_child->pos -= sizeof(struct dir_entry);
