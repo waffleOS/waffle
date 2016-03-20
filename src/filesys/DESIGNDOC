@@ -223,7 +223,7 @@ All in cache_sector in cache.c
 >> C2: Describe how your cache replacement algorithm chooses a cache
 >> block to evict.
 
-To get rid of thrashing on teh first index, we first do a random
+To get rid of thrashing on the first index, we first do a random
 replacement policy and randomly choose an index to default evict.
 Next, we do a Not Frequently Used (NFU) policy where we keep track
 of the indeces which haven't been accessed a lot. This is done with
