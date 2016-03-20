@@ -202,7 +202,12 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
                 /*printf("Got here\n");*/
                 /*printf("The buffer looks like %s\n", (char *) buffer);*/
                 num_bytes = do_write(fd, buffer, size);
+                if(num_bytes == -1) {
+                    do_exit(-1);
+                }
                 f->eax = num_bytes;
+                // printf("YODELYEHEHOO\n");
+                // f->eax = -1;
                 /*printf("Number of bytes: %d\n", num_bytes);*/
             }
             else {
@@ -451,6 +456,8 @@ int do_write(int fd, const void * buffer, unsigned int size)
     {
         return 0;
     }
+    
+
 
     if (fd == 1)
     {
@@ -461,7 +468,12 @@ int do_write(int fd, const void * buffer, unsigned int size)
     struct thread * t = thread_current();
     if (is_valid_fd(t, fd))
     {
+        if(inode_is_dir(t, fd)) {
+            return -1;
+        }
+/*    printf("HEY IM WRITING this buffer: %s\n", buffer);*/
         int length = file_write(t->files[fd - 2], buffer, size);
+/*        printf("length = %d\n", length);*/
         return length;
     }
 

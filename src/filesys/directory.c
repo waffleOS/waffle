@@ -38,8 +38,7 @@ struct dir * dir_open(struct inode *inode) {
         dir->pos = 0;
         dir->parent = dir; /* Put something ehre */
         return dir;
-    }
-    else {
+    } else {
         inode_close(inode);
         free(dir);
         return NULL; 
