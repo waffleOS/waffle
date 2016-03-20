@@ -901,11 +901,17 @@ bool dir_rmdir(const char *dir) {
 /*            printf("curdir = %p, name = %s, inode = %p\n", curdir, name, inode);*/
             if(dir_lookup(curdir, name, &inode)) {
                 struct dir *curdir_child = dir_open(inode);
-                bool success = dir_remove(curdir, name);
-/*                printf("curdir = %p\n", curdir);*/
-                dir_close(curdir);
-/*                printf("success = %d\n", success);*/
-                return success;
+                char temp[NAME_MAX + 1];
+                if(!dir_readdir(curdir_child, temp)) {
+                    bool success = dir_remove(curdir, name);
+    /*                printf("curdir = %p\n", curdir);*/
+                    dir_close(curdir);
+    /*                printf("success = %d\n", success);*/
+                    return success;
+                } else {
+                    curdir_child->pos -= sizeof(struct dir_entry);
+                    return false;
+                }
             }
         }
     }
