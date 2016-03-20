@@ -224,7 +224,10 @@ cache_sector *cache_read_sector(block_sector_t block_id) {
 
 /* */
 cache_sector *cache_write_sector(block_sector_t block_id) {
-    return &cache[cache_sync_sector(block_id, true)];
+    int cache_ind = cache_sync_sector(block_id, true);
+    cache[cache_ind].dirty = true;
+
+    return &cache[cache_ind];
 }
 
 /* Part of keeping track of eviction policies. */
