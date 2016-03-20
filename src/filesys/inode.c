@@ -402,23 +402,15 @@ struct inode * inode_open(block_sector_t sector) {
     struct list_elem *e;
     struct inode *inode;
 
-
-    
     /* Check whether this inode is already open. */
     for (e = list_begin(&open_inodes); e != list_end(&open_inodes);
          e = list_next(e)) {
-/*    printf("FOR INODE_OPEN\n");
-*/        inode = list_entry(e, struct inode, elem);
-/*    printf("INODE_OPEN2 inode->sector = %d, sector = %d\n", inode->sector, sector);
-*/        if (inode->sector == sector) {
-/*    printf("INODE_OPEN3\n");
-*/            inode_reopen(inode);
-/*    printf("INODE_OPEN4\n");
-*/            return inode; 
+        inode = list_entry(e, struct inode, elem);
+        if (inode->sector == sector) {
+            inode_reopen(inode);
+            return inode; 
         }
     }
-/*    printf("INODE_OPEN\n");
-*/
     /* Allocate memory. */
     inode = malloc(sizeof *inode);
     if (inode == NULL)
@@ -432,8 +424,7 @@ struct inode * inode_open(block_sector_t sector) {
     inode->removed = false;
     lock_init(&inode->extension_lock);
 
-/*    block_read(fs_device, inode->sector, &inode->data);
-*/    return inode;
+    return inode;
 }
 
 /*! Reopens and returns INODE. */
@@ -465,8 +456,6 @@ void inode_close(struct inode *inode) {
         if (inode->removed) {
             cache_sector * sector = cache_read_sector(inode->sector);
             struct inode_disk * data = (struct inode_disk *) sector->data;
-            /*cache_sector sector = cache_read_sector(inode->sector);*/
-            /*struct inode_disk *data = (struct inode_disk *) sector.data;*/
             
             size_t length = data->length;
             int i;
@@ -498,16 +487,11 @@ void inode_remove(struct inode *inode) {
 off_t inode_read_at(struct inode *inode, void *buffer_, off_t size, off_t offset) {
     uint8_t *buffer = buffer_;
     off_t bytes_read = 0;
-/*    uint8_t *bounce = NULL;
-*/
-/*    printf("Reading %d bytes of data\n", size);
-*/
+
     while (size > 0) {
         /* Disk sector to read, starting byte offset within sector. */
         block_sector_t sector_idx = byte_to_sector (inode, offset);
-/*        printf("size = %d, offset = %d, bytes_read = %d\n", size, offset, bytes_read);
-        printf("Reading sector %d\n", sector_idx);
-*/        int sector_ofs = offset % BLOCK_SECTOR_SIZE;
+        int sector_ofs = offset % BLOCK_SECTOR_SIZE;
 
         /* Bytes left in inode, bytes left in sector, lesser of the two. */
         off_t inode_left = inode_length(inode) - offset;
@@ -516,43 +500,22 @@ off_t inode_read_at(struct inode *inode, void *buffer_, off_t size, off_t offset
 
         /* Number of bytes to actually copy out of this sector. */
         int chunk_size = size < min_left ? size : min_left;
-/*        printf("chunk_size = %d\n", chunk_size);
-*/        if (chunk_size <= 0)
+        if (chunk_size <= 0)
             break;
-
 
         /* If there are things to read, let's get it into our cache. */
         cache_sector *sector = cache_read_sector(sector_idx);
-        /*cache_sector sector = cache_read_sector(sector_idx);*/
 
         /* Read from cache into the buffer */
         memcpy(buffer + bytes_read, sector->data + sector_ofs, chunk_size);
         /* Done reading sector. */
         done_read(&sector->rw);
 
-/*         if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) { 
-*/            /* Read full sector directly into caller's buffer. */
-         /*    block_read (fs_device, sector_idx, buffer + bytes_read);
-        }
-        else {*/ 
-            /* Read sector into bounce buffer, then partially copy
-               into caller's buffer. */
-            /*if (bounce == NULL) {
-                bounce = malloc(BLOCK_SECTOR_SIZE);
-                if (bounce == NULL)
-                    break;
-            }
-            block_read(fs_device, sector_idx, bounce);
-            memcpy(buffer + bytes_read, bounce + sector_ofs, chunk_size);
-        } 
-      */
         /* Advance. */
         size -= chunk_size;
         offset += chunk_size;
         bytes_read += chunk_size;
-/*        printf("%d bytes left to read in\n", size);*/
     }
-/*    free(bounce);*/
 
     /* TODO: Possibly do read ahead here. */
 
@@ -642,8 +605,6 @@ bool inode_extend(struct inode *inode, off_t offset) {
 
         if (create_double_indirect)
         {
-            /*struct indirect_inode_disk * d_ind_disk_inode = NULL;*/
-            /*d_ind_disk_inode = calloc(1, sizeof * d_ind_disk_inode);*/
             if(!free_map_allocate(1, &disk_inode->double_indirect))
             {
                 done_write(&sector->rw);
@@ -721,8 +682,7 @@ bool inode_extend(struct inode *inode, off_t offset) {
 off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t offset) {
     const uint8_t *buffer = buffer_;
     off_t bytes_written = 0;
-/*    uint8_t *bounce = NULL;
-*/
+
     if (inode->deny_write_cnt)
         return 0;
 
@@ -735,7 +695,6 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
         if (offset + size > length)
         {
             lock_acquire(&inode->extension_lock);
-            /*disk_inode_length = DIV_ROUND_UP(offset + size, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;*/
             if (offset + size > length) {
                 inode_extend(inode, offset + size);
                 cache_sector * sector = cache_write_sector(inode->sector);
@@ -756,11 +715,6 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
         }
     }
 
-    /*cache_sector * sector = cache_write_sector(inode->sector);*/
-    /*struct inode_disk * disk_inode = (struct inode_disk *) sector->data;*/
-    /*done_write(&sector->rw);*/
-
-
     while (size > 0) {
         /* Sector to write, starting byte offset within sector. */
         block_sector_t sector_idx = byte_to_sector(inode, offset);
@@ -778,50 +732,17 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
 
         /* If there are things to write, let's get it into our cache. */
         cache_sector *sector = cache_write_sector(sector_idx);
-        /*printf("Got the sector\n");*/
-        /*cache_sector sector = cache_write_sector(sector_idx);*/
 
         /* Write from cache into the buffer */
         memcpy(sector->data + sector_ofs, buffer + bytes_written, chunk_size);
         sector->dirty = true;
         done_write(&sector->rw);
-        /*printf("Wrote to file\n");*/
 
-/*        if (sector_ofs == 0 && chunk_size == BLOCK_SECTOR_SIZE) {
-*/            /* Write full sector directly to disk. */
-/*            block_write(fs_device, sector_idx, buffer + bytes_written);
-        }
-        else {
-*/            /* We need a bounce buffer. */
-/*            if (bounce == NULL) {
-                bounce = malloc(BLOCK_SECTOR_SIZE);
-                if (bounce == NULL)
-                    break;
-            }
-*/
-            /* If the sector contains data before or after the chunk
-               we're writing, then we need to read in the sector
-               first.  Otherwise we start with a sector of all zeros. */
-
-/*            if (sector_ofs > 0 || chunk_size < sector_left) 
-                block_read(fs_device, sector_idx, bounce);
-            else
-                memset (bounce, 0, BLOCK_SECTOR_SIZE);
-
-            memcpy(bounce + sector_ofs, buffer + bytes_written, chunk_size);
-            block_write(fs_device, sector_idx, bounce);
-        }
-*/
         /* Advance. */
         size -= chunk_size;
         offset += chunk_size;
         bytes_written += chunk_size;
     }
-/*    free(bounce);
-*/
-    /*sector = cache_write_sector(inode->sector);*/
-    /*disk_inode = (struct inode_disk *) sector->data;*/
-    /*done_write(&sector->rw);*/
     return bytes_written;
 }
 
@@ -852,79 +773,36 @@ off_t inode_length(const struct inode *inode) {
 }
 
 
+/* Takes a thread and a file descriptor and returns whether that file
+is a directory or not */
 bool inode_is_dir(struct thread * t, int fd) {
-/* Loop through all the threads out there looking for the fd. */
-    // struct list_elem *e;
-    // struct list all_list = get_all_list();
-    // for (e = list_begin(&all_list); e != list_end(&all_list);
-    //      e = list_next(e)) {
-    //     struct thread *t = list_entry(e, struct thread, allelem);
-    //     if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
-    //     {
-            struct inode *inode = file_get_inode(t->files[fd - 2]);
-            // printf("%d", inode->sector);
-            cache_sector * sector = cache_read_sector(inode->sector);
-            struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
-            bool result = disk_inode->isDirectory;
-            done_read(&sector->rw);
-            return result;
-            /*cache_sector *sector = cache_read_sector(inode->sector);
-            struct inode_disk *data = (struct inode_disk *) sector->data;
-            bool result = data->isDirectory;
-            done_read(&sector->rw);
-            return result;*/
-    //     }
-    // }
-
-    // return false;
+    struct inode *inode = file_get_inode(t->files[fd - 2]);
+    cache_sector * sector = cache_read_sector(inode->sector);
+    struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
+    bool result = disk_inode->isDirectory;
+    done_read(&sector->rw);
+    return result;
 }
 
-
+/* Converts a thread and its file descriptor and returns the inode sector
+id for that file */
 block_sector_t inode_get_inumber_from_fd(struct thread * t, int fd) {
-    // struct list_elem *e;
-    // struct list all_list = get_all_list();
-    // for (e = list_begin(&all_list); e != list_end(&all_list);
-    //      e = list_next(e)) {
-    //     struct thread *t = list_entry(e, struct thread, allelem);
-    //     if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
-    //     {
-            struct inode *inode = file_get_inode(t->files[fd - 2]);
-            return inode->sector;
-            // return file_get_inode(t->files[fd - 2])->sector;
-    //     }
-    // }
-    // return -1;
+    struct inode *inode = file_get_inode(t->files[fd - 2]);
+    return inode->sector;
 }
 
-
-
+/* Takes in a thread and a file descriptor so that it can fill in the
+passed in name parameter by calling directory readdir. Returns true on
+success */
 bool inode_readdir(struct thread * t, int fd, char * name) {
-    // struct list_elem *e;
-    // struct list all_list = get_all_list();
-    // for (e = list_begin(&all_list); e != list_end(&all_list);
-    //      e = list_next(e)) {
-    //     struct thread *t = list_entry(e, struct thread, allelem);
-    //     if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
-    //     {
-            // if(!strcmp(name, ".") || !strcmp(name, "..")) {
-            //     return false;
-            // }
-            // printf("AFTER THE IF\n");
-    // printf("BEFORE TEH IF fd = %d, name = %s\n", fd,  name);
-            struct inode *inode = file_get_inode(t->files[fd - 2]);
-            if(!inode_is_dir(t, fd)) return false;
-            struct dir *dir = dir_open(inode);
-    // printf("INODEDIVE fd = %d, name = %s, dir = %p\n", fd,  name, dir);
-            bool success = dir_readdir(dir, name);
-            /* Must check if name is . or .. */
-            return success;
-            // return file_get_inode(t->files[fd - 2])->sector;
-    //     }
-    // }
-    // return false;
+    struct inode *inode = file_get_inode(t->files[fd - 2]);
+    if(!inode_is_dir(t, fd)) return false;
+    struct dir *dir = dir_open(inode);
+    bool success = dir_readdir(dir, name);
+    return success;
 }
 
-
+/* sets the isDirectory flag */
 void inode_set_dir(block_sector_t sector_id, bool isDir) {
     cache_sector * sector = cache_write_sector(sector_id);
     struct inode_disk * disk_inode = (struct inode_disk *) sector->data;
@@ -932,7 +810,7 @@ void inode_set_dir(block_sector_t sector_id, bool isDir) {
     done_write(&sector->rw);
 }
 
-
+/* Check if an inode is in the process of being removed */
 bool inode_is_removed(struct inode * inode) {
     return inode->removed;
 }

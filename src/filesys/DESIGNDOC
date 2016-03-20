@@ -13,7 +13,7 @@ Robert Eng   <reng@caltech.edu>
 David Qu     <dqu@caltech.edu>
 
 >> Specify how many late tokens you are using on this assignment:  
-2
+3
 
 >> What is the Git repository and commit hash for your submission?
 
@@ -43,8 +43,10 @@ Rahul: Implemented file extension. Wrote algorithm to find sectors given byte
        extensively and worked with cache code to determine issues.
        Fixed bugs in cache eviction.
        Helped implement subdirectories. Debugged and fixed code.
-Robert:Implemented cache design. Wrote NFU eviction policy. Implemented
-       subdirectories.
+Robert:Implemented cache design. Wrote NFU eviction policy with Random
+	   Replacement. Implemented subdirectories. Helped brainstorm ideas
+	   for the inode structure including a really awesome B tree with Rahul.
+	   Did a whole lot of debugging.
 David: Implemented read write lock, and refactored cache API to use the
        read write lock by supplying synchronized cache_read_sector and
        cache_write_sector functions. Helped discuss implementation and
@@ -98,10 +100,18 @@ David: Implemented read write lock, and refactored cache API to use the
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+- Added struct dir * parent to struct dir so directories could keep track
+  of their parents and .. would work.
+- Added struct dir *curdir to struct thread so threads could know where
+  they were in the filesystem.
+
 ---- ALGORITHMS ----
 
 >> B2: Describe your code for traversing a user-specified path.  How
 >> do traversals of absolute and relative paths differ?
+
+It begins by parsing for all the '/' and keeps an array of all pointers
+to these '/'
 
 ---- SYNCHRONIZATION ----
 

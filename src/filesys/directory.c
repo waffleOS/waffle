@@ -31,7 +31,6 @@ bool dir_create(block_sector_t sector, size_t entry_cnt) {
 /*! Opens and returns the directory for the given INODE, of which
     it takes ownership.  Returns a null pointer on failure. */
 struct dir * dir_open(struct inode *inode) {
-/*    printf("Dir open?\n");*/
     struct dir *dir = calloc(1, sizeof(*dir));
     if (inode != NULL && dir != NULL) {
         dir->inode = inode;
@@ -77,8 +76,6 @@ struct inode * dir_get_inode(struct dir *dir) {
     otherwise, returns false and ignores EP and OFSP. */
 static bool lookup(const struct dir *dir, const char *name,
                    struct dir_entry *ep, off_t *ofsp) {
-/*    printf("In lookup, finding name: %s\tcurdir: %p\n", name, dir);*/
-    // printf("Curdir sector: %d\n", inode_get_inumber(dir->inode));
     struct dir_entry e;
     size_t ofs;
 
@@ -88,17 +85,14 @@ static bool lookup(const struct dir *dir, const char *name,
     for (ofs = 0; inode_read_at(dir->inode, &e, sizeof(e), ofs) == sizeof(e);
          ofs += sizeof(e)) {
 
-/*        printf("LOOKUP: name = %s, e.name = %s\n", name, e.name);*/
         if (e.in_use && !strcmp(name, e.name)) {
             if (ep != NULL)
                 *ep = e;
             if (ofsp != NULL)
                 *ofsp = ofs;
-/*            printf("Found\n");*/
             return true;
         }
     }
-/*    printf("Not found\n");*/
     return false;
 }
 
@@ -125,7 +119,6 @@ bool dir_lookup(const struct dir *dir, const char *name, struct inode **inode) {
     Fails if NAME is invalid (i.e. too long) or a disk or memory
     error occurs. */
 bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
-/*    printf("In dir add, name: %s\n", name);*/
     struct dir_entry e;
     off_t ofs;
     bool success = false;
@@ -140,14 +133,11 @@ bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
     /* Check NAME for validity. */
     if (*name == '\0' || strlen(name) > NAME_MAX)
         return false;
-    // printf("NAME IN USE?\n", name);
 
     /* Check that NAME is not in use. */
     if (lookup(dir, name, NULL, NULL)) {
-        // printf("YOU BUTT\n");
         goto done;
     }
-    // printf("NOODLES AND POODLES\n", name);
 
     /* Set OFS to offset of free slot.
        If there are no free slots, then it will be set to the
@@ -166,9 +156,7 @@ bool dir_add(struct dir *dir, const char *name, block_sector_t inode_sector) {
     e.in_use = true;
     strlcpy(e.name, name, sizeof e.name);
     e.inode_sector = inode_sector;
-    // printf("DIRADD: name = %s, e.name = %s\n", name, e.name);
     success = inode_write_at(dir->inode, &e, sizeof(e), ofs) == sizeof(e);
-/*printf("successssssssssssssssssssss = %d, dir = %p\n", success, dir);*/
 done:
     return success;
 }
@@ -211,13 +199,10 @@ done:
     true if successful, false if the directory contains no more entries. */
 bool dir_readdir(struct dir *dir, char name[NAME_MAX + 1]) {
     struct dir_entry e;
-// printf("DIR_READDIR dir = %p, name = %s\n", dir, name);
     while (inode_read_at(dir->inode, &e, sizeof(e), dir->pos) == sizeof(e)) {
         dir->pos += sizeof(e);
         if (e.in_use) {
-            // printf("ENTRY: e.name = %s\n", e.name);
             memcpy(name, e.name, NAME_MAX + 1);
-            // printf("COPIED: name = %s\n", name);
             return true;
         } 
     }
@@ -236,21 +221,11 @@ bool dir_chdir(const char *dir) {
     if(num_slashes > 0 && slash_indeces[0] == dir) {
         curdir = dir_open_root();
     } else { /* Relative path: set curdir to where this thread is */
-/*        printf("Opening a relative path\n");*/
         curdir = t->curdir;
-/*        printf("curdir: %p\n", curdir);*/
-        if (curdir != NULL)
-        {
-/*            printf("Curdir sector: %d\n", inode_get_inumber(curdir->inode));*/
-        }
-        /*printf("RELATIVELYSPEAKING curdir = %d\n", curdir);*/
         if(curdir == NULL) {
-            /*printf("ITS NULLLLLLL\n");*/
             curdir = dir_open_root();
         }
     }
-
-/*    printf("In chdir, changing dir to: %s\n\tcurdir:%p\n", dir, curdir);*/
 
     /* Different strategy. Parse up to the next slash. */
     int i;
