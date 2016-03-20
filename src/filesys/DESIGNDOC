@@ -87,6 +87,10 @@ size = NUM_DIRECT * NUM_BYTES_PER_SECTOR + NUM_INDIRECT * NUM_SECTORS *
 >> nonzero data, A is not allowed to see all zeros.  Explain how your
 >> code avoids this race.
 
+Either A or B gets the rw lock. Both can't get the lock because readers
+and writers can't have the lock at the same time. This solves the
+race.
+
 >> A5: Explain how your synchronization design provides "fairness".
 >> File access is "fair" if readers cannot indefinitely block writers
 >> or vice versa.  That is, many processes reading from a file cannot
@@ -154,6 +158,10 @@ implement directory locks.
 
 >> B6: Explain why you chose to represent the current directory of a
 >> process the way you did.
+
+Its represented as a struct dir * in the thread. It is the most logical
+way to represent a directory because it is the directory struct and
+has all the essential information to represent a directory.
 
 			     BUFFER CACHE
 			     ============
