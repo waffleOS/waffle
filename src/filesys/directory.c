@@ -727,6 +727,7 @@ bool dir_open_file(const char *dir, struct inode **inode_ptr) {
     char name[NAME_MAX + 1];
     int namelen;
     char *c = dir;
+    struct inode *inode;
 
     for(i = 0; i < num_slashes; i++) {
 /*  printf("LOOOOPOPPPITTTTTTTTTTTTTTTTTTTTTTTT\n");*/
@@ -756,7 +757,6 @@ bool dir_open_file(const char *dir, struct inode **inode_ptr) {
         }
 
         /* Go look it up, check the directory exists, and store it */
-        struct inode *inode;
 /*        printf("I'm looking for c again2 = %s, name = %s\n", c, name);*/
         if(dir_lookup(curdir, name, &inode)) {
             curdir = dir_open(inode);
@@ -775,10 +775,14 @@ bool dir_open_file(const char *dir, struct inode **inode_ptr) {
         name[namelen] = '\0';
 // printf("name = %s, c = %s, namelen = %d, name[0] = %c\n", name, c, namelen, name[0]);
         /* Handle the special cases . and .. and note we can't add them */
-        if(!strcmp(name, ".") || !strcmp(name, "..")) {
+        if(!strcmp(name, ".") && !inode_is_removed(curdir->inode)) {
+            *inode_ptr = curdir->inode;
+            return true;
+        }else if(!strcmp(name, "..")) {
+            // printf("Inside the strcmp\n");
             return false;
         } else {
-            /* Go look it up, check the directory doesn't exists, and make it */
+            /* Go look it up, check the directory exists, and say you have it */
             // printf("curdir = %p, name = %s, inode_ptr = %p\n", curdir, name, inode_ptr);
             if(dir_lookup(curdir, name, inode_ptr)) {
                 // printf("inode_ptr = %p\n", inode_ptr);

@@ -527,6 +527,7 @@ bool do_readdir(int fd, char *name) {
             return file_get_inode(t->files[fd - 2])->sector;
         }
     }*/
+        // printf("HELLO DO AREADDIR name = %s\n", name);
     struct thread * t = thread_current();
     if (is_valid_fd(t, fd))
     {
