@@ -8,15 +8,17 @@
 
 >> Fill in the names and email addresses of your group members.
 
-FirstName LastName <email@domain.example>
-FirstName LastName <email@domain.example>
-FirstName LastName <email@domain.example>
+Rahul Bachal <rbachal@caltech.edu>
+Robert Eng   <reng@caltech.edu>
+David Qu     <dqu@caltech.edu>
 
 >> Specify how many late tokens you are using on this assignment:  
+2
 
 >> What is the Git repository and commit hash for your submission?
 
-   Repository URL:  
+   Repository URL: login.cms.caltech.edu:/cs/courses/cs124/teams/waffle.git
+                   https://github.com/waffleOS/waffle.git
    commit ...
 
 ---- PRELIMINARIES ----
@@ -28,6 +30,26 @@ FirstName LastName <email@domain.example>
 >> preparing your submission, other than the Pintos documentation, course
 >> text, lecture notes, and course instructors.
 
+---- LOGISTICS ----
+>> L1: Hours spent
+Rahul: 54
+Robert: 65
+David: 38
+
+>> L2: Focus
+Rahul: Implemented file extension. Wrote algorithm to find sectors given byte
+       offsets for files, create files, and extend files. Rewrote all inode
+       functions to use new file inode structure. Debugged inode structure
+       extensively and worked with cache code to determine issues.
+       Fixed bugs in cache eviction.
+       Helped implement subdirectories. Debugged and fixed code.
+Robert:Implemented cache design. Wrote NFU eviction policy. Implemented
+       subdirectories.
+David: Implemented read write lock, and refactored cache API to use the
+       read write lock by supplying synchronized cache_read_sector and
+       cache_write_sector functions. Helped discuss implementation and
+       design strategies for file extension and sub directories.
+       
 		     INDEXED AND EXTENSIBLE FILES
 		     ============================
 
@@ -121,9 +143,16 @@ FirstName LastName <email@domain.example>
 >> C5: When one process is actively reading or writing data in a
 >> buffer cache block, how are other processes prevented from evicting
 >> that block?
+The eviction policy acquires the rw_lock with the intention to write.
+This forces it to wait for any current readers or writers to finish
+before it acquires the lock. The rw_lock prioritizes writers when
+a reader is reading and readers when a writer is writing. This way
+it is fair.
 
 >> C6: During the eviction of a block from the cache, how are other
 >> processes prevented from attempting to access the block?
+The write access rw_lock prevents others from accessing the block
+until after the eviction is done.
 
 ---- RATIONALE ----
 
