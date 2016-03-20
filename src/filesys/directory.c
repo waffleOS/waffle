@@ -475,7 +475,6 @@ bool dir_open_file(const char *dir, struct inode **inode_ptr) {
             continue;
         }
 
-/*        printf("I'm looking for c again = %s\n", c);*/
         memcpy(name, c, namelen);
         name[namelen] = '\0';
 
@@ -514,7 +513,6 @@ bool dir_open_file(const char *dir, struct inode **inode_ptr) {
             return false;
         } else {
             /* Go look it up, check the directory exists, and say you have it */
-            // printf("curdir = %p, name = %s, inode_ptr = %p\n", curdir, name, inode_ptr);
             if(dir_lookup(curdir, name, inode_ptr)) {
                 return true;
 
@@ -531,7 +529,6 @@ bool dir_open_file(const char *dir, struct inode **inode_ptr) {
 
 
 bool dir_rmdir(const char *dir) {
-*/
 
     char * slash_indeces[MAX_PATH_DEPTH];
     int length = strlen(dir);
