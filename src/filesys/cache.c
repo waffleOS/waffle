@@ -236,6 +236,7 @@ void cache_refresh(void) {
 		/* Delay the reset of the count so the decay isn't so severe */
 		if(cache_refresh_count > CACHE_REFRESH_LIMIT * CACHE_DELAY_MULTIPLIER) {
 			cache_refresh_count = 0;
+			cache_write_all_dirty();
 		}
 
 		/* Take all accessed bits and set them back to false. If it was
