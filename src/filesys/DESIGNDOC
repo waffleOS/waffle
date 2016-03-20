@@ -125,8 +125,15 @@ different inode functions easier.
 >> B2: Describe your code for traversing a user-specified path.  How
 >> do traversals of absolute and relative paths differ?
 
+To figure out if it's absolute or relative, we check if the first
+character is a '/'. Then we set the temporary directory accordingly where
+absolute corresponds with teh root and relative corresponds with
+setting it to the current thread's directory.
 It begins by parsing for all the '/' and keeps an array of all pointers
-to these '/'
+to these '/'. Then we split up the string and traverse through the 
+directory tree by changing a temporary directory. All '/' are truncated
+off the end. The last piece of string after the last '/' is dealt with
+according to the function.
 
 ---- SYNCHRONIZATION ----
 
@@ -134,6 +141,9 @@ to these '/'
 >> only one of two simultaneous attempts to remove a single file
 >> should succeed, as should only one of two simultaneous attempts to
 >> create a file with the same name, and so on.
+
+We have a readwrite lock on the cache. We unfortunately did not
+implement directory locks.
 
 >> B5: Does your implementation allow a directory to be removed if it
 >> is open by a process or if it is in use as a process's current
@@ -154,14 +164,47 @@ to these '/'
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+All in cache_sector in cache.c
+- block_sector_t block_id         /* Sector index contained in cache */
+- bool used                       /* Has this sector been used yet */
+- bool dirty                      /* Has this sector been written to */
+- bool accessed                   /* Has this sector been accessed recently */
+- struct rw_lock rw               /* Synchronizes reads and writes. */
+- uint8_t data[BLOCK_SECTOR_SIZE] /* Holds up to BLOCK_SECTOR_SIZE bytes */
+
 ---- ALGORITHMS ----
 
 >> C2: Describe how your cache replacement algorithm chooses a cache
 >> block to evict.
 
+To get rid of thrashing on teh first index, we first do a random
+replacement policy and randomly choose an index to default evict.
+Next, we do a Not Frequently Used (NFU) policy where we keep track
+of the indeces which haven't been accessed a lot. This is done with
+access flags in each index which are set to true when an index is
+accessed. After a certain number of accesses over the entire cache,
+cache_refresh is called and sets all accesses to false and increments
+a counter on each of the indeces. After a certain number of refreshes,
+the accesses will decay so something accessed a lot a long time ago
+won't stay in teh cache. Thus when something needs to be evicted, it will
+choose the index with the fewest number of these increments.
+
 >> C3: Describe your implementation of write-behind.
 
+When something is written, it will get pulled up from disk memory or
+found in the cache, at which point it's written to the cache and the
+dirty flag on teh cache is set to true.
+When that index is evicted in cache_evict or a cache_write_all_dirty
+is called, the cache indeces are written back to the disk.
+As of now, it isn't on a new thread as we had hoped (we ran out of
+time). It currently resides in the cache_refresh function where it
+takes writes all dirty indeces back to the disk.
+
 >> C4: Describe your implementation of read-ahead.
+
+We have a TODO stub. :( We were planning on putting this in inode_read_at
+and it would spawn a new thread to read in the next block. We priortized
+getting the subdirectories to work and cache bugs out before this.
 
 ---- SYNCHRONIZATION ----
 
@@ -183,6 +226,17 @@ until after the eviction is done.
 
 >> C7: Describe a file workload likely to benefit from buffer caching,
 >> and workloads likely to benefit from read-ahead and write-behind.
+
+Workloads where you work with a chunk of files which is larger than
+your RAM will benefit from the cache so you don't have to constantly read
+junk from disk memory which takes a long time and thus is a pain. Thus
+you can keep data you access a lot in the cache and reduce the time
+it takes to bring it up from memory.
+Read-ahead benefits workloads where you are reading things sequentially.
+Write-behind benefits from workloads where you are writing to the same
+chunk of memory over and over again. Since writing takes a while,
+if you write back later all at once, it will save time.
+
 
 			   SURVEY QUESTIONS
 			   ================
