@@ -61,6 +61,36 @@ David: Implemented read write lock, and refactored cache API to use the
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+This struct represents the inode on disk and contains metadata for the file
+struct inode_disk {
+    block_sector_t start;               /*!< First data sector. */
+    off_t length;                       /*!< File size in bytes. */
+    unsigned magic;                     /*!< Magic number. */
+    bool isDirectory;                   /*!< Specifies if inode is directory. */
+    block_sector_t direct[NUM_DIRECT];  /*!< Array of direct blocks. */
+    block_sector_t indirect;            /*!< Indirect block. */
+    block_sector_t double_indirect;     /*!< Double indirect block. */
+};
+
+ On-disk inode for indirect and double indirect blocks
+struct indirect_inode_disk {
+    block_sector_t sectors[NUM_ENTRIES];    /*!< Block sectors. If inode is
+                                              indirect block, contains direct
+                                              blocks. Else if inode is double
+                                              indirect block, contains indirect
+                                              blocks. */
+};
+
+In-memory inode
+struct inode {
+    struct list_elem elem;              /*!< Element in inode list. */
+    block_sector_t sector;              /*!< Sector number of disk location. */
+    int open_cnt;                       /*!< Number of openers. */
+    bool removed;                       /*!< True if deleted, false otherwise. */
+    int deny_write_cnt;                 /*!< 0: writes ok, >0: deny writes. */
+    struct lock extension_lock;         /*!< Lock to allow extending file. */
+};
+
 >> A2: What is the maximum size of a file supported by your inode
 >> structure?  Show your work.
 NUM_DIRECT = 122
