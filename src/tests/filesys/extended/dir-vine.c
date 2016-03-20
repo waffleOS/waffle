@@ -53,8 +53,11 @@ test_main (void)
 
       /* Check for file and directory. */
       CHECK ((fd = open (".")) > 1, "open \".\"");
+      printf("CHANGE with %d and %s\n", fd, name[0]);
       CHECK (readdir (fd, name[0]), "readdir \".\"");
+      printf("DOLLAR\n");
       CHECK (readdir (fd, name[1]), "readdir \".\"");
+      printf("REAL\n");
       CHECK (!readdir (fd, name[2]), "readdir \".\" (should fail)");
       CHECK ((!strcmp (name[0], dir_name) && !strcmp (name[1], file_name))
              || (!strcmp (name[1], dir_name) && !strcmp (name[0], file_name)),

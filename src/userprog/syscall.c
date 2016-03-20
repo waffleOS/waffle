@@ -148,7 +148,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
                 do_exit(-1);
                 return;
             }
-            /*printf("Printing inside open\n");*/
+            // printf("Printing inside open\n");
             file = *((const char **) (f->esp + 4));
             if (validate_pointer(file)) {
                 fd = do_open(file);
@@ -284,6 +284,7 @@ static void syscall_handler(struct intr_frame *f UNUSED) {
             }
             fd = *((int *) (f->esp + 4));
             name = *((char **) (f->esp + 8));
+            // printf("SYS_READDIR fd = %d, name = %s\n", fd, name);
             if (validate_pointer(name)) {
                 success = do_readdir(fd, name);
                 f->eax = success;
@@ -527,10 +528,11 @@ bool do_readdir(int fd, char *name) {
             return file_get_inode(t->files[fd - 2])->sector;
         }
     }*/
-        // printf("HELLO DO AREADDIR name = %s\n", name);
+        // printf("HELLO DO AREADDIR fd = %d, name = %s\n", fd, name);
     struct thread * t = thread_current();
     if (is_valid_fd(t, fd))
     {
+        // printf("IT IS VALID fd\n");
         return inode_readdir(t, fd, name);
     }
     return false;

@@ -211,11 +211,13 @@ done:
     true if successful, false if the directory contains no more entries. */
 bool dir_readdir(struct dir *dir, char name[NAME_MAX + 1]) {
     struct dir_entry e;
-
+// printf("DIR_READDIR dir = %p, name = %s\n", dir, name);
     while (inode_read_at(dir->inode, &e, sizeof(e), dir->pos) == sizeof(e)) {
         dir->pos += sizeof(e);
         if (e.in_use) {
-            strlcpy(name, e.name, NAME_MAX + 1);
+            // printf("ENTRY: e.name = %s\n", e.name);
+            memcpy(name, e.name, NAME_MAX + 1);
+            // printf("COPIED: name = %s\n", name);
             return true;
         } 
     }

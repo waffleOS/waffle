@@ -906,13 +906,15 @@ bool inode_readdir(struct thread * t, int fd, char * name) {
     //     struct thread *t = list_entry(e, struct thread, allelem);
     //     if (fd >= 2 && fd < NUM_FILES && t->files[fd - 2] != NULL)
     //     {
-    // printf("BEFORE TEH IF name = %s\n", name);
-            if(!strcmp(name, ".") || !strcmp(name, "..")) {
-                return false;
-            }
+            // if(!strcmp(name, ".") || !strcmp(name, "..")) {
+            //     return false;
+            // }
             // printf("AFTER THE IF\n");
+    // printf("BEFORE TEH IF fd = %d, name = %s\n", fd,  name);
             struct inode *inode = file_get_inode(t->files[fd - 2]);
+            if(!inode_is_dir(t, fd)) return false;
             struct dir *dir = dir_open(inode);
+    // printf("INODEDIVE fd = %d, name = %s, dir = %p\n", fd,  name, dir);
             bool success = dir_readdir(dir, name);
             /* Must check if name is . or .. */
             return success;
