@@ -30,6 +30,8 @@ struct inode *dir_get_inode(struct dir *);
 
 bool dir_chdir(const char *dir);
 bool dir_mkdir(const char *dir, bool isDirectory, off_t file_size);
+bool dir_open_file(const char *dir, struct inode **inode_ptr);
+bool dir_rmdir(const char *dir);
 
 /* Reading and writing. */
 bool dir_lookup(const struct dir *, const char *name, struct inode **);

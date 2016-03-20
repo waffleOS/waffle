@@ -165,20 +165,20 @@ bool filesys_create(const char *name, off_t initial_size) {
     or a null pointer otherwise.  Fails if no file named NAME exists,
     or if an internal memory allocation fails. */
 struct file * filesys_open(const char *name) {
-    /*struct dir *dir = dir_open_root();*/
-    struct thread * t = thread_current();
-    struct dir * dir = t->curdir;
+    // struct thread * t = thread_current();
+    // struct dir * dir = t->curdir;
     struct inode *inode = NULL;
 
-    if (dir == NULL)
-    {
-        dir = dir_open_root();
-    }
+    // if (dir == NULL)
+    // {
+    //     dir = dir_open_root();
+    // }
 
-    if (dir != NULL)
-        dir_lookup(dir, name, &inode);
-    dir_close(dir);
+    // if (dir != NULL)
+    //     dir_lookup(dir, name, &inode);
+    // dir_close(dir);
 
+    dir_open_file(name, &inode);
     return file_open(inode);
 }
 
@@ -187,17 +187,17 @@ struct file * filesys_open(const char *name) {
     fails. */
 bool filesys_remove(const char *name) {
     /*struct dir *dir = dir_open_root();*/
-    struct thread * t = thread_current();
-    struct dir * dir = t->curdir;
+    // struct thread * t = thread_current();
+    // struct dir * dir = t->curdir;
 
-    if (dir == NULL)
-    {
-        dir = dir_open_root();
-    }
-    bool success = dir != NULL && dir_remove(dir, name);
-    dir_close(dir);
+    // if (dir == NULL)
+    // {
+    //     dir = dir_open_root();
+    // }
+    // bool success = dir != NULL && dir_remove(dir, name);
+    // dir_close(dir);
 
-    return success;
+    return dir_rmdir(name);
 }
 
 /*! Formats the file system. */
