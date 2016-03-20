@@ -458,6 +458,8 @@ void inode_close(struct inode *inode) {
             struct inode_disk * data = (struct inode_disk *) sector->data;
             
             size_t length = data->length;
+
+            /* Find each sector in the inode and free it */
             int i;
             for (i = 0; i < length; i += BLOCK_SECTOR_SIZE)
             {
@@ -531,6 +533,8 @@ bool inode_extend(struct inode *inode, off_t offset) {
 
     bool success = false;
 
+    /* If the last offset to write to is greater than the length of the inode,
+     * extend the file */
     if (offset > length)
     {
         int num_bytes = offset - length;
@@ -689,11 +693,18 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
     int disk_inode_length = inode_length(inode);
     int length = DIV_ROUND_UP(disk_inode_length, NUM_BYTES_PER_SECTOR) * NUM_BYTES_PER_SECTOR;
 
+    /* If the last position to write to is greater than the length of the file,
+     * extend it */
     if (offset + size > disk_inode_length)
     {
         disk_inode_length = offset + size;
+        
+        /* Check if the last position is greater than the allocated length of
+         * the file */
         if (offset + size > length)
         {
+
+            /* Double checked lock */
             lock_acquire(&inode->extension_lock);
             if (offset + size > length) {
                 inode_extend(inode, offset + size);
@@ -704,6 +715,8 @@ off_t inode_write_at(struct inode *inode, const void *buffer_, off_t size, off_t
             }
             lock_release(&inode->extension_lock);
         }
+
+        /* Update the file size */
         else
         {
             lock_acquire(&inode->extension_lock);

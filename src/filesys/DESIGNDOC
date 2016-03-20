@@ -109,6 +109,8 @@ size = NUM_DIRECT * NUM_BYTES_PER_SECTOR + NUM_INDIRECT * NUM_SECTORS *
 
 >> A3: Explain how your code avoids a race if two processes attempt to
 >> extend a file at the same time.
+The file has an extension lock that only one process can acquire at a time. This
+prevents race conditions in file extension.
 
 >> A4: Suppose processes A and B both have file F open, both
 >> positioned at end-of-file.  If A reads and B writes F at the same
@@ -123,6 +125,8 @@ size = NUM_DIRECT * NUM_BYTES_PER_SECTOR + NUM_INDIRECT * NUM_SECTORS *
 >> prevent forever another process from writing the file, and many
 >> processes writing to a file cannot prevent another process forever
 >> from reading the file.
+Readers check after reading whether there is a writer waiting and if so, allow
+the writer to write. This is vice versa for writers.
 
 ---- RATIONALE ----
 
@@ -169,6 +173,10 @@ to these '/'
 >> is open by a process or if it is in use as a process's current
 >> working directory?  If so, what happens to that process's future
 >> file system operations?  If not, how do you prevent it?
+Our implementation allows a directory to be removed if it is open or in use
+as a process's current working directory. The process's future file system
+operations inside that directory are disabled until the process changes
+directory.
 
 ---- RATIONALE ----
 
