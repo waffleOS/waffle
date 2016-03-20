@@ -63,6 +63,17 @@ David: Implemented read write lock, and refactored cache API to use the
 
 >> A2: What is the maximum size of a file supported by your inode
 >> structure?  Show your work.
+NUM_DIRECT = 122
+NUM_INDIRECT = 1
+NUM_DOUBLE_INDIRECT = 1
+NUM_BYTES_PER_SECTOR = 512
+NUM_SECTORS = 128
+
+size = NUM_DIRECT * NUM_BYTES_PER_SECTOR + NUM_INDIRECT * NUM_SECTORS *
+       NUM_BYTES_PER_SECTOR + NUM_DOUBLE_INDIRECT * NUM_SECTORS * NUM_SECTORS
+       * NUM_BYTES_PER_SECTOR
+     = 8516608 bytes
+     = 8.122 MB
 
 ---- SYNCHRONIZATION ----
 
@@ -90,6 +101,10 @@ David: Implemented read write lock, and refactored cache API to use the
 >> indirect blocks?  If not, why did you choose an alternative inode
 >> structure, and what advantages and disadvantages does your
 >> structure have, compared to a multilevel index?
+Our inode structure is a multilevel index. We have 122 direct blocks, 1 indirect
+block, and 1 double indirect block. This allows us to have files at most 8 MB.
+Using only 1 indirect and 1 double indirect block makes the math for the
+different inode functions easier.
 
 			    SUBDIRECTORIES
 			    ==============
@@ -180,6 +195,9 @@ website.
 
 >> In your opinion, was this assignment, or any one of the three problems
 >> in it, too easy or too hard?  Did it take too long or too little time?
+This assignment was pretty difficult, especially since it was during finals
+week. We all left to go home and did the majority of work remotely. We were
+not able to get persistence to work even though most of the tests worked.
 
 >> Did you find that working on a particular part of the assignment gave
 >> you greater insight into some aspect of OS design?
